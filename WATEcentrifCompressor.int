@@ -1,0 +1,512 @@
+#ifndef _WATECENTRIFCOMPRESSOR_
+#define _WATECENTRIFCOMPRESSOR_
+ 
+extern real S_Gearbox.weight;
+ 
+class WATEcentrifCompressor extends WATEcompressorBase
+{
+  //DESVAL(3)
+  real TtMaxIn_in {
+    IOstatus = "input";    units = "R";
+    description = "Maximum total temperature of the compressor inlet. Overrides max value obtained from running the aero model.";
+  } 
+
+  real TtMaxIn {
+    IOstatus = "output";  units = "R";
+    description = "Maximum total temperature of the compressor inlet";
+  }
+
+  //DESVAL(4)
+  real TtMaxOut_in {
+    IOstatus = "input";    units = "R";
+    description = "Maximum total temperature of the compressor exit. Overrides max value obtained from running the aero model.";
+  }    
+
+  real TtMaxOut {
+    IOstatus = "output";  units = "R";
+    description = "Maximum total temperature of the compressor exit";
+  }
+          
+  //DESVAL(5)
+  real stg1MaxPR {
+    IOstatus = "input";    units = "none";
+    description = "Maximum pressure ratio of the first compressor stage";
+  }   
+
+  //DESVAL(16)
+  int numRotorBlades {
+    IOstatus = "input";    units = "none";
+    description = "Number of rotor blades. If not zero, then the value of bladeSolidity is ignored";
+  }   
+
+  //DESVAL(18)
+  real bladeSolidity {
+    value = 1.0; IOstatus = "input";    units = "none";
+    description = "blade cord to spacing ratio. Default determined by compressorType. Ignored if numBlades != 0";
+  }     
+
+  //DESVAL(20)
+  real bladeThicknessRatio {
+    IOstatus = "input";    units = "none";
+    description = "Blade thickness ratio";
+  }   
+          
+  //DESVAL(83)
+  real stg1NcTip {
+    IOstatus = "input";    units = "ft/sec";
+    description = "Corrected linear tip speed of the first stage";
+  }        
+
+  real Tin;
+  real bladeDensity;
+  real weightPerBlade;
+  real bladeHubRadius;
+  real areaOut;
+  
+  int stage;
+  
+  real bladeTipRadius;
+  real stgTemp;
+  real caseDensity, strd;
+  
+  real polytropicEfficiency;
+  real Hin;
+  real deltaHideal;
+  real deltaH;
+  real Pin;
+  real avgLenPerStg;
+    
+  real diffuserLength;
+  real diffuserWt;
+  real housingWt;
+  real crossoverDuctLength;
+  real crossoverDuctWt;
+  real crossoverDuctDiam;
+  real diffuserDiam;
+  
+  real crossoverDuctLength_stg[];
+  
+  real cgcomp;
+  
+  defaultHideLevel = 2; 
+  
+  int firstCompOnShaft;
+
+  string shaftRef;
+  
+  defaultHideLevel = 0;
+ 
+  // ********************* Sockets *************************
+
+  Socket S_Gearbox {
+     socketType = "WATEgearbox";
+  }
+  
+  // ******************** Materials ***************************
+  
+  WATEmaterial bladeMaterial;
+  
+  // ******************* Max Savers ***************************
+  
+  MaxSaver max_TtIn {
+     var = "Fl_I.Tt";
+  }
+  
+  MaxSaver max_TtOut {
+     var = "Fl_O.Tt";
+  }
+  
+  MaxSaver max_PtIn {
+     var = "Fl_I.Pt";
+  }
+  
+  MaxSaver max_WcIn {
+     var = "Fl_I.Wc";
+  }
+  
+  MaxSaver max_N {
+     var = "Sh_O.Nmech";
+  }  
+  
+#ifdef WATE_LEGACY
+  // ??? keep track of max horsepower coming from the compressor and its
+  // associated Nmech. WATE updates max Nmech when max pwr changes *AND*
+  // when Nmech increases above current max Nmech. This means that you 
+  // get different max values depending upon the order in which the
+  // cases are executed. :(
+  MaxSaver pwr_max {
+     var = "-pwr";  // pwr is negative
+     associatedVars = { "Sh_O.Nmech" };
+  } 
+  
+  // if true, use max Nmech that corresponds to max pwr instead of 
+  // absolute max Nmech
+  int useNmaxAtpwrMax = 0; 
+#endif
+  
+  FlowStation centFS;
+  FlowStation stgFS;
+  FlowStation Fl_Oideal; 
+  FlowStation Fl_Otmp;        
+ 
+  Socket TB_PRvsTipSpd {
+     socketType = "Function";
+     returnType = "real";
+     argTypes = { "real" }
+  }
+  
+  SecantSolver slv;
+  
+  void calculate() {
+      string errmsg;
+      real wi = des_Fl_I.W; 
+      Pin  = des_Fl_I.Pt; 
+      real Pin_psf   = Pin*144.;
+      Tin  = des_Fl_I.Tt;
+      real gam = des_Fl_I.gamt; 
+      real ef = des_eff; 
+       
+//     check for bad inlet total temperature (Tin)
+//
+      if (Tin  <  200. )  { 
+         errmsg = "entrance total temperature too low ("+toStr(Tin)+
+                  "). Setting to 200.";
+         provisionalWarning(errmsg);
+         Tin=200.; 
+      }
+      if (Tin  >  6000.)  {   
+         errmsg = "entrance total temperature too high ("+toStr(Tin)+
+                  "). Setting to 6000."; 
+         provisionalWarning(errmsg);
+         Tin=6000.; 
+      }
+ 
+//     calculate adiabatic (ef) or polytropic (polytropicEfficiency) component design
+//     efficiency
+//
+      polytropicEfficiency = peffd(des_PR,des_eff,gam);
+      ef = effd (des_PR,polytropicEfficiency,gam);
+ 
+//     calculate inlet enthalpy (Hin), ideal exit enthalpy (HoutIdeal), ideal del
+//     enthalpy (deltaHideal), actual delta enthalpy (deltaH), actual exit enthalpy
+//     (Hexit) and exit total temperature (Tt_exit)
+      
+      Hin  = des_Fl_I.ht; 
+      real pio = Pin*des_PR;
+
+      Fl_Oideal.copyFlowStatic( "des_Fl_I" );
+      Fl_Otmp.copyFlowStatic("Fl_Oideal");
+      
+      Fl_Oideal.setTotalSP( des_Fl_I.s, pio );
+      real HoutIdeal = Fl_Oideal.ht;
+      real Hexit = ( HoutIdeal - des_Fl_I.ht )/ef+des_Fl_I.ht;
+      deltaHideal = HoutIdeal-Hin;
+      deltaH = deltaHideal/ef;
+      
+      Fl_Otmp.setTotal_hP( Hexit, pio );
+      real Tt_exit = Fl_Otmp.Tt;
+ 
+      areaIn = calcDuctArea (Tin,Pin_psf,wi,gam,MNin);      
+ 
+//     calculate component mechanical design and dimensions
+//
+      cmech (MNin); 
+      
+//     calculate component exit area (areaOut)
+//
+      areaOut = calcDuctArea (Tt_exit,Pin_psf*des_PR,wi,gam,MNin);
+      
+      if(!S_Gearbox.isEmpty()) {
+         S_Gearbox.execute();
+         weight += S_Gearbox.weight;
+      }
+      
+      outPort.axialPosition = inPort.axialPosition + length; 
+      
+      cg = calcCG();
+   }
+      
+      
+  /**
+   *
+   ********************************************************************/                   
+   void cmech (real xm)
+   {
+      real alpha,kcond,v,duc;
+      real rbhol;
+      real su,sy;
+      real srat, ga;
+      real delrtb,delrhb;
+      real enthalpyStgIn, stgTempIn, stgPin;
+      real stgMN;
+      real deltaMaxT;
+      real pr1;
+
+      real tstd=C_TSTD;
+      
+
+      real rpmt;
+      real cc1rt;
+      real cc1rt2;
+      real cccrpm;
+      real cccutp;      
+      
+      real stg1ExitEnthalpy;
+      real rp2;
+      real hisc;
+      real gavc;
+      real tosc1;
+      real tosc2;
+
+      maxPressureRatio = stg1MaxPR;
+
+      if(xm != 0.) {
+         maxPressureRatio = stg1MaxPR;
+
+         TtMaxIn = TtMaxIn_in;
+         if (TtMaxIn == 0.) { TtMaxIn = max_TtIn.val; }
+
+         TtMaxOut = TtMaxOut_in;
+         if (TtMaxOut == 0.) { TtMaxOut = max_TtOut.val; }
+
+         real nmax;
+#ifdef WATE_LEGACY
+         if(useNmaxAtpwrMax) {
+            nmax = pwr_max.associatedVals[0];
+         }
+         else {
+            nmax = max_N.val;
+         }
+#else
+         nmax = max_N.val;
+#endif
+         maxSpdRatio = maxSpdRatio_in;
+         if (maxSpdRatio == 0.) { 
+            maxSpdRatio = nmax / des_Nmech; 
+         }
+
+         if(bladeMaterial.type == "") {
+            if(TtMaxOut < 790) { bladeMaterial.type = "Ti_17"; }
+            else { bladeMaterial.type = "Inconel_718"; }
+         }
+      }
+
+//
+//     for design case  calculate number of stages based on enthalpy
+//     change per stage and maximum pressure ratio
+
+      numStages = 0;
+      pr1 = des_PR;
+
+      // grab starting flow conditions
+      stgFS.copyFlowStatic("des_Fl_I");
+      real entropy = stgFS.s;
+
+
+      do {
+         ++numStages;
+         if (numStages > 20.) { 
+            throwError("compressor pressure ratio is too high (numStages > 20)");
+         }
+   //
+   //     calculate pressure ratio (pr1) across the component
+   //
+   //  override stage number calculation if numStages_in is input
+         if (numStages_in  != 0) { numStages = numStages_in; }
+
+         stg1ExitEnthalpy = Hin+deltaHideal/numStages;
+         rp2 = Pin+des_PR/numStages;
+
+         slv.initialize(rp2);
+
+         do {
+           stgFS.setTotal_hP(stg1ExitEnthalpy, rp2);
+           rp2 = slv.iterate(entropy-stgFS.s);
+           if(rp2<0.00001) { rp2 = 0.00001; }
+         } while(!(slv.isConverged()) && !(slv.errorType));
+
+         pr1 = rp2/Pin;
+      } while(pr1 > maxPressureRatio && numStages_in == 0);
+
+//
+//     calculate corrected tip speed (correctedTipSpd), tip
+//     radius (stg1TipRadius), corrected rotor speed (Nc), and rotor speed (spoolRPM)
+//
+      spoolRPM = findNmech(); // grab rpm of first component on shaft
+
+      cc1rt  = sqrt(areaIn/PI/(1.-hubTipRatioIn*hubTipRatioIn));
+      cc1rt2 = cc1rt*12.;
+      
+      if(!firstCompOnShaft || spoolRPM>=100. || stg1NcTip>0.) {
+         cccrpm = spoolRPM/sqrt(Tin/tstd);
+         cccutp = cccrpm/60.*2.*cc1rt*PI;
+      }
+      else {
+         cccutp = 188.+(561.417*pr1)+(-66.15*pr1**2)+(3.033*pr1**3);
+         cccrpm = cccutp*60./(2.*cc1rt*PI);
+         spoolRPM  = cccrpm*sqrt(Tin/tstd)*maxSpdRatio;
+      }
+
+      real dhasc = deltaH/numStages;
+      real posc = des_Fl_I.Pt*144.; // units are lb/ft2?
+      real ttosc = Tin;
+      real hosc = Hin;
+
+      bladeTipRadius=cc1rt2*hubTipRatioIn*3.;
+      centFS.copyFlow("des_Fl_I");
+
+      if(crossoverDuctLength_stg.entries() != numStages) {
+         WATEcompressorBase::resizeStgArrays();         
+         crossoverDuctLength_stg.resize(numStages);
+      }
+
+//     stage by stage calculations
+      real pisc,hiscttisc,tgamc;
+      real ttisc;
+      real stgLength;
+      real stgInertia;
+      
+      real shaftDiameter = shaftRef->getVal("outerDiameter");
+      real br = 1.1*shaftDiameter/2.0; 
+        
+      crossoverDuctDiam = 2.0*bladeTipRadius*1.6; 
+      crossoverDuctLength = crossoverDuctDiam*.2;
+      crossoverDuctWt     = 33.5*crossoverDuctDiam*crossoverDuctLength;
+      
+      inPort.innerRadius = br*1.4;
+      inPort.outerRadius = .42*bladeTipRadius;
+
+      weight = 0.;
+      length = 0.;
+      totInertia = 0.;
+      housingWt = 0.;
+      
+      for(stage=0; stage<numStages; ++stage) { 
+        if (stage > 0) { bladeTipRadius *=.98; }
+        hisc = hosc;
+        ttisc = ttosc;
+        pisc = posc;
+        hosc = hisc+dhasc;
+        centFS.setTotal_hP(hosc,Pin); 
+        ttosc = centFS.Tt;
+
+        tgamc = 0.5*(ttisc+ttosc);
+        centFS.setTotalTP(tgamc,Pin); 
+        gavc = centFS.gamt;
+
+        tosc1 = -polytropicEfficiency*log(ttosc/ttisc);
+        tosc2 = exp(tosc1);
+        PR_stg[stage] = tosc2**(gavc/(gavc-1.));
+        posc = pisc*PR_stg[stage];
+
+        stgLength  = 2.53+(.167*bladeTipRadius);
+        stgInertia = ((bladeTipRadius**5)/22220.)*12.*32.17;
+
+        housingWt += 163.*bladeTipRadius*stgLength/144.;
+
+        weight_stg[stage]    = (bladeTipRadius*bladeTipRadius*bladeTipRadius)/13.1;
+        tipRadius_stg[stage] = bladeTipRadius;
+        hubRadius_stg[stage] = .42*bladeTipRadius;
+        length_stg[stage]    = stgLength;
+        crossoverDuctLength_stg[stage] = crossoverDuctLength;
+        inertia_stg[stage] = stgInertia;
+
+        weight  += weight_stg[stage]; 
+        length  += stgLength;
+        totInertia += stgInertia;
+
+      } // end stage loop
+      
+      outPort.innerRadius = 1.25*bladeTipRadius;
+      outPort.outerRadius = 11./8.*bladeTipRadius;
+      
+      if(numStages > 1) {
+        length += crossoverDuctLength;
+        weight += crossoverDuctWt; 
+      }
+      
+      diffuserDiam   = bladeTipRadius/6.*1.6; 
+      diffuserLength = diffuserDiam*.07;
+      diffuserWt     = 32.8*diffuserDiam*diffuserLength;
+      
+      length += diffuserLength;
+      weight += (diffuserWt+housingWt);
+
+      bladeHubRadius = cc1rt2*hubTipRatioIn;
+      cgcomp = length/2.;
+   } // end cmech
+   
+   
+  /**
+   *
+   ********************************************************************/ 
+   real findNmech() {
+      if(firstCompOnShaft) {
+         return des_Nmech;
+      }
+     
+      string icomps[] = shaftRef->getVal("inertiaComps");
+      string tmp;
+      if(icomps.entries() > 1) {
+         tmp = icomps[0];
+         return tmp->getVal("spoolRPM");
+      }
+      else {
+         return shaftRef->getVal("des_Nmech"); 
+      }
+   }
+   findNmech.hide(2);
+      
+   
+  /**
+   *
+   ********************************************************************/    
+   real calcCG() {
+      return cgcomp+inPort.axialPosition;
+   }
+   
+   
+  /**
+   *
+   ********************************************************************/    
+   int verify() {
+      int ret=1;
+      int i,j;
+      string tmp;
+      string shafts[] = parent.parent.list("WATEshaftBase",0);
+      string shaftComps[];
+      shaftRef = "";
+      
+      if(shafts.entries()==0) {
+         error("can't find any WATEshafts");
+         ret = 0;
+      }
+      else {
+         for(i=0; i<shafts.entries(); ++i) {
+           if(shaftRef != "") { break; }
+           shaftComps = shafts[i]->inertiaComps;
+           for(j=0; j<shaftComps.entries(); ++j) {
+              if(parent.getName() == shaftComps[j] ||
+                 parent.getPathName() == shaftComps[j]) {
+                 shaftRef = shafts[i];
+                 if(j==0) {
+                    firstCompOnShaft = 1;
+                 }
+                 else {
+                    firstCompOnShaft = 0;
+                 }
+                 break;
+              }
+           }
+         }
+         if(shaftRef=="") {
+            error("this compressor is not referenced by any shaft");
+            ret = 0;
+         }
+      }
+      return ret;
+   }
+
+}
+ 
+#endif

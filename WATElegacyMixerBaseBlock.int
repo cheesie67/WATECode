@@ -1,0 +1,31 @@
+
+#ifndef _WATELEGACYMIXERBASEBLOCK_INT
+#define _WATELEGACYMIXERBASEBLOCK_INT
+
+
+/**
+ *
+ ****************************************************************/
+class WATElegacyMixerBaseBlock extends UserTextBlock
+{     
+  /**
+   *
+   ****************************************************************/
+   void update() {
+     filledBlock = { };
+
+     filledBlock.append("");
+     filledBlock.append("******** "+scopingObj->isA() + 
+                        " ("+scopingObj->getPathName()+ ")*********");
+     filledBlock.append("");
+     filledBlock.append("LENGTH= "+toStr(scopingObj->length) + "    WEIGHT =" + 
+                         toStr(scopingObj->weight));
+     filledBlock.append("");
+   }
+}
+
+#endif
+
+
+
+

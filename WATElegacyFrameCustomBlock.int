@@ -1,0 +1,40 @@
+
+#ifndef _WATELEGACYFRAMECUSTOMBLOCK_INT
+#define _WATELEGACYFRAMECUSTOMBLOCK_INT
+
+/**
+ *
+ ****************************************************************/
+class WATElegacyFrameCustomBlock extends SimpleBlock
+{
+   body = "\nFRAME COMPONENTS INFORMATION\n\n"+
+            "FRAME WT    LENGTH     GAP    #FRAMES    ARF      RHOF\n"+
+            "?????.??   ????.?   ????.?     ???      ??.??    ??.???\n"+
+            "CASE WT    HUB WT    UP SUPP    LW SUPP   RHOS     THSUP    WTTOWER    TS DIAM\n"+
+            "????.??   ????.??   ????.??   ?????.??   ??.???  ???.??   ???.??       ??.??\n\n"+
+            "FRAME WT  =   ?????.???\n\n";
+   
+   
+   vars = {
+      "frameWt",
+      "length",
+      "gap",
+      "numBlades",
+      "aspectRatio",
+      "rhof",
+      "caseWt",
+      "hubWt",
+      "upperSupportWt",
+      "lowerSupportWt",
+      "supportMaterial.type==\"\" ? rhof : supportMaterial.rho(500)",
+      "supportThickness",
+      "S_TowerShaft.isEmpty() ? 0.00 : S_TowerShaft.weight",
+      "S_TowerShaft.isEmpty() ? 1.00 : S_TowerShaft.outerDiameter",
+      "weight"
+   }
+}
+
+#endif
+
+
+

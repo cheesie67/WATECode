@@ -1,0 +1,174 @@
+#ifndef WATEMIXERBASE
+#define WATEMIXERBASE
+
+//
+// LAST INSPECTION DATE: *not inspected*
+//
+//  EXTERNAL DEPENDENCIES
+//
+
+/*
+ *
+ *******************************************************************/
+class WATEmixerBase extends WATEelement 
+{
+  //IWMEC(2)
+  Option primaryStream {
+    trigger = 0;
+    allowedValues = { "INNER", "OUTER" }
+    IOstatus = "input";    units = "none";
+    description = "Specifies which discharge stream is considered primary";
+  }
+
+  //DESVAL(3)
+  real inOutRR {
+    value = 1.0; 
+    IOstatus = "input";    units = "in";
+    description = "Ratio of exit radius to entrance radius";
+  }  
+
+  //DESVAL(4)
+  real innerWallRadius {
+    value = 0.0;    IOstatus = "input";    units = "in";
+    description = "Radial location of mixer inner wall. If zero, use radius of previous component";
+  }  
+
+  defaultHideLevel = 1;
+  
+  real Rii;
+  real Rmo;
+  real Rmi;
+  real Roo;
+  
+  defaultHideLevel = 0;
+  
+  real A_i,A_o;
+  
+  // design point data
+  FlowStation des_Fl_I1;
+  FlowStation des_Fl_I2;
+  
+
+  WATEInputPort innerInPort;
+  WATEInputPort outerInPort;
+  WATEOutputPort outPort;
+  
+
+  /*
+   *
+   *******************************************************************/
+  void calculate() {
+      real AREA,Ri2,Roi; 
+
+      if(primaryStream == "INNER") {
+         A_i=des_Fl_I1.Aphy; 
+         A_o=des_Fl_I2.Aphy;
+      }
+      else { // primaryStream=="OUTER"
+         A_i=des_Fl_I2.Aphy; 
+         A_o=des_Fl_I1.Aphy;
+      }
+
+      Rii = innerInPort.innerRadiusUp;
+      Roi = innerInPort.outerRadiusUp;
+
+//
+//     CALCULATE DIMENSIONS OF MIXER
+//
+
+// Add code to allow radial positioning of mixer inner wall
+
+      if(innerWallRadius > 0.) {
+         AREA = PI*(Roi*Roi - Rii*Rii);
+         Rii = innerWallRadius;
+         Roi = sqrt(Rii*Rii + AREA/PI);
+      }
+
+      Ri2=((Roi*Roi+Rii*Rii)/2.0)-A_i/(2.0*PI);
+      if(Ri2 <= 0.) { Ri2=0.; }
+      Rmi=sqrt(Ri2);
+      Rmo=sqrt(A_i/PI+Ri2);
+      Roo=sqrt(A_o/PI+Rmo*Rmo);
+
+      calcLength();
+      calcWeight();
+      
+      innerInPort.innerRadius = Rmi;
+      innerInPort.outerRadius = Rmo;
+      outerInPort.innerRadius = Rmo;
+      outerInPort.outerRadius = Roo;
+
+      outPort.innerRadius = Rmi - (1.0 - inOutRR)*Rmi;
+      outPort.outerRadius = Roo - (1.0 - inOutRR)*Rmi;
+      
+      real outpos = max(outerInPort.axialPosition, innerInPort.axialPosition);
+      outPort.axialPosition = outpos + length;
+      cg = length/2.0 + outpos;
+  }
+
+
+  /*
+   *
+   *******************************************************************/
+  void calcLength() { } // overridden in derived classes
+  
+  
+  /*
+   *
+   *******************************************************************/
+  void calcWeight() { } // overridden in derived classes
+  
+  
+  /*
+   *
+   *******************************************************************/
+  void saveMechDesignData() {
+     des_Fl_I1.copyFlowStatic(componentRef+".Fl_I1");
+     des_Fl_I2.copyFlowStatic(componentRef+".Fl_I2");
+  }
+  
+  
+  void calcGeometry() {
+      real x[5],y[5];
+      
+      y[0] = innerInPort.innerRadius;
+      y[1] = outerInPort.outerRadius; 
+      y[2] = outPort.outerRadius; 
+      y[3] = outPort.innerRadius; 
+      y[4] = y[0];
+      x[0] = innerInPort.axialPosition;
+      x[1] = x[0];
+      x[2] = x[0] + length; 
+      x[3] = x[2];
+      x[4] = x[0];
+
+      addPolyLine(x,y,drawDepth,1);
+      
+      real sx[4],sy[4];
+      sx[0] = innerInPort.axialPosition;
+      sx[1] = sx[0] + 0.75*length;
+      sx[2] = outPort.axialPosition; 
+      sx[3] = sx[0];
+      sy[0] = outerInPort.innerRadius; 
+      sy[1] = sy[0];
+      sy[2] = sy[0] + 0.5*(outerInPort.outerRadius-outerInPort.innerRadius);
+      sy[3] = sy[0];
+      addPolyLine(sx,sy,drawDepth,1);
+  }
+
+  /*
+   *
+   *******************************************************************/
+  void VCinit() {
+     if(primaryStream == "INNER") {
+       wateInPortNames = { "InnerInPort", "OuterInPort" };
+     }
+     else {
+       wateInPortNames = { "OuterInPort", "InnerInPort"  };
+     }
+  }
+}
+
+#endif
+
+

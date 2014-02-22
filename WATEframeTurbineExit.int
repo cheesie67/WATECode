@@ -1,0 +1,25 @@
+
+#ifndef _WATEFRAMETURBINEEXIT_H_
+#define _WATEFRAMETURBINEEXIT_H_
+
+
+// type 3 frame - turb ex
+class WATEframeTurbineExit extends WATEframeBase
+{
+   void calculate()
+   {
+      real rt2=(tipRadius/12.)**2;
+      if (rt2 > 2.1) { 
+         weight=49.71*rt2+167.61; 
+      } 
+      else {
+         weight=130.77*rt2;
+      }
+      length = calcLength();
+   }
+}   
+
+
+#endif
+
+

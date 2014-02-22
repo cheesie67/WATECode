@@ -1,0 +1,22 @@
+#ifndef _WATELPC_
+#define _WATELPC_
+ 
+class WATEaxialLPC extends WATEaxialCompressor
+{
+  // defaults
+  areaIn = .5;
+  bladeSolidity = 0.93;
+  bladeTaperRatio = .833;
+  statorSolidity = 0.77;
+  bladeVolumeFactor = 0.047;    
+  statorVolumeFactor = 0.092;
+
+  maxPressureRatio = 1.5; 
+  hubTipRatioIn = .4;
+  MNout = .45; 
+  maxSpdRatio = 1.; 
+}
+
+#endif
+
+

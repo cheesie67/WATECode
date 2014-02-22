@@ -1,0 +1,51 @@
+
+#ifndef _WATELEGACYENGINESUMMARYBLOCK_INT
+#define _WATELEGACYENGINESUMMARYBLOCK_INT
+
+
+/**
+ *
+ ****************************************************************/
+class WATElegacyEngineSummaryBlock extends UserTextBlock
+{
+  string inletName;
+       
+  /**
+   *
+   ****************************************************************/
+   void update() {
+
+     real radInfo[] = getMaxRadiusInfo();
+
+     filledBlock = { };
+     
+     real wtacc = 0.,engMountWt=0.;
+     if(!S_Accessories.isEmpty()) {
+        wtacc = S_Accessories.weight;
+     }
+     if(!S_EngineMount.isEmpty()) {
+        engMountWt = S_EngineMount.weight;
+     }
+     
+     real bareWt = weight-inletName->weight-engMountWt;
+     
+     filledBlock.append("");
+     filledBlock.append("ENGINE MOUNT WEIGHT      = " + toStr(engMountWt));
+     filledBlock.append("BARE ENGINE WEIGHT       = " + toStr(bareWt));
+     filledBlock.append("ACCESSORIES WEIGHT       = " + toStr(wtacc));
+     filledBlock.append("TOTAL ENGINE WEIGHT      = " + toStr(bareWt+wtacc));
+     filledBlock.append("INLET/NACELLE WEIGHT     = " + toStr(inletName->weight + engMountWt));
+     filledBlock.append("TOTAL ENGINE POD WEIGHT  = " + toStr(weight + wtacc));
+     filledBlock.append("");
+     
+     filledBlock.append("ENGINE LENGTH            = " + toStr(length));
+     filledBlock.append("TOTAL ENGINE POD LENGTH  = " + toStr(length + inletName->length));
+     filledBlock.append("FAN COWL LENGTH          = " + toStr(inletName->fanCowlLength));
+     filledBlock.append("ENGINE MAX DIAMETER      = " + toStr(radInfo[0]*2.0));
+     filledBlock.append("NACELLE MAX DIAMETER     = " + toStr(inletName->maxrad*2.0));
+     filledBlock.append("ENGINE POD C.G. LOCATION = " + toStr(cg));
+   }
+}
+
+#endif
+

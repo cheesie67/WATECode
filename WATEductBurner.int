@@ -1,0 +1,10 @@
+#ifndef WATEDUCTBURNER
+#define WATEDUCTBURNER
+
+
+class WATEductBurner extends WATEburnerBase
+{
+   Vflow = 150.;      
+}
+
+#endif

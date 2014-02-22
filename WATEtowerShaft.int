@@ -1,0 +1,123 @@
+#ifndef _WATETOWERSHAFT_H_
+#define _WATETOWERSHAFT_H_
+
+//
+// LAST INSPECTION DATE: *not inspected*
+//
+
+extern int wateShafts.entries();
+
+/*  
+ *  
+ *********************************************************************/  
+class WATEtowerShaft extends WATEsubelement
+{
+    //FRVAL(17)
+    real HPX {
+      value = 500.0 ;    IOstatus = "input";    units = "hp" ;
+      description = "" ;
+    }
+
+    //FRVAL(18)
+    real diamRatio {
+      value = 0.0 ;    IOstatus = "input";    units = "none" ;
+      description = "Tower shaft diameter ratio (Dinner/Douter)" ;
+    }
+    
+    real outerDiameter=1.;
+
+  
+  /**
+   * 
+   *********************************************************/    
+   void calculate()
+   { 
+      real bngwt,bnglen,ballwt,bearingCaseWt,ocaswt,tbear,radbear;
+      real tspeed=2000,dshaft=0.,do3,diabear;
+      real r1,r2,r3,r4,di;
+      real maxpwr=0.;
+      real tmp;
+      real tmpArr[];
+      int roller,nball,nbng,i;
+      int numShafts = wateShafts.entries();
+      string s;
+      
+      weight = 0.0;
+      
+      for(i=0; i<numShafts; ++i) {
+         s = wateShafts[i]+".max_pwr.val";
+         tmp = s->value;
+         if(tmp>maxpwr) {
+            maxpwr = tmp;
+            s = wateShafts[i]+".max_pwr.associatedVals";
+            tmpArr = s->value;
+            tspeed = tmpArr[0];
+            s = wateShafts[i]+".outerDiameter";
+            dshaft = s->value;
+         }
+      }
+      
+//
+//     determine total shaft torque
+//
+      real torqu=HPX/tspeed;
+//
+//     input design data(assume tower shaft made out of stainless steel)
+//
+      // ??? should change this to allow for user-defined material
+      real stre=50000;
+      real rho=0.286;
+//
+//     only one shaft
+//
+      do3=320985.51*(torqu)/(stre*(1.-diamRatio*diamRatio*diamRatio*diamRatio));
+      outerDiameter=do3**(1./3.);
+      if(outerDiameter < 1.0) { outerDiameter = 1.0; } 
+      di=outerDiameter*diamRatio;
+ 
+      weight = .7853981*rho*tipRadius*(outerDiameter*outerDiameter-di*di);
+//
+//     calculate bearing weights
+//
+      nbng = 4;
+      roller = 1;
+      for(i=0; i<nbng; ++i) {
+         diabear = 0.5;
+         radbear = diabear*0.5;
+         bngwt = 0.0;
+         ballwt = 0.0;
+         bearingCaseWt = 0.0;
+         tbear = 0.3;
+         r1 = outerDiameter*0.5;
+         r2 = radbear;
+         r3 = r1+r2+tbear;
+         r4 = r3+r2+tbear;
+         nball = PI/asin(r2/(r1+r2));
+         if(roller) {
+           bnglen = 2.0*diabear;
+           ballwt = rho*nball*PI*bnglen*radbear**2.;
+           roller = 0;
+         }
+         else {
+           bnglen = diabear;
+           ballwt = rho*nball*4./3.*PI*radbear**3.;
+           roller = 1;
+         }
+         bearingCaseWt =4.0*PI*r3*tbear*(diabear+bnglen+2.0*tbear)*rho;
+         ocaswt =2.0*PI*r4*(9.*diabear*0.5*tbear)*rho;
+         bngwt = ballwt+bearingCaseWt+ocaswt;
+         weight += bngwt;
+      }
+//
+//     calculate gear weights connecting towershaft to main shaft
+//
+      weight += (2.*PI*0.11*dshaft*dshaft*rho);
+
+   } // end calculate
+
+      
+} // end class
+
+
+#endif
+

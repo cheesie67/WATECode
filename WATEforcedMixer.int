@@ -1,0 +1,77 @@
+#ifndef WATEFORCEDMIXER
+#define WATEFORCEDMIXER
+
+
+class WATEforcedMixer extends WATEmixerBase 
+{
+   //DESVAL(1)
+   real LDratioEffective {
+     value = 1.0; 
+     IOstatus = "input";    units = "none";
+     description = "Effective length to diameter ratio for a mechanical mixer. Equal zero for CoAnnular mixer";
+   }  
+
+   //DESVAL(2)
+   int numPassages {
+     value = 0;    // need default ???
+     IOstatus = "input";    units = "none";
+     description = "Number of passages or lobes for hot or cold stream";
+   }    
+
+   //DESVAL(15)
+   real s_Wt {
+     value = 1.0;    IOstatus = "input";    units = "none";
+     description = "Scalar on calculated weight. If zero, no scaling done";
+   }            
+
+   //DESVAL(17)
+   real thickness {
+     value = 0.1;    IOstatus = "input";    units = "in";
+     description = "Mixer material thickness. Default = 0.1";
+   } 
+
+   real length_in {
+      value = 0.0; IOstatus = "input"; units="in";
+      description = "if nonzero, length value will be set to this value";
+   }
+
+   WATEmaterial material { type = "A_286"; }
+
+   /*
+    *
+    ********************************************************************/
+   void calcLength() {
+      //
+      // length can be an input, so if it is, don't calculate it
+      //
+      if(length_in == 0.0) {
+        length=LDratioEffective*sqrt(2.0*(A_i+A_o)/PI);
+      }
+      else {
+         length = length_in;
+      }
+   }
+
+   /*
+    *
+    ********************************************************************/
+   void calcWeight() {
+      real density; 
+
+      density = material.rho(530);
+
+      if(numPassages == 0) { 
+        weight=PI*length*thickness*density*(Roo+Rmo+Rmo); 
+      }
+      else {
+        weight = (3.927*Rmo+1.25*numPassages*(Roo-Rmi))*
+                     length*thickness*density;
+      }
+
+      weight *= s_Wt;
+   }
+}
+
+#endif
+
+

@@ -1,0 +1,262 @@
+
+#ifndef _WATELEGACYAXIALCOMPRESSORBLOCK_INT
+#define _WATELEGACYAXIALCOMPRESSORBLOCK_INT
+
+
+/**
+ *
+ ****************************************************************/
+class WATElegacyAxialCompressorBlock extends UserTextBlock
+{
+  /**
+   *
+   ****************************************************************/
+   SimpleBlock bodyBlock1 {
+     body = "\n\nDUCT\n"+
+            " M NO     VEL    T TOT    P TOT   P STAT   AREA      GAM\n"+
+            "??.??? ?????? ?????? ???????? ???????? ?????.????  ???.????\n\n"+
+            "UTIPMAX   STRESS     DEN     W/AREA     TR      H/T\n"+
+            "??????.? ??????.?  ????.???    N/A   ????.???  ????.???\n\n"+
+             "COMPRESSOR ?????????????????????? MECHANICAL DESIGN\n\n"+
+            " LOADING    N STG     DIAM     U TIP C    RPM      C RPM    MAX RPM   s_Nmech\n"+
+            "?????.???   ?????   ?????.??  ??????.?  ??????.?  ??????.?  ??????.?  ?.???\n";
+            
+     vars = {
+        "MNin",
+        "des_Fl_I.V",
+        "Tin",
+        "Pin*144.",
+        "des_Fl_I.Ps*144.",
+        "areaIn",
+        "des_Fl_I.gamt",      
+        "stg1TipSpd*maxSpdRatio",
+        "bladeStress_stg[0]",
+        "bladeDensity",
+        "bladeTaperRatio",
+        "hubRadius_stg[0]/tipRadius_stg[0]", 
+        "getName()",         
+        "loadingParam",
+        "numStages",
+        "stg1TipRadius*24.",
+        "stg1NcTip",
+        "spoolRPM",
+        "Nc",
+        "spoolRPM*maxSpdRatio", 
+        "s_Nmech"
+      };      
+   }
+   
+   
+  /**
+   *
+   ****************************************************************/
+   SimpleBlock bodyBlock1a {
+       body = "\nCOMPRESSOR COMPONENT WEIGHT SUMMARY\n"+
+            "   WTDSK   WTBLD    WTDRM     WTST/IGV   WTSF      WTCAS     WTNAB     WTCR\n"+
+            " ??????.? ??????.?  ??????.?  ??????.?  ??????.?  ??????.?  ??????.?  ??????.?\n\n";
+       
+       vars = {
+        "totDiskWt", 
+        "totBladeWt", 
+        "totRotorDrumWt", 
+        "totStatorWt", 
+        "totStatorSupportFlangeWt", 
+        "totCaseWt", 
+        "totNutsBoltsWt", 
+        "totFanContRingWt" 
+       };
+    }
+   
+   WATElegacyFrameCustomBlock frontFrameBlock;
+   WATElegacyFrameBaseBlock frontFrameBaseBlock;
+   WATElegacyFrameCustomBlock rearFrameBlock;
+   WATElegacyFrameBaseBlock rearFrameBaseBlock;
+   
+   scopingObj.trigger = 1;
+   
+       
+  /**
+   *
+   ****************************************************************/
+   SimpleBlock bodyBlock2 {
+      body = "  N STG  WEIGHT   LENGTH  CENGRA  INERTIA  LENGTH2\n"+
+             "?????? ??????.?? ?????.?? ?????.? ????????.? ?????.??\n\n"+
+             "    PR    AD EF     PO     TO     HP\n"+
+             "???.???? ???.???? ??????.? ??????.? ????????\n"+
+             "    HI      HO     WI     CWI\n"+
+             "?????.?? ?????.?? ?????.?? ?????.??\n\n"+
+             "******************* TOTAL COMP WEIGHT IS ?????.???\n\n";
+      
+      vars = {      
+            "numStages",
+            "weight",
+            "length",
+            "cgcomp",
+            "totInertia",
+            "bypassLength",
+            "des_PR",
+            "ef",
+            "stgPout",
+            "stgTempOut",
+            "-des_pwr",
+            "Hin",
+            "Hexit",
+            "des_Fl_I.W",
+            "des_Fl_I.Wc",
+            "weight"
+      };
+   }
+
+
+   SimpleBlock bodyBlock3 {
+        body = " HPC STRUCTURAL CASE:  WEIGHT   LENGTH   DENSITY\n"+
+               "                      ????.???  ???.??   ?.????\n\n"; 
+        vars = { "outerCaseWt", "outerCaseLen", "structCaseStg ? outerCaseMaterial.rho(500) : 0.0" };
+   }
+   
+   
+  /**
+   *
+   ****************************************************************/
+   void variableChanged(string nm, any val) {
+      if(nm=="scopingObj") {
+         bodyBlock1.scopingObj = scopingObj;
+         bodyBlock1a.scopingObj = scopingObj;
+         frontFrameBlock.scopingObj = scopingObj+".S_FrontFrame";
+         frontFrameBaseBlock.scopingObj = scopingObj+".S_FrontFrame";
+         rearFrameBlock.scopingObj = scopingObj+".S_RearFrame";
+         rearFrameBaseBlock.scopingObj = scopingObj+".S_RearFrame";
+         bodyBlock2.scopingObj = scopingObj;
+         bodyBlock3.scopingObj = scopingObj;
+      }      
+   }
+
+  /**
+   *
+   ****************************************************************/
+   void updateStageInfo() {
+      int ns = scopingObj->numStages;
+      int stage;
+      
+      for(stage=0; stage<ns; ++stage) {
+         filledBlock.append("\nSTAGE   "+toStr(stage+1,"i"));
+         if(!scopingObj->S_Disk.isEmpty() && scopingObj->S_Disk.child.hasInterface("WATEdiskMTC")) {
+            filledBlock.append("Material chosen for disk ("+scopingObj->S_Disk.material_stg[stage]+")");
+            filledBlock.append("Disk shape = "+scopingObj->S_Disk.shape_stg[stage]);
+         }
+
+         if(stage==0) {
+            if(scopingObj->igvType == "FIXED") {
+               filledBlock.append(" INLET GUIDE VANE PRESENT");
+            }
+            else if(scopingObj->igvType == "variable") {
+               filledBlock.append(" VARIABLE INLET GUIDE VANE PRESENT");
+            }
+            if(scopingObj->igvType != "NONE") {
+               filledBlock.append("  WIGV   RHOIGV   ARIGV  NBIGV");
+               filledBlock.append(toStr( scopingObj->igvWt,"f7.2")+"  "+toStr( scopingObj->igvDensity,"f6.3")
+                                 +"  "+toStr( scopingObj->igvAR,"f6.2")+"   "
+                                 +toStr( scopingObj->numIGVblades,"i"));
+               filledBlock.append("");
+            }
+         }
+
+         filledBlock.append("     WD     WB     WS   WSSF     WN     WC   WFCR  WTDRUM");
+         filledBlock.append(toStr( scopingObj->S_Disk.weight_stg[stage],"f7.2")
+              +toStr( scopingObj->bladeWt_stg[stage],"f7.2")+" "
+              +toStr( scopingObj->statorWt_stg[stage],"f7.2")
+              +toStr( scopingObj->statorSupportFlangeWt_stg[stage],"f7.2")
+              +toStr( scopingObj->nutsBoltsWt_stg[stage],"f7.2")
+              +toStr( scopingObj->caseWt_stg[stage],"f7.2")
+              +toStr( scopingObj->fanContRingWt_stg[stage],"f7.2")
+              +toStr( scopingObj->rotorDrumWt_stg[stage],"f7.2"));
+
+          filledBlock.append("    CL   CL2  RHOD  RHOB  RHOS RHOC RHOFCR    AR   ARS  NS    DFCR");
+          filledBlock.append(toStr( scopingObj->length_stg[stage],"f5.1")+" "
+               +toStr( scopingObj->bypassLen_stg[stage],"f5.1")+" "
+               +toStr( scopingObj->S_Disk.density_stg[stage],"f6.3")
+               +toStr( scopingObj->bladeDensity_stg[stage],"f6.3")
+               +toStr( scopingObj->statorDensity_stg[stage],"f6.3")
+               +toStr( scopingObj->caseDensity_stg[stage],"f6.3")
+               +toStr( scopingObj->containmentDensity_stg[stage],"f6.3")+" " 
+               +toStr( scopingObj->AR_stg[stage],"f6.2")+" "
+               +toStr( scopingObj->statorAR_stg[stage],"f6.2")
+               +toStr( scopingObj->numStatorBlades_stg[stage],"i4")
+               +toStr( scopingObj->contRingRadialThickness_stg[stage],"f6.2"));
+
+          filledBlock.append("\n    PR DEL H  MACH   AREA R HUB  R TIP  NB UTIPMAX   "
+               +"STR WEIGHT  TIN   TMAX   STAGE I  WFACT");
+          filledBlock.append(toStr( scopingObj->PR_stg[stage],"f7.4")
+               +toStr( scopingObj->deltaStgEnthalpy_stg[stage],"f6.1")
+               +toStr( scopingObj->MNin_stg[stage],"f6.3")
+               +toStr( scopingObj->area_stg[stage],"f7.3")
+               +toStr( scopingObj->hubRadius_stg[stage],"f6.2")
+               +toStr( scopingObj->tipRadius_stg[stage],"f7.2")
+               +toStr( scopingObj->numBlades_stg[stage],"i4")
+               +toStr( scopingObj->bladeTipSpd_stg[stage],"f7.1")
+               +toStr( scopingObj->bladeStress_stg[stage],"f7.0")
+               +toStr( scopingObj->weight_stg[stage],"f6.0")
+               +toStr( scopingObj->Tin_stg[stage],"f6.0")
+               +toStr( scopingObj->Tstress_stg[stage],"f7.0")
+               +toStr( scopingObj->inertia_stg[stage],"f10.0")
+               +toStr( scopingObj->workFactor_stg[stage],"f7.4"));
+      } // end stage loop
+   }
+   
+                
+  /**
+   *
+   ****************************************************************/
+   void update() {
+      int i;
+      
+      filledBlock = { };
+      filledBlock.append("");
+      filledBlock.append("******* "+scopingObj->isA()+" ("+scopingObj->getPathName()+
+                         ") *******");
+      filledBlock.append("");
+      
+      bodyBlock1.update();
+      filledBlock += bodyBlock1.filledBlock;
+                             
+      updateStageInfo();
+      
+      bodyBlock1a.update();
+      filledBlock += bodyBlock1a.filledBlock;
+      
+      if(!(scopingObj->S_FrontFrame.isEmpty())) {
+         if(scopingObj->S_FrontFrame.child.hasInterface("WATEframeCustom")) {
+           frontFrameBlock.update();
+           filledBlock += frontFrameBlock.filledBlock;
+         }
+         else {
+           frontFrameBaseBlock.update();
+           filledBlock += frontFrameBaseBlock.filledBlock;
+         }
+      }
+      if(!(scopingObj->S_RearFrame.isEmpty())) {
+         if(scopingObj->S_RearFrame.child.hasInterface("WATEframeCustom")) {
+            rearFrameBlock.update();
+            filledBlock += rearFrameBlock.filledBlock;
+         }
+         else {
+            rearFrameBaseBlock.update();
+            filledBlock += rearFrameBaseBlock.filledBlock;
+         }
+      }
+      
+      bodyBlock2.update();
+      filledBlock += bodyBlock2.filledBlock;     
+      
+      if(scopingObj->hasInterface("WATEaxialHPC")) {
+         bodyBlock3.update();
+         filledBlock += bodyBlock3.filledBlock;
+      }
+   }
+}
+
+
+#endif
+
+
+

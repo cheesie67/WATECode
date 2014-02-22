@@ -1,0 +1,26 @@
+
+#ifndef _WATEFRAMESMALLENGINE_H_
+#define _WATEFRAMESMALLENGINE_H_
+
+
+//
+// LAST INSPECTION DATE: *not inspected*
+//
+//  EXTERNAL DEPENDENCIES
+//
+
+/**
+ * 
+ *********************************************************/
+class WATEframeSmallEngine extends WATEframeBase
+{
+   void calculate()
+   {
+      weight = 55.5*(tipRadius/12.)**2+6.53;
+      length = calcLength();
+   }
+
+}
+#endif
+
+

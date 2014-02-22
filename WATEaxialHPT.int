@@ -1,0 +1,42 @@
+#ifndef WATEAXIALHPT_H
+#define WATEAXIALHPT_H
+
+
+/**
+ * 
+ *********************************************************/    
+class WATEaxialHPT extends WATEaxialTurbine
+{
+   activeCoolingConst = 1.09;
+   
+   MNin = .3;
+   MNout = .45;
+      
+   stg1BladeAR = 1.5;
+   lastStgBladeAR = 1.5;
+   
+   bladeSolidity = 0.71;
+   statorSolidity = 0.92;
+   bladeVolumeFactor = 0.7;
+   
+   statorVolumeFactor = 0.38;
+   
+  /**
+   * 
+   *********************************************************/    
+   void checkDesignLimits(real dlimit, real htratio)
+   {
+      WATEaxialTurbine::checkDesignLimits(dlimit, htratio);
+      
+      if (bladeStress > dlimit) { 
+         string msg = "stage "+toStr(stage+1)+" design limit exceeded. ";
+         msg += "bladeStress = "; msg += toStr(bladeStress);
+         msg += "  design limit = "; msg += toStr(dlimit);
+         msg += ".  stress is too high reduce shaft speed or increase exit mach number";
+         provisionalWarning(msg);
+      } 
+   }   
+}
+
+#endif
+

@@ -1,0 +1,1715 @@
+
+#ifndef _WATEDISKMTC_
+#define _WATEDISKMTC_
+
+//
+// LAST INSPECTION DATE: *not inspected*
+//
+//  EXTERNAL DEPENDENCIES
+//
+//    Tstress
+//    bladeHubRadius
+//    bladeLength
+//    bladeTipRadius
+//    numBlades
+//    spoolRPM
+//    stage
+//    weightPerBlade
+
+extern int stage;
+extern int numStages;
+extern int S_FrontFrame.isEmpty();
+extern int parent.parent.parent.hasInterface(string);
+extern real S_FrontFrame.length;
+extern real igvLength;
+
+/*
+ * 
+ ***************************************************************************/
+class  WATEdiskMTC extends WATEdiskNew
+{
+   real  shapeCorrection {
+     value = 1.0; IOstatus = "input";    units = "none";
+     description = "Correction factor for disk shape for the current stage. Default 1.0";
+   }
+   
+   real  diskRimBoreDeltaT {
+     IOstatus = "input"; 
+//     description = "If not zero, program will calculate thermal stress using the given delta T asuming linear thermal gradient";
+   }  
+     
+   string shape {
+      IOstatus = "output"; 
+      description = "the shape of the disk (\"RING\",\"WEB\",\"HYPERBOLIC\")";
+   }
+         
+   string tmpShape;
+   tmpShape.hide(2);
+
+
+   //DESVAL(88) 
+   Option shape1 {
+     allowedValues = { "RING", "WEB", "HYPERBOLIC", "OPTIMUM" }
+     IOstatus = "input";  
+     description = "Specifies the first disk shape. Used for all disk stages unless shape2StartStg is specified. Default is 'RING'";
+     trigger = FALSE;
+   }        
+
+   //DESVAL(89)
+   real  shape1Correction {
+     value = 1.0; IOstatus = "input";    units = "none";
+     description = "Correction factor for disk shape 1. Default 1.0";
+   }  
+
+   //DESVAL(90) 
+   Option shape2 {
+     allowedValues = { "RING", "WEB", "HYPERBOLIC", "OPTIMUM" }
+     IOstatus = "input"; 
+     description = "Specifies the second disk shape. Default is 'RING'";
+     trigger = FALSE;
+   }           
+
+   //DESVAL(91)
+   int  shape2StartStg {
+     value = 999;    IOstatus = "input"; 
+     description = "Gives the stage number where disk shape changes to shape specified by shape2";
+   }         
+
+   //DESVAL(92)
+   real  shape2Correction {
+     value = 1.0; IOstatus = "input";   units = "none";
+     description = "Correction factor for disk shape 2. Default 1.0";
+   }  
+
+  //DESVAL(94)
+   real  diskBoreBladeHubRR {
+     value = .35; IOstatus = "input";    units = "none";
+     description = "Disk bore radius to the airfoil hub radius ratio. Default 0.35";
+   }        
+
+   real innerRimWidth;
+   real diskShapeFactor;   
+   real safetyFactor;
+   real outerRimWt;
+   real outerRimWidth;
+   real outerRimHt;
+   real webWt;
+   real webWidth;
+   real innerRimHt;
+   real innerRimWt;
+   real shoulderHt;
+   real shoulderWt;
+   real outerShoulderWt;
+   real innerShoulderWt;
+   
+   defaultHideLevel = 2;
+   
+   real webLRR, ringLRR, hyperLRR; 
+   real webIRW, hyperIRW;
+   
+   real wtring, wtweb, wthyp;
+   real rtmp,vol; // temp vars for fem looping functions
+   
+   // in is used to dimension the finite element stuff
+   int in = 10;
+   int ndim = 55; // 5*in+5;
+   
+   real massTotal, areaTotal, jpolarTotal;
+   real ra[55];
+   real rstres[55],tstres[55],estres[55],ms[55];
+   real rstran[55],tstran[55],estran[55],th[55];
+   real tr[55],dtdr[55],asec[55];
+   
+   real dum2d[55][55];
+   
+   real m1,n1,dr[5];
+   real radiusOfGyration;
+   real avestres {
+      units = "psia";
+   }
+   real E,v,alpha,kcond,ccap,duc,roh;
+   real rimstress,btmass,btforce,rpm;
+   
+   real rjr[50], wd[50]; /* hyp only */
+   real sigma;
+   real dc[11],dt[5],desmin;
+   real wtCorrection;
+   real r[6], t[6];
+   
+   real stgTemp;
+   real hb;
+   real borradRing;
+   real borradWeb;
+   real borradHyp;
+   real rootht;
+   real bldht;
+   real rootwt;
+   real postwt;
+   real airwt;
+   real xcg;
+   real rcg;
+   real webwt;
+   real rimwt;
+   real rh2;
+   real trstres;
+   real thstres;
+   
+   real tref = 70.;
+   
+   real bx;
+   int istep;
+   real dt4a;
+   
+   // stage quantities
+   real webWidth_stg[];
+   real outerRimWidth_stg[];
+   real outerRimHt_stg[];
+   real innerRimWidth_stg[];
+   real innerRimHt_stg[];
+   real shoulderHt_stg[];
+   real t1_stg[];
+   real t2_stg[];
+   real t3_stg[];
+      
+   real gc = 386.088;
+   
+   int dsvSet=0;
+   int optRun=1;
+   
+   defaultHideLevel = 0;
+   
+   string shape_stg[];
+ 
+
+   Matrix A=dum2d,b=ra,C=dum2d,u=ra;
+   // when assigning a 1D array to a matrix, we get a row vector
+   // so transpose b and u to get column vectors
+   b = b.transpose();
+   u = u.transpose();
+   
+   // stream used to output plotting files
+#ifdef WATE_LEGACY  
+   int verbose {
+     description = "set to TRUE to get detailed disk design info";
+   }
+   OutFileStream logStream { filename = "cout"; }
+#endif   
+   
+   
+   DSV dsv {
+     allowedValues = { "SIMPLE", "OPTIMAL" }
+     stateInitial = "SIMPLE";
+     maxFreeToggles = 0;
+     autoSetup = TRUE;
+   }
+
+
+   /**
+    * resize internal arrays based on the total number of stages
+    *
+    *************************************************************************/   
+   void resize(int nstages) {
+      WATEdiskBase::resize(nstages);
+      
+      if(webWidth_stg.entries() != nstages) {
+         webWidth_stg.resize(nstages);
+         outerRimWidth_stg.resize(nstages);
+         outerRimHt_stg.resize(nstages);
+         innerRimWidth_stg.resize(nstages);
+         innerRimHt_stg.resize(nstages);
+         shoulderHt_stg.resize(nstages);
+         t1_stg.resize(nstages);
+         t2_stg.resize(nstages);
+         t3_stg.resize(nstages);
+         shape_stg.resize(nstages);
+      }
+   }
+   
+   
+   /**
+    * Set values for the current stage in the stage arrays
+    *
+    *************************************************************************/   
+   void updateStageArrays(int stg) {   
+      WATEdiskBase::updateStageArrays(stg);
+         
+      webWidth_stg[stg] = webWidth;
+      outerRimWidth_stg[stg] = outerRimWidth;
+      outerRimHt_stg[stg] = outerRimHt;
+      innerRimWidth_stg[stg] = innerRimWidth;
+      innerRimHt_stg[stg] = innerRimHt;
+      shoulderHt_stg[stg] = shoulderHt;
+      t1_stg[stg] = t[1];
+      t2_stg[stg] = t[2];
+      t3_stg[stg] = t[3];
+      shape_stg[stg] = shape;
+   }
+   
+   
+   /**
+    * this routine designs ring, web or hyperbolic disk based
+    *              on a finite difference analysis
+    *
+    *************************************************************************/   
+   void calculate() {
+      
+      // if our WATEassembly has no indeps/deps, then we will ONLY be
+      // executed as a first pass. To prevent continually resetting our
+      // DSV to "SIMPLE", we must do our own bookkeeping.
+      if(getPassType() == 0) { // first pass
+         if(!dsvSet && optRun) {
+            dsv.stateInitial = "SIMPLE";
+            dsv.stateDemand  = "OPTIMAL";
+            dsvSet = 1;
+         }
+      }
+      
+      if(dsv.state == "SIMPLE") {
+         optRun = 0; 
+         // use simpler (and faster) disk weight model until the DSV loop
+         WATEdiskNew::calculate();
+         return;
+      }
+      else {
+         optRun = 1;
+      }
+
+      setStage(stage);
+      
+      boreRadius = 0.;
+ 
+      stgTemp = Tstress;
+      real diskDensity = currentMaterial.rho(stgTemp-460.);                     
+      sy = material.sy(stgTemp-460.) * 0.9;
+      su = material.su(stgTemp-460.) * 0.47;
+      E = material.E(stgTemp-460.);
+      
+      if(stage+1 < shape2StartStg) {
+         tmpShape = shape1;      
+         wtCorrection = shape1Correction;
+      }
+      else {
+         tmpShape = shape2;      
+         wtCorrection = shape2Correction;
+      }
+      
+      rpm = spoolRPM * maxSpdRatio; //  * rpmr;
+      bx = bladeLength;
+      dt[0] = 0.;
+      dt[1] = 0.;
+      dt[2] = 0.;
+      dt4a = stgTemp - 460. - diskRimBoreDeltaT;
+      roh = diskDensity / gc;
+ 
+      hb = 12.*(bladeTipRadius-bladeHubRadius);
+ 
+      shape = tmpShape;
+      
+      if(tmpShape == "RING") { 
+         if(designRingDisk()) {
+         }
+      }
+      else if(tmpShape == "WEB") {
+         if(designWebDisk()) {
+         }
+      }
+      else if(tmpShape == "HYPERBOLIC") { 
+         if(designHypDisk()) {
+         }
+      }
+      else { // tmpShape == "OPTIMUM"
+         int iflag;
+         tmpShape = "RING";
+         iflag = designRingDisk();
+         tmpShape = "WEB";
+         iflag = iflag | designWebDisk();
+         tmpShape = "HYPERBOLIC";
+         iflag = iflag | designHypDisk();
+         
+         // all designs have failed, so just return
+         if(iflag == 0) {
+            provisionalError("disk design not possible");
+            return;
+         }
+         
+         // find minimum of the weights
+         if((wtring < wtweb) && (wtring < wthyp)) { // ring is best
+            shape = "OPTIMIZED RING";
+            wdisk = wtring;
+            boreRadius = borradRing;
+            liveRimRadius = ringLRR;
+            innerRimWidth = 0.;
+         }
+         else if((wtweb < wtring) && (wtweb < wthyp)) { // web is best
+            shape = "OPTIMIZED WEB";
+            wdisk = wtweb;
+            boreRadius = borradWeb;
+            liveRimRadius = webLRR;
+            innerRimWidth = webIRW;
+         }
+         else if((wthyp < wtring) && (wthyp < wtweb)) { // hyperbolic is best
+            shape = "OPTIMIZED HYPERBOLIC";
+            wdisk = wthyp;
+            boreRadius = borradHyp;
+            liveRimRadius = hyperLRR;
+            innerRimWidth = hyperIRW;
+         }
+      } 
+      
+      weight = wdisk;
+      
+      updateStageArrays(stage);
+   } 
+ 
+
+/**
+ *
+ ******************************************************************************/
+   void designFailed(string type, int istage, string matname)
+   {
+      string msg = "design of disk shape '" + type + "' has failed. ";
+      msg += "stage = ";
+      msg += toStr(istage);
+      msg += ",  material = ";
+      msg += toStr(matname);
+      provisionalWarning(msg);
+   }
+   
+    
+/**
+ *
+ ******************************************************************************/
+   real chkdesg() 
+   {
+      real mn = dc[0];
+      int i;
+      for(i=1; i<11; ++i) {
+         if(mn > dc[i]) { mn = dc[i]; }
+      }
+      return mn;
+   }
+ 
+ 
+
+   
+/**
+ * calculate mass properties for section isec
+ ******************************************************************************/
+void calcMassProperties(int isec) { 
+    real area = abs((m1*(r[isec]*r[isec]-r[isec-1]*r[isec-1])*0.5) + 
+                    (n1*(r[isec]-r[isec-1]))); 
+    real jpolar = abs(2.*PI*roh*(m1*(r[1]**5-r[0]**5)*0.2 + n1*(r[1]**4-r[0]**4)*0.25));
+    areaTotal += area;
+    massTotal += (roh*vol);
+    jpolarTotal += jpolar;
+}   
+
+
+/**
+ * 
+ ******************************************************************************/
+int boundaryConditions(int isec, int i, int j, int n)
+{
+      rtmp = r[isec];
+      dr[isec] = (r[isec+1]-rtmp)/in;
+ 
+      A[i][j-1] = 1.;
+      A[i][j] = -1.;
+      b[i][0] = 0.;
+ 
+      A[i+1][j-1] = 3./(2.*dr[isec-1]);
+      A[i+1][j-2] = -4./(2.*dr[isec-1]);
+      A[i+1][j-3] = 1./(2.*dr[isec-1]);
+      A[i+1][j] = (3./(2.*dr[isec]));
+      A[i+1][j+1] = -4./(2.*dr[isec]);
+      A[i+1][j+2] = 1./(2.*dr[isec]);
+
+      tr[i] = dt[3]*log(rtmp) + dt[4] - tref;
+      dtdr[i] = dt[3]/rtmp;
+
+      b[i+1][0] = 0.;
+      ra[i] = rtmp;
+ 
+      m1 = (t[isec]-t[isec+1])/(rtmp-r[isec+1]);
+      n1 = t[isec+1]-m1*r[isec+1];
+      rtmp += dr[isec];
+      th[i+1] = t[isec];
+      return n+2;
+}   
+
+
+/**
+ * calculate internal nodes (for FEM)
+ ******************************************************************************/
+int calcNodes(int isec, int istart, int istop, int n)
+{
+   int i,j,j1;
+   real drtmp = dr[isec-1];
+   real dum1;
+   real rho;
+   
+   for(i = istart; i < istop; ++i) { 
+      ra[i] = rtmp;
+      j1 = 1;
+      th[i] = t[isec]-m1*(r[isec]-rtmp);
+
+
+      tr[i] = dt[3]*log(rtmp) + dt[4] - tref;
+      dtdr[i] = dt[3]/rtmp;
+
+      if(dt[3] > 0.) {
+         alpha = currentMaterial.alpha(tr[i] + tref);
+         v = currentMaterial.poissonRatio(tr[i] + tref);
+         E = currentMaterial.E(tr[i] + tref);
+         rho = currentMaterial.rho(tr[i] + tref);
+         roh = rho/386.;
+      }
+
+      for(j = n-1; j < n+2; ++j) { 
+         if(j1 == 1) { 
+            A[i][j] = 1./(drtmp**2); 
+         }
+         else if(j1 == 2) {
+           dum1 = m1*rtmp+n1;
+           A[i][j] = (2./(drtmp*drtmp))+((2.*m1*rtmp+n1)/(dum1*rtmp*drtmp))-
+                     ((v*m1*rtmp-m1*rtmp-n1)/(dum1*rtmp*rtmp));
+           
+           A[i][j] = -A[i][j];
+         } 
+         else if(j1 == 3) { 
+           A[i][j] = (1/(drtmp*drtmp))+((2*m1*rtmp+n1)/(rtmp*(m1*rtmp+n1)*drtmp)); 
+         }
+         ++j1;
+      }         
+
+      b[i][0] = alpha*(1+v)*(dtdr[i]+m1*tr[i]/(m1*rtmp+n1))-
+             (1-(v**2))*roh*(PI*rpm/30.)**2*rtmp/E;
+
+      asec[i] = PI*(rtmp*rtmp-(rtmp-drtmp)**2)*0.5*(th[i]+th[i-1]);
+      vol += asec[i] ;
+      rtmp += drtmp; 
+      ++n;
+   }
+
+   calcMassProperties(isec);
+   
+   if(n!=54) {
+      n = boundaryConditions(isec, i, j, n);
+   }
+   
+   return n;
+}   
+
+    
+/**
+ *  this subroutine analyses a given disk by the
+ *          finite difference method 
+ ******************************************************************************/
+   void fem() 
+   {  
+      int i,j,n,jj,ii;
+      real rho;
+ 
+ 
+// initialize the program variables
+ 
+      for(i = 0; i < ndim; ++i) { 
+         u[i][0] = 0.;
+         b[i][0] = 0.;
+         ra[i] = 0.;
+         rstres[i] = 0.;
+         tstres[i] = 0.;
+         estres[i] = 0.;
+         ms[i] = 0.;
+         asec[i] = 0.;
+         for(j = 0; j < ndim; ++j) { 
+           A[i][j] = 0.;
+           C[i][j] = 0.;
+         }
+      }
+ 
+      areaTotal = 0.;
+      massTotal = 0.;
+      jpolarTotal = 0.;
+ 
+      rtmp = r[0];
+      dr[0] = (r[1]-rtmp)/(in);
+ 
+      m1 = (t[0]-t[1])/(rtmp-r[1]);
+      n1 = t[1]-m1*r[1];
+ 
+ 
+// apply boundary condition at the i.d.
+ 
+      tr[0] = dt[3]*log(rtmp) + dt[4] - tref;
+      dtdr[0] = dt[3]/rtmp;
+      
+      alpha = currentMaterial.alpha(tr[0] + tref);
+      v = currentMaterial.poissonRatio(tr[0] + tref);
+      su = currentMaterial.su(tr[0] + tref);
+      sy = currentMaterial.sy(tr[0] + tref);
+      
+      A[0][0] = (-3./(2.*dr[0]))+(v/rtmp);
+      A[0][1] = 2./dr[0];
+      A[0][2] = -1./(2.*dr[0]);
+      b[0][0] = (1+v)*alpha*tr[1];
+      ra[0] = rtmp;
+      th[0] = t[0];
+ 
+// generate the internal nodes
+ 
+      rtmp += dr[0];
+      n = 1; 
+ 
+      // calc section 1 internal nodes and boundary conditions
+      n = calcNodes(1,1,in,n);       
+      i = in; 
+      
+      
+      // this loop was split out from the section 2 internal node calculation
+      // so we wouldn't have to perform the check on every call to calcNodes.
+      real rtmp2;
+      int i2;
+      if(tmpShape == "HYPERBOLIC") {
+         rtmp2 = rtmp; 
+         for(i2 = i+2; i2 < 2*in+1; ++i2) { 
+            th[i2] = t[2]+t[3]/(r[3]-r[2])*(r[2]-rtmp2)**diskShapeFactor; 
+            rtmp2 += dr[1];
+         }
+      }
+      
+      // calc section 2 internal nodes and boundary conditions
+      n = calcNodes(2, i+2, 2*in+1, n);
+      i = 2*in+1; 
+      
+      // calc section 3 internal nodes and boundary conditions
+      n = calcNodes(3, i+2, 3*in+2, n);
+      i = 3*in+2; 
+      
+      // calc section 4 internal nodes and boundary conditions
+      n = calcNodes(4, i+2, 4*in+3, n);
+      i = 4*in+3; 
+      
+      // calc section 5 internal nodes and boundary conditions
+      n = calcNodes(5, i+2, 5*in+4, n);
+      i = 5*in+4; 
+      
+// to account for the second half of the disk:
+      areaTotal *= 2.;
+ 
+  
+// calculate the radiaus of gyration
+ 
+      radiusOfGyration = sqrt(jpolarTotal/massTotal);
+ 
+ 
+// setup the boundary condition at the interface
+ 
+      tr[i] = dt[3]*log(rtmp) + dt[4] - tref;
+      dtdr[i] = dt[3]/rtmp;
+
+      if(dt[3] > 0.) {
+         alpha = currentMaterial.alpha(tr[i] + tref);
+         v = currentMaterial.poissonRatio(tr[i] + tref);
+         E = currentMaterial.E(tr[i] + tref);
+         rho = currentMaterial.rho(tr[i] + tref);
+         roh = rho/386.;
+      }
+
+      A[i][i] = (3./(2.*dr[4]))+(v/rtmp);
+      A[i][i-1] = -4./(2.*dr[4]);
+      A[i][i-2] = 1./(2.*dr[4]);
+      b[i][0] = (rimstress*(1-v**2)/E)+(1+v)*alpha*tr[i] ;
+      ra[i] = rtmp;
+      
+// invert the a matrix and call it the C matrix
+//      call matinv(A,C,ndim,ndim);
+      C = A.inverse();
+ 
+// multiply C*b to obtain the displacement, u, vector
+ 
+      u = C*b;
+ 
+// using the u and r matrix determine the stresses
+      if(tmpShape == "RING") {
+         ringStresm();
+      }
+      else {
+         stresm();
+      }
+ 
+      avestres = tanstres();
+      
+      real tmp;
+      if(dt[3] > 0.) {
+         tmp = 0.5*(tr[1]+tr[ndim-1])+530.-460.; 
+         alpha = currentMaterial.alpha(tmp);
+         v = currentMaterial.poissonRatio(tmp);
+         E = currentMaterial.E(tmp);
+         su = currentMaterial.su(tmp);
+         sy = currentMaterial.sy(tmp);
+      }
+      
+// using the temperature at r, determine the margins of safety
+ 
+      margins();
+
+// set up the design constraints for sumt code
+ 
+      dc[0] = ms[0];
+      dc[1] = ms[in-1];
+      dc[2] = ms[in+2];
+      dc[3] = ms[2*in];
+      dc[4] = ms[2*in+3];
+      dc[5] = ms[3*in+1];
+      dc[6] = ms[3*in+4];
+      dc[7] = ms[4*in+2];
+      dc[8] = ms[4*in+5];
+      dc[9] = ms[5*in+3];
+      dc[10] = (.47*su/avestres)-1.0;
+            
+// using the u and r matrix determine the strains
+ 
+      strain(); 
+
+      desmin = chkdesg();
+
+      if(desmin > 0. && t[1] > innerRimWidth && tmpShape == "HYPERBOLIC") {
+         string errmsg = "bore thickness is bigger than one-third of live-rim radius : bore width = ";
+         errmsg += toStr(t[1]);
+         errmsg += " , live rim radius = ";
+         errmsg += toStr(r[5]);
+         provisionalWarning(errmsg);
+      }
+   } // end fem
+ 
+   
+/**
+ *
+ ******************************************************************************/
+   void  stresm() 
+   { 
+      real dum1,dum2;
+      int j,i,in1;
+ 
+      in1 = (ndim-5)*0.2;
+      
+      for(i = 0; i < ndim; ++i) { // do 99 i = 1,ndim;
+         
+        alpha = currentMaterial.alpha(tr[i]+530.-460.);
+        v = currentMaterial.poissonRatio(tr[i]+530.-460.);
+        E = currentMaterial.E(tr[i]+530.-460.);
+
+        if(i == 1+in1 || i == 2+2*in1 || i == 3+3*in1 || i == 4+4*in1) { 
+           continue; 
+        }
+
+        if(i == in1 || i == 1+2*in1 || i == 2+3*in1 || i == 3+4*in1 || 
+           i == 4+5*in1) {
+            continue; 
+        }
+        dum1 = E/(1.-v*v);
+        rstres[i] = dum1*((u[i+1][0]-u[i][0])/(ra[i+1]-ra[i])+v*u[i][0]/ra[i]-
+                          (1+v)*alpha*tr[i]);
+        tstres[i] = dum1*(v*(u[i+1][0]-u[i][0])/(ra[i+1]-ra[i])+u[i][0]/ra[i]-
+                          (1+v)*alpha*tr[i]);
+
+        estres[i] = sqrt(rstres[i]**2+tstres[i]**2-rstres[i]*tstres[i]);
+      }
+      
+   } // end stresm
+
+    
+/**
+ *
+ ******************************************************************************/
+   void  ringStresm() 
+   { 
+      real dum1,dum2;
+      int j;
+      real rho;
+ 
+      int i,in1;
+ 
+      in1 = (ndim-5)*0.2;
+      real f1,f2,f3,f4,f5;
+      real f6;
+      real tr1;
+      real tr2;
+      real tr3=0; 
+      real tr4;
+      real tr22,tr23,tr24,tr25;
+      real d_r;
+
+      for(i = 0; i < ndim; ++i) { // do 99 i = 1,ndim;
+         
+        alpha = currentMaterial.alpha(tr[i]+530.-460.);
+        v = currentMaterial.poissonRatio(tr[i]+530.-460.);
+        E = currentMaterial.E(tr[i]+530.-460.);
+        rho = currentMaterial.rho(tr[i]+530.-460.);
+        roh = rho/386.;
+
+        if(i == 1+in1 || i == 2+2*in1 || i == 3+3*in1 || i == 4+4*in1) { 
+           continue; 
+        }
+
+        f1 = r[0]*r[0] + r[5]*r[5];
+        f2 = r[0]*r[0] - r[5]*r[5];
+        f3 = (r[0]*r[5]/ra[i]);
+        f3 *= f3;
+        f4 = (1.+3.*v)/(3.+v);
+        f5 = ra[i]**2-r[0]**2;
+        f6 = ra[i]**2+r[0]**2;
+
+//tong   calculate thermal stresses
+
+        if(i == 0) { 
+           tr3 = 0.; 
+        }
+        else {
+           tr1 = tr[i] *ra[i] ;
+
+           if(i == 12 || i == 23 || i == 34 || i == 45) { 
+              tr2 = tr[i-2]*ra[i-2];
+              d_r = ra[i] -ra[i-2]; 
+           }
+           else {
+              tr2 = tr[i-1]*ra[i-1];
+              d_r = ra[i] -ra[i-1];
+           }
+           tr3 = tr3+((tr1+tr2)*0.5*d_r);
+        }
+
+        tr4 = tr3/ra[i]**2;
+        tr23 = 0.;
+
+        for(j = 1; j < 55; ++j) { // do 98 j = 2,55;
+
+           if(j == 11 || j == 22 || j == 33 || j == 44) { continue; }
+           else if(j == 12 || j == 23 || j == 34 || j == 45) { 
+              tr22 = tr[j-2]*ra[j-2];
+              d_r = ra[j]-ra[j-2]; 
+           }
+           else {
+              tr22 = tr[j-1]*ra[j-1];
+              d_r = ra[j]-ra[j-1];
+           }
+
+           tr23 += (tr[j]*ra[j]+tr22)*0.5*d_r;
+           tr24 = tr23*f5/(-f2)/ra[i]**2;
+           tr25 = tr23*f6/(-f2)/ra[i]**2;
+         }
+
+         trstres = alpha*E*(tr24-tr4);
+         thstres = alpha*E*(tr25+tr4-tr[i]);
+
+         dum2 = (3.+v)*roh*(PI*rpm/30.)**2/8.;
+         rstres[i] = dum2*(f1-f3-ra[i]**2) + rimstress*(f3-r[5]**2)/f2 +
+                     trstres;
+         tstres[i] = dum2*(f1+f3-f4*ra[i]**2)-rimstress*(r[5]**2+f3)/f2 + 
+                     thstres;
+
+         estres[i] = sqrt(rstres[i]**2+tstres[i]**2-rstres[i]*tstres[i]);
+      }
+   } // end ringStresm
+
+    
+/**
+ *
+ ******************************************************************************/
+   void strain() 
+   {
+      int i,in1;
+ 
+      in1 = (ndim-5.)*0.2;
+
+      for(i = 0; i < ndim-1; ++i) { // do i = 1,ndim-1;
+        alpha = currentMaterial.alpha(tr[i]+530.-460.);
+        v = currentMaterial.poissonRatio(tr[i]+530.-460.);
+        E = currentMaterial.E(tr[i]+530.-460.);
+        
+        if(i == in1 || i == 1+in1 || i == 1+2*in1 || i == 2+2*in1 || i == 2+3*in1 ||
+           i == 3+3*in1 || i == 3+4*in1 || i == 4+4*in1) { 
+           continue; 
+        }
+
+        rstran[i] = ((rstres[i] - v*tstres[i])/E)+alpha*tr[i];
+        tstran[i] = ((tstres[i] - v*rstres[i])/E)+alpha*tr[i];
+        estran[i] = sqrt(rstran[i]**2 + tstran[i]**2 - rstran[i]*tstran[i]);
+      }
+   } // end strain
+ 
+ 
+    
+/**
+ *
+ ******************************************************************************/
+   void margins() 
+   {
+      int i,in1;
+ 
+// per lerc's engineering design guide, 1.18.2, safetyFactor = 1.1 for yield
+// to force the average margin of safety based on average tangential
+// stress positive the 1.1 has been increased to 1.5.
+
+      safetyFactor = 1.1;
+
+      in1 = (ndim-5)*0.2;
+
+      for(i = 0; i < ndim-1; ++i) { // do i = 1,ndim-1;
+         sy = currentMaterial.sy(tr[i]+530.-460.);
+         if(i == in1 || i == 1+in1 || i == 1+2*in1 || i == 2+2*in1 || 
+            i == 2+3*in1 || i == 3+3*in1 || i == 3+4*in1 || i == 4+4*in1) { 
+            continue; 
+         }
+
+         ms[i] = (sy/(safetyFactor*estres[i]))-1.;
+      }
+   } // end margins
+ 
+   
+/**
+ *
+ ******************************************************************************/  
+   real tanstres() 
+   { 
+      real dum1=0.,dum2=0.; 
+      int i,in1=(ndim-5)*0.2;
+      
+      for(i = 0; i < ndim-1; ++i) { // do i = 1,ndim-1;
+
+        if(i == in1 || i == 1+in1 || i == 1+2*in1 || i == 2+2*in1 || 
+            i == 2+3*in1 || i == 3+3*in1 || i == 3+4*in1 || i == 4+4*in1 || 
+            asec[i] == 0.) { continue; }
+
+        dum1 += tstres[i] * asec[i] ;
+        dum2 += asec[i] ; 
+     }
+ 
+     return dum1/dum2;
+   } // end tanstres
+ 
+
+#ifdef WATE_LEGACY 
+/**
+ *
+ ******************************************************************************/
+   void writeRingDiskInfo(int iter)
+   {     
+      logStream << "design vars = " << dc << "\n\n";
+      logStream << "LIVE RIM RADIUS   = " << liveRimRadius << " in\n";
+      logStream << "OUTER RIM WIDTH   = " << outerRimWidth << " in\n";
+      logStream << "BORE RADIUS       = " << boreRadius << " in\n";
+      logStream << "WEIGHT OF RING DISK       = " << wtring << " lb\n";
+      logStream << "no. of iteration for ring disk design = " << iter << "\n";           
+   }         
+
+   
+/**
+ *
+ ******************************************************************************/
+   void writeWebDiskInfo(int iter)
+   {     
+      logStream << "WEB design vars = " << dc << "\n";
+      logStream << "OUTER RIM WIDTH   = " << outerRimWidth << " in\n";
+      logStream << "OUTER RIM HEIGHT   = " << outerRimHt << " in\n";
+      logStream << "WEB WIDTH   = " << webWidth << " in\n";
+      logStream << "INNER RIM WIDTH   = " << innerRimWidth << " in\n";
+      logStream << "INNER RIM HEIGHT   = " << innerRimHt << " in\n\n";
+      logStream << "WEIGHT OF OUTER RIM       = " << outerRimWt << " lb\n";
+      logStream << "WEIGHT OF OUTER SHOULDER  = " << outerShoulderWt << " lb\n";
+      logStream << "WEB WEIGHT                = " << webWt << " lb\n";
+      logStream << "WEIGHT OF INNER SHOULDER  = " << innerShoulderWt << " lb\n";
+      logStream << "WEIGHT OF INNER RIM       = " << innerRimWt << " lb\n";
+      logStream << "POST WEIGHT               = " << postwt*numBlades << " lb\n";
+      logStream << "WEIGHT CORRECTION FACTOR  = " << wtCorrection << "\n";
+      logStream << "TOTAL WEIGHT OF WEB DISK  = " << wtweb<< " lb\n\n\n";
+      logStream << "no. of iteration for web disk design = " << iter << "\n";           
+   }
+      
+         
+/**
+ *
+ ******************************************************************************/
+   void writeHyperDiskInfo(int iter)
+   {
+      int i;     
+      logStream << "design vars = " << dc << "\n\n";
+      logStream << "DISK SHAPE FACTOR = " << diskShapeFactor << "\n\n";
+      logStream << "SHOULDER HEIGHT, HS =  " << shoulderHt << " in\n";
+      logStream << "OUTER RIM WIDTH   = " << outerRimWidth << " in\n";
+      logStream << "OUTER RIM HEIGHT   = " << outerRimHt << " in\n";
+      logStream << "LIVE RIM RADIUS   = " << liveRimRadius << " in\n\n";
+      logStream << "R5 = " << r[4] << " in     T5 = " << t[4] << "in\n";
+      logStream << "R4 = " << r[3] << " in     T4 = " << t[3] << "in\n\n\n";
+      logStream << "                RIW (in)         TIW (in)\n";
+      logStream << "               " << rjr[0] << "         " << t[1] << "\n";
+      for(i = 1; i < istep+1; ++i) { // do 90 i = 2, istep+1;
+         logStream << "               " << rjr[i] << "         " << wd[i] << "\n";
+      }
+      logStream << "\n\n";
+      logStream << "R2 = " << r[1] << " in     T2 = " << t[1] << "in\n\n";
+      logStream << "INNER RIM WIDTH    = " << innerRimWidth << " in\n";
+      logStream << "INNER RIM HEIGHT   = " << innerRimHt << " in\n\n";
+      logStream << "OUTER RIM WEIGHT   = " << rimwt << " lb\n";
+      logStream << "WEB WEIGHT         = " << webwt << " lb\n";
+      logStream << "INNER RIM WEIGHT   = " << innerRimWt << " lb\n";
+      logStream << "SHOULDER WEIGHT    = " << shoulderWt << " lb\n";
+      logStream << "POST WEIGHT        = " << postwt*numBlades << " lb\n\n";
+      logStream << "WEIGHT CORRECTION FACTOR  = " << wtCorrection << "\n";
+      logStream << "TOTAL WEIGHT OF HYPERBOLIC DISK  = " << wthyp<< " lb\n\n";
+      logStream << "no. of iteration for hyperbolic disk design = " << iter << "\n";           
+   }               
+#endif   
+   
+   
+   
+/**
+ *   design ring disk
+ *
+ ******************************************************************************/
+   int designRingDisk() {
+      int i;
+      real rs;
+      real adj;
+      real delr;
+      wtring = 0.;
+      wdisk = 0.;
+      
+//
+//  write blade height, mass distribution, and post weight
+//  for ring disk blade
+//
+      rootht = 0.1765*hb;
+      bldht = hb+rootht;
+      rootwt = 0.20*weightPerBlade;
+ 
+      postwt = 0.10*weightPerBlade;
+//
+// calculate rim stress
+//
+      real bhr = bladeHubRadius*12.;
+      
+      liveRimRadius = bhr-rootht;
+      ringLRR = liveRimRadius;
+ 
+      airwt = weightPerBlade-rootwt;
+      xcg = 0.5*bldht;
+      rcg = liveRimRadius + 0.5*rootht + airwt*xcg/(airwt+rootwt+postwt);
+ 
+      btmass = airwt+rootwt+postwt; 
+      rimstress = numBlades*btmass*rcg*((2*PI*rpm/60)**2)/(2.*PI*liveRimRadius*bx*gc);
+      
+      int iter = 0;
+      rs = diskBoreBladeHubRR*bhr;
+      t[0] = bx;
+      t[1] = bx;
+      t[2] = bx;
+      t[3] = bx;
+      t[4] = bx;
+      t[5] = bx;
+      outerRimWidth = bx;
+      delr = 0.1;
+      int imax = (liveRimRadius-rs)/delr;
+      r[0] = liveRimRadius;
+      desmin = 0.;
+      sigma = 0.;
+      
+//tong *****added by m.tong on 9/18/97 to replaced fixed-step
+//            iteration scheme with self-adaptive iteration
+//                  scheme to reduce computing time
+      real f1,f2,f3;
+      for(i = 0; i < imax; ++i) { // do 10 i = 1, imax;
+ 
+         sigma = abs(desmin);
+         if ((r[0] <= rs && desmin < 0.) || r[0] > liveRimRadius) { break; }
+         f1 = 1./(1.+sigma);
+         f2 = liveRimRadius**2 - (liveRimRadius**2-r[0]**2)/f1;
+
+         if (f2 <= 0.) { break; }
+
+         f3 = sqrt(f2)/r[0];
+         if (i == 0) { 
+            adj = .95; 
+         }
+         else {
+            adj = min(f3,.99);
+         }
+
+         r[0] = r[0]*adj;
+
+         if (r[0] < rs) { r[0] = rs; }
+         ++iter;
+
+         r[1] = r[0]+0.2*(liveRimRadius-r[0]);
+         r[2] = r[0]+0.4*(liveRimRadius-r[0]);
+         r[3] = r[0]+0.6*(liveRimRadius-r[0]);
+         r[4] = r[0]+0.8*(liveRimRadius-r[0]);
+         r[5] = liveRimRadius;
+
+         dt[3] = diskRimBoreDeltaT/(log(r[5])-log(r[0]));
+         dt[4] = dt4a - dt[3] * log(r[0]);
+
+         fem();
+
+         desmin = chkdesg();
+         
+         if(desmin > 0.0) {
+            borradRing = r[0];
+            boreRadius = r[0];
+
+            wtring = wtCorrection*(PI*(liveRimRadius*liveRimRadius-boreRadius*boreRadius)*bx*roh*gc+postwt*numBlades);
+            wdisk = wtring;
+#ifdef WATE_LEGACY            
+            if(verbose) { writeRingDiskInfo(iter); }
+#endif            
+            return 1;
+         }
+      }
+      
+      if(desmin <= 0.0) {
+         wtring = 1.e10;
+         if(tmpShape == "RING") {
+            designFailed("RING", stage, currentMaterial.type);
+         }
+         return 0;
+      }
+       
+      return 1;
+   } // end designRingDisk 
+   
+      
+/**
+ *   design web disk
+ *
+ ******************************************************************************/
+   int designWebDisk() 
+   {
+      int i,k;
+      real nadj=0.;
+      real twmax;
+      real p1=0.;
+      wtweb = 0.;
+      wdisk = 0.;
+      
+//
+//  write blade height, mass distribution, and post weight
+//  for web disk blade
+//
+      rootht = 0.25*hb;
+      bldht = hb + rootht;
+      rootwt = 0.20*weightPerBlade; 
+      postwt = 0.20*weightPerBlade;
+//
+//  calculate average rim stress for web disk
+//
+      liveRimRadius = bladeHubRadius*12. - rootht;
+      webLRR = liveRimRadius;
+      airwt = weightPerBlade-rootwt;
+      xcg = 0.5*bldht;
+      rcg = liveRimRadius + 0.5*rootht + airwt*xcg/(airwt+rootwt+postwt);
+ 
+      btmass = airwt+rootwt+postwt;
+      rimstress = numBlades*btmass*rcg*((2*PI*rpm/60)**2)/(2.*PI*liveRimRadius*bx*gc);
+
+      outerRimWidth = bx;
+      outerRimHt = bx/4;
+
+      real twmin = bx*.10;
+      if(twmin <= .25) { twmin = .25; }
+      twmax = 0.5*bx;
+
+      if(twmin >= twmax) { twmin = twmax * .95; }
+
+      real tirmin = 3.33*twmin;
+      real tirmax = bx;
+      real deltw = 0.01;
+      real deltir = 0.01;
+      webWidth = twmin-deltw;
+      int kmax = (twmax-twmin)/deltw +1;
+      int imax = (tirmax-tirmin)/deltir +1;
+      if(imax < 1) { imax = 1; }
+      
+      int iter = 0;
+      sigma = 0.;
+      desmin = 0.;
+      
+      for(k = 0; k < kmax; ++k) { 
+         webWidth += deltw;
+
+         if (k == 0) { innerRimWidth = tirmin-deltir; }
+         else { imax = 1; }
+
+         for(i = 0; i < imax; ++i) { 
+
+      //tong *****added by m.tong on 9/18/97 to replaced fixed-step
+      //            iteration scheme with self-adaptive iteration
+      //                  scheme to reduce computing time
+
+            if (abs(desmin) >= sigma && iter > 1 && k < 1) {
+               break;
+            }
+            if (i>0 &&((abs(desmin) >= sigma && k > 1) || 
+                   (innerRimWidth >= tirmax && dc[0] < 0.))) {
+               wtweb = 1.e10;
+               if(tmpShape == "WEB") { 
+                  designFailed("WEB", stage, currentMaterial.type);
+               }
+               return 0;
+            }
+
+            if(sigma != 0.) { p1 = (sigma-abs(desmin))/sigma; }
+
+            if (p1 != 0.) { nadj = (1.-p1)/(p1)*nadj*.75; }
+            if (nadj < 2.) { nadj = 2.0; }
+            if (sigma <= .02) { nadj = 1.0; }
+            if (nadj > 50) { nadj = 50; }
+            if (k > 0) { nadj = 0; }
+            
+            sigma = abs(desmin);
+            innerRimWidth += deltir*nadj;
+            if (innerRimWidth > tirmax) { innerRimWidth = tirmax; }
+            ++iter;
+            innerRimHt = 2.*innerRimWidth;
+
+            r[0] = diskBoreBladeHubRR*liveRimRadius;
+            r[5] = liveRimRadius;
+            r[4] = r[5]-outerRimHt;
+            r[3] = r[4]-0.25;
+
+            r[1] = r[0]+innerRimHt;
+            r[2] = r[1]+0.5;
+            t[0] = innerRimWidth;
+            t[1] = t[0];
+            t[2] = webWidth;
+            t[3] = t[2];
+            t[4] = outerRimWidth;
+            t[5] = t[4];
+            dt[3] = diskRimBoreDeltaT/(log(r[5])-log(r[0]));
+            dt[4] = dt4a - dt[3] * log(r[0]);
+            
+            webIRW = innerRimWidth;
+
+            if(r[1]-r[0]<0. || r[2]-r[1]<0. || r[3]-r[2]<0. || r[4]-r[3]<0. ||
+               r[5]-r[4]<0.) {
+               wtweb = 1.e10;
+               if(tmpShape == "WEB") { 
+                  designFailed("WEB", stage, currentMaterial.type);
+               }
+               return 0;
+            }
+
+            fem();
+
+            outerRimWt = PI*(r[5]*r[5]-r[4]*r[4])*innerRimWidth*roh*gc;
+            webWt = PI*(r[3]*r[3]-r[2]*r[2])*webWidth*roh*gc;
+            innerRimWt = PI*(r[1]*r[1]-r[0]*r[0])*innerRimWidth*roh*gc;
+            outerShoulderWt = PI*(r[4]*r[4]-r[3]*r[3])*0.5*(t[4]+t[3])*roh*gc;
+            innerShoulderWt = PI*(r[2]*r[2]-r[1]*r[1])*0.5*(t[2]+t[1])*roh*gc;
+            
+            wtweb = outerRimWt+webWt+innerRimWt+outerShoulderWt+
+                    innerShoulderWt+postwt*numBlades;
+            wtweb *= wtCorrection;
+
+            wdisk = wtweb;
+            borradWeb = r[0];
+            boreRadius = r[0];
+
+            desmin = chkdesg();
+            
+            if(desmin > 0.0) {
+#ifdef WATE_LEGACY            
+               if(verbose) { writeWebDiskInfo(iter); }
+#endif            
+               return 1;
+            }
+         } // end inner loop
+         desmin = chkdesg();
+         if(desmin > 0.0) {
+#ifdef WATE_LEGACY            
+            if(verbose) { writeWebDiskInfo(iter); }
+#endif            
+            return 1;
+         }
+      } // end outer loop
+      
+      wtweb = 1.e10;
+      if(tmpShape == "WEB") {
+         designFailed("WEB", stage, currentMaterial.type);
+      }
+      return 0;
+   } // end designWebDisk
+   
+   
+
+/**
+ *   design hyperbolic disk
+ *
+ ******************************************************************************/
+  int designHypDisk() 
+  {
+      string msg;
+     
+      real nadj;
+      real tow;
+      real towmin;
+      real rj;
+      real wa;
+      real wb;
+      real webwt1;
+      real wbbwt2;
+      real tiw;
+      real fact1;
+      real delr;
+      wthyp = 0.;
+      wdisk = 0.;
+    
+//
+//  write blade height, mass distribution, and post weight
+//  for hyperbolic disk blade
+//
+      rootht = 0.5385*hb;
+      bldht = hb+rootht;
+      rootwt = 0.50*weightPerBlade;
+      postwt = 0.20*weightPerBlade;
+ 
+//
+//  calculate average rim stress for hyperbolic disk
+//
+      liveRimRadius = bladeHubRadius*12.-rootht;
+      hyperLRR = liveRimRadius;
+      airwt = weightPerBlade-rootwt;
+      xcg = 0.5*bldht;
+      rcg = liveRimRadius + 0.5*rootht + airwt*xcg/(airwt+rootwt+postwt);
+ 
+      btmass = airwt+rootwt+postwt; 
+      rimstress = numBlades*btmass*rcg*((2*PI*rpm/60)**2)/(2.*PI*liveRimRadius*bx*gc);
+      
+      int iter = 0;
+      istep = 30;
+      outerRimWidth = bx;
+      outerRimHt = outerRimWidth/4.0;
+      innerRimHt = bx;
+      shoulderHt = 0.25;
+      towmin = 0.35*bx;
+ 
+      innerRimWidth = liveRimRadius/3.0;
+      hyperIRW = innerRimWidth;
+ 
+      tow = towmin-0.01;
+      int kmax = (bx-towmin)/0.01;
+      diskShapeFactor = 1.0;
+      desmin = 0.;
+      
+      int loopflag = 0; // 0 = normal behavior, 1 = break inner loop but continue outer loop, 2 = double break
+ 
+      int i,k;
+      for(k = 1; k <= kmax; ++k) { // do 30 k = 1, kmax;
+         tow = tow + 0.01;
+         r[0] = diskBoreBladeHubRR*bladeHubRadius*12.;
+         r[1] = r[0]+0.25*innerRimWidth;
+         r[4] = liveRimRadius-outerRimHt;
+         r[3] = r[4]-shoulderHt;
+         r[2] = r[1]+(r[3]-r[1])/3;
+         innerRimHt = r[1]-r[0];
+
+         
+         if(r[0] > liveRimRadius || r[1] > liveRimRadius || r[3] > liveRimRadius || 
+            r[4] > liveRimRadius) {
+            wthyp = 1.e10;
+            if (tmpShape == "OPTIMUM") {
+               msg = "HYPERBOLIC disk design not possible unless disk-bore to airfoil-hub ratio (i.e. diskBoreBladeHubRR) can be reduced.";
+            }
+            else {
+               msg = "HYPERBOLIC disk design not possible. Try selecting a ";
+               msg += "different material or reduce the stress level by lowering ";
+               msg += "the RPM or increase no. of stages. For the turbine, increasing ";
+               msg += "the GE LOADING parameter will also reduce the disk stress. ";
+            }
+            msg += "  STAGE = "; msg += toStr(stage);
+            msg += ",  MATERIAL = "; msg += currentMaterial.type;
+            provisionalWarning(msg);
+            return 0;
+         }
+   //
+   //tong *****added and modified by m.tong on 9/18/97 to replaced fixed-step
+   //            iteration scheme with self-adaptive iteration
+   //                  scheme to reduce computing time
+         int imax = 100;
+         if (k > 1) { imax = 1; }
+
+         for(i = 1; i <= imax; ++i) { // do 35 i = 1, imax;
+            loopflag = 0;
+            
+            if(i == 1) { nadj = 2; }
+            sigma = abs(desmin);
+            if(r[2] > r[1]) {
+               fact1 = log10(r[2]-r[1]);
+               if (i > 1) { 
+                  nadj = ((log10(1.+sigma)+diskShapeFactor*fact1)/fact1 - 1.0)/0.01; 
+               }
+            }
+            if (nadj <= 0) { nadj = 8; }
+
+            if (sigma < .50) { nadj = min(nadj,100); }
+            if (sigma < .30) { nadj = min(nadj,60); }
+            if (sigma < .20) { nadj = min(nadj,40); }
+            if (sigma < .10) { nadj = min(nadj,20); }
+            if (sigma < .05) { nadj = min(nadj,10); }
+            if (sigma < .01) { nadj = 2; }
+            if (k > 1) { nadj = 0; }
+
+            diskShapeFactor += 0.01*nadj;
+            ++iter;
+
+            t[5] = outerRimWidth;
+            t[4] = outerRimWidth;
+            t[3] = tow;
+            t[2] = 2.*tow;
+
+            if(r[2] >= r[3] || r[1] >= r[2]) {
+               wthyp = 1.e10;
+               msg = "hyperbolic disk design not possible unless disk-bore to ";
+               msg += "airfoil-hub ratio (i.e. diskBoreBladeHubRR) can be reduced.";
+               msg += "  STAGE = "; msg += toStr(stage);
+               msg += ",  MATERIAL = "; msg += currentMaterial.type;
+               provisionalWarning(msg);
+               if (tmpShape == "OPTIMUM") {
+                  return 0;
+               }
+               loopflag = 2;  // double break
+               break;
+            }
+
+            if(r[2]-r[1] < 1.) { diskShapeFactor = 1/diskShapeFactor; }
+            tiw = t[3]/(r[3]-r[2])*(r[2]-r[1])**diskShapeFactor;
+
+            t[1] = t[2] + 1.0 * tiw;
+
+            t[0] = t[1];
+            r[5] = liveRimRadius;
+            dt[3] = diskRimBoreDeltaT/(log(r[5])-log(r[0]));
+            dt[4] = dt4a - dt[3] * log(r[0]);
+            
+            if(t[1] >= liveRimRadius) {
+               loopflag = 1;
+               break;
+            }
+
+            fem();
+
+            desmin = chkdesg();
+
+            if(desmin > 0.0) {
+               break;
+            }
+
+            if (sigma == abs(dc[5])) {
+               loopflag = 1;
+               break;
+            }
+            if (t[1] >= liveRimRadius) {
+               loopflag = 2;
+               break;
+            }
+         } // end inner for loop
+         
+         if(loopflag == 2) { 
+            break; 
+         }
+         else if(loopflag == 1) { 
+            continue; 
+         }
+         
+         desmin = chkdesg();
+
+         if(desmin > 0.0) {
+           delr = (r[2]-r[1])/(istep*r[2]);
+           rj = 1.0+delr;
+
+           for(i = 1; i <= istep+1; ++i) { // do 70 i = 1, istep+1;
+              rj = rj-delr;
+              rjr[i] = rj*r[2];
+              wd[i] = t[2]+(t[3]/(r[3]-r[2])*(r[2]-rjr[i])**diskShapeFactor);
+           }
+
+           real sum = 0.0;
+           wd[1] = t[2];
+           for(i = 1; i <= istep; ++i) { // do 80 i = 1, istep;
+              wa = 0.5*(wd[i]+wd[i+1]);
+              sum += (PI*(rjr[i] *rjr[i] -rjr[i+1]*rjr[i+1])*wa);
+           }
+
+           webwt1 = PI*(r[3]*r[3]-r[2]*r[2])*(t[3]+t[2])*0.5*roh*gc;
+           wbbwt2 = sum*roh*gc;
+           webwt = webwt1+wbbwt2;
+           rimwt = PI*(liveRimRadius*liveRimRadius-r[4]*r[4])*bx*roh*gc;
+           wb = t[1];
+           innerRimWt = PI*(r[1]*r[1]-r[0]*r[0])*wb*roh*gc;
+           shoulderWt = PI*(r[4]*r[4]-r[3]*r[3])*0.5*(t[4]+t[3])*roh*gc;
+           wthyp = webwt+rimwt+innerRimWt+shoulderWt+postwt*numBlades;
+
+           wthyp = wthyp*wtCorrection;
+
+           wdisk = wthyp;
+           borradHyp = r[0];
+           boreRadius = r[0];
+           
+#ifdef WATE_LEGACY            
+           if(verbose) { writeHyperDiskInfo(iter); }
+#endif           
+           return 1;
+         }
+      } // end outer for loop
+      
+      wthyp = 1.e10;
+      if(tmpShape == "HYPERBOLIC") {
+         designFailed("HYPERBOLIC", stage, currentMaterial.type);
+      }
+      return 0;
+   } // end designHypDisk
+   
+
+/**
+ * draw ring disk geometry
+ *
+ ******************************************************************************/
+    void drawRingDisk(real xstart, int stgnum) {
+       real xarr[8],yarr[8];
+       
+       real bore = boreRadius_stg[stgnum];
+       real lrr  = liveRimRadius_stg[stgnum];
+       real bl = bladeLen_stg[stgnum];
+       
+       real jnk;
+       real xRadMax = xstart;
+       real outerRadMin,outerRadMax;
+       outerRadMin = hubRadius_stg[stgnum];
+       outerRadMax = outerRadMin;
+       if(stgnum<numStages-1) {
+          jnk = hubRadius_stg[stgnum+1];
+       }
+       else {
+          jnk = outPort.innerRadius;
+       }
+       if(jnk < outerRadMin) {
+          outerRadMin = jnk;
+       }
+       else if(jnk > outerRadMax) {
+          outerRadMax = jnk;
+          xRadMax = xstart+bl;
+       }
+ 
+       xarr[0] = xstart;    yarr[0] = bore;
+       xarr[1] = xstart;    yarr[1] = outerRadMin;
+       xarr[2] = xstart+bl; yarr[2] = yarr[1];
+       xarr[3] = xstart+bl; yarr[3] = bore;
+       xarr[4] = xstart;    yarr[4] = bore;
+       xarr[5] = xstart;    yarr[5] = lrr;
+       xarr[6] = xstart+bl; yarr[6] = lrr;
+       xarr[7] = xstart+bl; yarr[7] = bore;
+       
+       addPolygon(xarr,yarr,drawDepth,1);
+       addLine(xRadMax,outerRadMin,xRadMax,outerRadMax,drawDepth,1);
+   }
+   
+   
+/**
+ *
+ ******************************************************************************/
+   void drawWebDisk(real xstart, int stgnum) {
+       real xarr[37],yarr[37];
+       real x      = xstart;
+       real hubRad = hubRadius_stg[stgnum];
+       real lrr    = liveRimRadius_stg[stgnum];
+       real orw    = outerRimWidth_stg[stgnum];
+       real irw    = innerRimWidth_stg[stgnum];
+       real orh    = outerRimHt_stg[stgnum];
+       real irh    = innerRimHt_stg[stgnum];
+       real ww     = webWidth_stg[stgnum];
+       real rr     = diskBoreBladeHubRR;
+       real bl     = bladeLen_stg[stgnum];
+       
+       xarr[0] = x;                yarr[0] = hubRad;
+       xarr[1] = x;                yarr[1] = lrr-orh;
+
+       xarr[2] = x;                yarr[2] = lrr-orh;
+       xarr[3] = x+orw;            yarr[3] = lrr-orh;
+
+       xarr[4] = x+orw;            yarr[4] = lrr-orh;
+       xarr[5] = x+orw;            yarr[5] = hubRad;
+
+       xarr[6] = x+orw;            yarr[6] = hubRad;
+       xarr[7] = x;                yarr[7] = hubRad;
+
+       xarr[8] = x;                yarr[8] = lrr;
+       xarr[9] = x+orw;            yarr[9] = lrr;
+
+   // plot outer shoulder
+
+       xarr[10] = x+orw;           yarr[10] = lrr-orh;
+       xarr[11] = x+ww+(orw-ww)/2; yarr[11] = lrr-orh-0.25;
+
+       xarr[12] = x+ww+(orw-ww)/2; yarr[12] = lrr-orh-0.25;
+       xarr[13] = x+(orw-ww)/2;    yarr[13] = lrr-orh-0.25;
+
+       xarr[14] = x+(orw-ww)/2;    yarr[14] = lrr-orh-0.25;
+       xarr[15] = x;               yarr[15] = lrr-orh;
+
+   // plot web
+
+       xarr[16] = x+(orw-ww)/2;    yarr[16] = lrr-orh-0.25;
+       xarr[17] = x+(orw-ww)/2;    yarr[17] = rr*hubRad+irh+0.5;
+
+       xarr[18] = x+(orw-ww)/2;    yarr[18] = rr*hubRad+irh+0.5;
+       xarr[19] = x+ww+(orw-ww)/2; yarr[19] = rr*hubRad+irh+0.5;
+
+       xarr[20] = x+ww+(orw-ww)/2; yarr[20] = rr*hubRad+irh+0.5;
+       xarr[21] = x+ww+(orw-ww)/2; yarr[21] = lrr-orh-0.25;
+
+   // plot inner shoulder
+
+       xarr[22] = x+ww+(orw-ww)/2; yarr[22] = rr*hubRad+irh+0.5;
+       xarr[23] = x+orw/2+irw/2;   yarr[23] = rr*hubRad+irh;
+
+       xarr[24] = x+orw/2+irw/2;   yarr[24] = rr*hubRad+irh;
+       xarr[25] = x+bl/2-irw/2;    yarr[25] = rr*hubRad+irh;
+
+       xarr[26] = x+bl/2-irw/2;    yarr[26] = rr*hubRad+irh;
+       xarr[27] = x+(bl-ww)/2;     yarr[27] = rr*hubRad+irh+0.5;
+
+   // plot inner rim
+
+       xarr[28] = x+orw/2-irw/2;   yarr[28] = rr*hubRad+irh;
+       xarr[29] = x+orw/2-irw/2;   yarr[29] = rr*hubRad;
+
+       xarr[30] = x+orw/2-irw/2;   yarr[30] = rr*hubRad;
+       xarr[31] = x+orw/2+irw/2;   yarr[31] = rr*hubRad;
+
+       xarr[32] = x+orw/2+irw/2;   yarr[32] = rr*hubRad;
+       xarr[33] = x+orw/2+irw/2;   yarr[33] = rr*hubRad+irh;
+
+       xarr[34] = x+ww+(orw-ww)/2; yarr[34] = rr*hubRad+irh+0.5;
+       xarr[35] = x+ww+(orw-ww)/2; yarr[35] = lrr-orh-0.25;
+       xarr[36] = x+orw;           yarr[36] = lrr-orh;
+       
+       addPolyLine(xarr,yarr,drawDepth,1);
+    }
+   
+    
+   
+/**
+ * draw hyperbolic disk geometry using the xyplot software
+ *
+ ******************************************************************************/
+   void drawHypDisk(real xstart, int stgnum) {
+       int i;
+       real xarr[] = { };
+       real yarr[] = { };
+       
+       real x = xstart;
+       real lrr = liveRimRadius_stg[stgnum];
+       real orh = outerRimHt_stg[stgnum];
+       real irw = innerRimWidth_stg[stgnum];
+       real sh = shoulderHt_stg[stgnum];
+       real hr = hubRadius_stg[stgnum];
+       real bl = bladeLen_stg[stgnum];
+       real rr = diskBoreBladeHubRR;
+       real _t1 = t1_stg[stgnum];
+       real _t2 = t2_stg[stgnum];
+       real _t3 = t3_stg[stgnum];
+       real _r1 = hr*rr+0.25*irw;
+       real _r3 = lrr-orh-sh;
+       real _r2 = _r1+(_r3-_r1)/3.;
+       
+       
+//  plot rim
+       xarr.append(x);                 yarr.append(hr);
+       xarr.append(x);                 yarr.append(lrr-orh);
+
+       xarr.append(x+bl);              yarr.append(lrr-orh);
+
+       xarr.append(x+bl);              yarr.append(hr);
+
+       xarr.append(x);                 yarr.append(hr); 
+       xarr.append(x);                 yarr.append(lrr);
+       xarr.append(x+bl);              yarr.append(lrr); 
+
+// plot shank
+       xarr.append(x+bl);              yarr.append(lrr-orh);
+       xarr.append(x+_t3+(bl-_t3)/2.); yarr.append(lrr-orh-sh); 
+       xarr.append(x+(bl-_t3)/2.);     yarr.append(lrr-orh-sh); 
+       xarr.append(x);                 yarr.append(lrr-orh);
+
+// plot trapezoidal web
+       xarr.append(x+(bl-_t3)/2);      yarr.append(_r3);
+       xarr.append(x+(bl-_t2)/2);      yarr.append(_r2);
+
+       xarr.append(x+(bl+_t2)/2);      yarr.append(_r2);
+       xarr.append(x+(bl+_t3)/2);      yarr.append(_r3);
+
+// plot hyperbolic web
+
+       xarr.append(x+ (bl+_t2)/2);     yarr.append(_r2);
+
+       
+       real delr = (_r2-_r1)/(istep*_r2);
+       real rj = 1.0+delr;
+
+       for(i = 0; i < istep+1; ++i) { // do 70 i = 1, istep+1;
+          rj = rj-delr;
+          rjr[i] = rj*_r2;
+          wd[i] = _t2+(_t3/(_r3-_r2)*(_r2-rjr[i])**diskShapeFactor);
+          xarr.append(x+(bl+wd[i])/2); yarr.append(rjr[i]);
+       }
+       
+       xarr.append(x+(bl+_t1)/2);      yarr.append(_r1); 
+       xarr.append(x+(bl-_t1)/2);      yarr.append(_r1); 
+
+       for(i = istep; i >= 0; --i) { 
+          xarr.append(x+(bl-wd[i])/2); yarr.append(rjr[i]);
+       }
+
+       for(i = 0; i < istep+1; ++i) {
+          xarr.append(x+(bl-wd[i])/2); yarr.append(rjr[i]);
+       }
+//
+//  plot bore
+//
+       xarr.append(x+(bl-_t1)/2);      yarr.append(_r1);
+       xarr.append(x+(bl+_t1)/2);      yarr.append(_r1);
+       xarr.append(x+(bl+_t1)/2);      yarr.append(hr*rr);
+       xarr.append(x+(bl-_t1)/2);      yarr.append(hr*rr);
+       xarr.append(x+(bl-_t1)/2);      yarr.append(_r1);
+
+       addPolyLine(xarr,yarr,drawDepth,1);
+   }
+   
+      
+   /**
+    *
+    ************************************************************************/  
+   void drawStage(real stgPosition, int stg) 
+   {      
+       real tmp;
+
+       if(parent.parent.parent.hasInterface("WATEaxialTurbine")) {
+          tmp = statorLen_stg[stg]+spacerLen_stg[stg];
+          stgPosition += tmp;
+       }
+
+       if(shape_stg[stg]=="RING" || shape_stg[stg]=="OPTIMIZED RING") {
+          drawRingDisk(stgPosition,stg);
+       }
+       else if(shape_stg[stg]=="WEB" || shape_stg[stg]=="OPTIMIZED WEB") {
+          drawWebDisk(stgPosition,stg);
+       }
+       else if(shape_stg[stg]=="HYPERBOLIC" || shape_stg[stg]=="OPTIMIZED HYPERBOLIC") {
+          drawHypDisk(stgPosition,stg);
+       }
+   }
+      
+} // end class
+
+#endif
+

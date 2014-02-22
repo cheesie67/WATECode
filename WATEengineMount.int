@@ -1,0 +1,32 @@
+#ifndef __WATEENGINEMOUNT__
+#define __WATEENGINEMOUNT__
+
+
+/*
+ * Calculates the engine mount weight
+ ************************************************************************/  
+class WATEengineMount extends WATEsubelement {
+
+  real ultLoadFactor {
+     value = 2.0; IOstatus = "input"; units = "none";
+     description = "Engine ultimate load factor. Fusalage mount use 8 civil/2 militiary, wing mount use A/C design load factor";
+  }
+
+  real mountFactor {
+     value = 1.0; IOstatus = "input"; units = "none";
+     description = "Engine Mount Factor. Internal - 2, helicopter - 1.25, through wing spar - 0.7, others - 1.0";
+  }
+
+/*
+ * 
+ ************************************************************************/  
+  void calculate() {
+      real x = 9.*sqrt(ultLoadFactor)*mountFactor/1000.*1.40;
+      real pweight = parent.parent.parent.weight;
+      weight = pweight*x/(1.0-x);
+   }
+} 
+
+ 
+#endif
+

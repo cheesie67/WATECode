@@ -1,0 +1,42 @@
+#ifndef _WATEBALLBEARINGSIMPLE_
+#define _WATEBALLBEARINGSIMPLE_
+
+//
+// WATEballBearingSimple is a subelement of WATEshaft. It calculates the weight of 
+// a group of ball bearings at a particular axial location along the shaft.
+
+class WATEballBearingSimple extends WATEbearingBase
+{
+   real ballWt;
+   
+//
+//     calculate bearing weight
+//
+   void calculate() {
+      real radius = diameter/2.0;
+      real tbear = 0.3;
+      real density = material.rho(maxTemp);
+
+      real r1 = outerDiameter/2.0; // outerDiameter comes from parent shaft
+
+      real r3 = r1 + radius + tbear;
+      real r4 = r3 + radius + tbear;
+      real nball = PI/asin(radius/(r1+radius));
+
+      // set numBearings to nball, rounding up if nball has a fractional part
+      // that's >= .5
+      numBearings = nball;
+      if((nball - numBearings) >= 0.5) { ++numBearings; }
+      nball = numBearings;
+
+      length = diameter;
+      ballWt = density*nball*4./3.*PI*radius*radius*radius;
+
+      caseWt = 4.0*PI*r3*tbear*(diameter+length+2.0*tbear)*density;
+      weight = ballWt + caseWt + (PI*r4*(9.*diameter*tbear)*density);
+   }
+}
+
+#endif
+
+

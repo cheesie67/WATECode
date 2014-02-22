@@ -1,0 +1,140 @@
+#ifndef _WATEHPC_
+#define _WATEHPC_
+ 
+class WATEaxialHPC extends WATEaxialCompressor
+{
+     string burnerRef {
+        IOstatus = "output";
+        description = "reference to the burner downstream of this component";
+     }
+     burnerRef.hide(1);
+            
+     real outerCaseThickness=0.15;
+     real outerCaseLen;
+     real outerCaseWt;
+     WATEmaterial outerCaseMaterial;
+     
+  // defaults
+     areaIn = .4;
+     bladeSolidity = 0.84;
+     bladeTaperRatio = .833;
+     statorSolidity = 0.75;
+     bladeVolumeFactor = 0.163; 
+     statorVolumeFactor = 0.164;
+         
+     maxPressureRatio = 1.4; 
+     hubTipRatioIn = .7;
+     MNout = .3; 
+     maxSpdRatio = 1.;
+     
+     defaultHideLevel = 2;
+     string pnames[];
+     pnames.ptrType = "WATEPort";
+     string outpname;
+     outpname.ptrType = "WATEPort";
+     defaultHideLevel = 0;
+  
+  /**
+   *  calculate the hpc structural case (moved over from WATEprimaryBurner)
+   **********************************************************************/
+   real calcOuterCaseWt(real burnerPosition, real outerDiam) {
+      outerCaseLen=0.;
+      real len;
+      
+      if(structCaseStg > 0) {
+         outerCaseLen = length;
+         
+         // get the rest of the distance between burner and compressor
+         len = burnerPosition - outPort.axialPosition;
+         outerCaseLen += len;
+
+         if(length_stg.entries() < structCaseStg) {
+            throwError("compressor case starting stage > stage length array");
+         }
+
+         int ii;
+         for(ii=0; ii < structCaseStg-1; ++ii) { 
+           outerCaseLen -= length_stg[ii];
+         }
+
+         if(outerCaseMaterial.type=="") {
+            if(Tstress<790) { outerCaseMaterial.type = "Ti_6Al_4v"; }
+            else { outerCaseMaterial.type = "Inconel_718"; }
+         }
+         outerCaseWt = PI*(tipRadius_stg[structCaseStg-1]+outerDiam*0.5)*
+                   sqrt((tipRadius_stg[structCaseStg-1]-outerDiam*0.5)**2+outerCaseLen*outerCaseLen)*
+                   outerCaseThickness*outerCaseMaterial.rho(500);
+         
+         return outerCaseWt;
+      }
+      return 0.;
+   } // end calcCaseWt
+   
+   
+   
+  /**
+   *  find the burner connected to this component through the outPort
+   ***************************************************************************/
+//    string findDownstreamBurner()
+//    {
+//       string bname = "";
+//       outpname = "outPort";
+//       
+//       while(bname == "") {
+//          pnames = outpname->getLinkedPortName();
+//          if(pnames.entries()==0) { break; }
+//          bname = pnames[0]->getParentName();
+//          if(bname->hasInterface("WATEprimaryBurner")) { break; }
+//          outpname = bname + ".outPort";
+//          bname = "";
+//       }
+//       
+//       return bname;
+//    }
+   
+      
+  /**
+   *  
+   ***************************************************************************/
+   void drawStage(real stgPosition, int stg)
+   {
+      WATEaxialCompressor::drawStage(stgPosition, stg);
+      drawStructuralCase(stgPosition, stg);
+   }
+   
+   
+   
+  /**
+   *  add curve representing the hpc structural case
+   **********************************************************************/
+   void drawStructuralCase(real stgPosition, int stg) { 
+      real x[2],y[2];
+      
+      if(stg+1 == structCaseStg) {
+         
+        if(burnerRef == "") { 
+           burnerRef = findDownstreamComponent("WATEprimaryBurner");
+           if(burnerRef != "" && burnerRef->compressorRef=="") {
+              burnerRef->compressorRef = getPathName();
+           }
+        }
+        
+        if(burnerRef=="") {
+           error("Couldn't find a burner when attempting to draw HPC structural case");
+           return;
+        }        
+        
+        x[0] = stgPosition;
+        y[0] = tipRadius_stg[stg];
+        
+        x[1] = burnerRef->inPort.axialPosition; //tleng(jconf[j,1]);  // find upstream axial loc of burner
+        y[1] = burnerRef->inPort.outerRadius; //ro(1,jconf[j,1]);
+        
+        addPolyLine(x,y,drawDepth,1);
+      }
+   }    
+        
+}
+
+#endif
+   

@@ -1,0 +1,98 @@
+#ifndef _WATEBEARINGBASE_
+#define _WATEBEARINGBASE_
+
+/*
+ * WATEbearingBase is the base class for all WATE bearing objects
+ ****************************************************************/
+class WATEbearingBase extends WATEsubelement
+{
+   WATEmaterial material { type = "Alloy_713C"; }
+   
+   real diameter {
+     value = 0.5; IOstatus = "input";    units = "in";
+     description = "Diameter of bearing on the shaft (default=0.5)";
+   }
+
+   real caseWt {
+     IOstatus = "output";  units = "lbf";
+     description = "weight of bearing case???";
+   }
+
+   real axialPosition_in {
+     IOstatus = "input";    units = "in";
+   }
+   
+   real axialPosition {
+      IOstatus = "output";  units = "in";
+   }
+
+   int numBearings {
+     IOstatus = "output"; 
+     description = "Number of bearings in this group";
+   }
+   
+   
+   //??? I'm guessing that this is what rbear(bearnum) is supposed to be
+   real bearingCenterRadius {
+      IOstatus = "output";
+      description = "distance from the center point of the shaft to the center of the bearing";
+   }
+
+   socketRequired = 0;
+   
+   
+   /*
+    *  set bearing location and radius only 
+    ***********************************************************************/
+   void calcLocation(real shaftOuterDiam, int index, int isOuter) {
+      bearingCenterRadius = (shaftOuterDiam + diameter)*.5;
+      
+      string cmp;
+      int sz;
+      
+      if(axialPosition_in == 0.) {
+         
+         sz = inertiaComps.entries();
+         
+         if(sz > index) {
+            cmp = inertiaComps[index];
+         }
+         else if(sz > 0) {
+            cmp = inertiaComps[sz-1];
+         }
+         
+         if(cmp != "") {
+            if(isOuter) {
+               if(index==0 && sz > index) {
+                  axialPosition = cmp->inPort.axialPosition;
+               }
+               else if(index==1 && sz > index) {
+                  axialPosition = cmp->outPort.axialPosition + 9.;
+               }
+            }
+            else {
+               if(index==0 && sz > index) {
+                  axialPosition = cmp->outPort.axialPosition;
+               }
+               else if(index==1) {
+                  if(sz > index) {
+                     axialPosition = cmp->outPort.axialPosition;
+                  }
+                  else {
+                     axialPosition = cmp->outPort.axialPosition * 2.;
+                  }
+               }
+               else if(index==2) {
+                     axialPosition = cmp->outPort.axialPosition + 5.;
+               }
+            }
+         }         
+      }
+      else {
+         axialPosition = axialPosition_in;
+      }
+   }
+}
+
+#endif
+

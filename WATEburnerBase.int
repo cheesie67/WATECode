@@ -1,0 +1,308 @@
+#ifndef WATEBURNERBASE
+#define WATEBURNERBASE
+
+//    S_Frame.hubRadius
+//    S_Frame.tipRadius
+//    S_Frame.weight
+//    VCInterface* diamSettingComp
+
+extern real S_Frame.weight;
+
+/*
+ *  calculates weight of combustors.
+ ***********************************************************************/
+class WATEburnerBase extends WATEelement
+{
+   //IWMEC(3)
+   Option domeType {
+      trigger = FALSE;
+      allowedValues = { "SINGLE", "DOUBLE" }
+      IOstatus = "input";
+      description = "Select the type of combustor dome" ;
+   }
+
+   //DESVAL(1)
+   real Vflow {
+     IOstatus = "input";    units = "ft/sec" ;
+     description = "Through-Flow Velocity" ;
+   }  
+
+   //DESVAL(2)
+   real residenceTime {
+     value = .015;  IOstatus = "input";    units = "sec" ;
+     description = "Airflow residence time in the burner" ;
+   }     
+
+   //DESVAL(6)
+   string diamSettingComp {
+     IOstatus = "input";
+     description = "Full path name of the element setting the mean diameter. If blank, then connecting component used" ;
+   }
+
+   //DESVAL(7)
+   int numCans {
+     IOstatus = "input";
+     description = "Number of combustor cans for can burners. Zero indicates not a can burner" ;
+   }    
+
+   //DESVAL(8)
+   real meanDiam {
+     IOstatus = "input";    units = "in" ;
+     description = "Mean duct diameter. If zero, mean radius set by named component" ;
+   } 
+   
+   real innerOuterRR;
+   real innerDiam;
+   real outerDiam;
+   real WperUnitArea;
+   real WcIn;
+   real tmin;
+   real amach;
+   
+   real caseWt;
+   real innerCaseWt;
+   real linerWt;
+   real nozzleWt;
+   
+   int numFuelNozzles;
+   
+   // design point values
+   FlowStation des_Fl_I;
+   
+   WATEInputPort inPort;
+   WATEOutputPort outPort;
+   
+   MaxSaver max_PtIn {
+      var = "Fl_I.Pt";
+   }
+   
+   MaxSaver max_TtIn {
+      var = "Fl_I.Tt";
+   }
+   
+   MaxSaver max_WcIn {
+      var = "Fl_I.Wc";
+   }
+   
+   WATEmaterial linerMaterial { type = "Haynes_188"; }
+   WATEmaterial caseMaterial  { type = "Haynes_188"; }
+   
+   Socket S_Frame;
+   
+  /*
+   *  .
+   ***********************************************************************/
+   void calculate() {
+      real rtr;
+      real rhr;
+      real nodei;
+      real po;
+      real pomax;
+      real to;
+      real gamb;
+      real rhocase;
+      real rholiner;
+
+      inPort.innerRadius = inPort.innerRadiusUp;
+      inPort.outerRadius = inPort.outerRadiusUp;
+          
+//
+//     initialize inputs
+//
+      if (Vflow == 0. && numCans > 0.) { Vflow = 300.; } 
+      
+      WcIn = des_Fl_I.Wc; 
+      po = des_Fl_I.Pt; 
+      pomax = max_PtIn.val;
+      
+//
+// add safety factor to max burner pressure
+//
+      pomax = 1.5*pomax*144.;
+      po = po*144.;
+      to = des_Fl_I.Tt;
+      gamb = des_Fl_I.gamt;
+      
+      calcMeanDiam();      
+     
+//
+//     calculate mach number and flow per unit area
+//
+      amach = Vflow/sqrt(gamb*32.17*53.3*to-(gamb-1.)/2.*Vflow*Vflow);
+      WperUnitArea = po*amach*sqrt(gamb/(53.3*to)*32.2)*
+               (1./(1.+(gamb-1.)/2.*amach**2))**((gamb+1.)/2./(gamb-1.));
+      WperUnitArea *= 2116.22/po*sqrt(to/518.67);
+      
+      calcInnerDiam();      
+//
+//     calculate burner dimensions
+//
+      outerDiam = sqrt(innerDiam*innerDiam/144.+4.*WcIn/WperUnitArea/PI)*12.;
+      length = Vflow*residenceTime*12.;
+//
+//     calculate weight
+//
+      rhocase = caseMaterial.rho(530);
+      rholiner = linerMaterial.rho(530);
+      
+      tmin = pomax/144.*outerDiam/166000.;
+      if(tmin < 0.08) { tmin = 0.08; } 
+      caseWt = PI*outerDiam*length*rhocase*tmin;
+      innerCaseWt = PI*length*innerDiam*rhocase*tmin;
+      linerWt=.080*PI*length*rholiner*(1.2*innerDiam+0.8*outerDiam);
+      numFuelNozzles = PI*(outerDiam+innerDiam)/(.6*(outerDiam-innerDiam));
+      nozzleWt=.009*length*PI*0.25*(outerDiam-innerDiam)**2*0.25*rholiner*numFuelNozzles;
+//
+// add check for double dome combustors
+//
+      if(domeType == "DOUBLE") { nozzleWt *= 2.0; } 
+ 
+      weight = caseWt+linerWt+nozzleWt+innerCaseWt;
+      if (numCans > 0) { weight *= numCans; } 
+      
+//
+//     calculate frame weight for pri burners
+//
+      if(!S_Frame.isEmpty()) {
+         if (!S_Frame.isEmpty()) { 
+            S_Frame.tipRadius = outerDiam*0.5;
+            S_Frame.hubRadius = innerDiam*0.5;
+            S_Frame.execute();
+            weight += S_Frame.weight;
+         }
+      }
+      
+      calcCaseWt();      
+ 
+      inPort.innerRadius = innerDiam*0.5;
+      inPort.outerRadius = outerDiam*0.5;
+      outPort.innerRadius = innerDiam*0.5;
+      outPort.outerRadius = outerDiam*0.5;
+      outPort.axialPosition = inPort.axialPosition + length;
+
+      cg = length/2.0+inPort.axialPosition;
+   } // end calculate
+
+   
+  /**
+   * 
+   *********************************************************/    
+   void calcCaseWt() { }
+   
+   
+  /**
+   * 
+   *********************************************************/    
+   void calcMeanDiam() { 
+      real rtr,rhr;
+      
+      if(meanDiam != 0.) { return; } 
+
+      if(diamSettingComp == "") {
+         if (Vflow != 0.) {
+            rtr = inPort.outerRadius;
+            rhr = inPort.innerRadius; 
+            meanDiam = rtr+rhr;
+         }
+      }
+      else {
+         rtr = diamSettingComp->outPort.outerRadius;
+         rhr = diamSettingComp->outPort.innerRadius;
+         meanDiam = rtr+rhr;
+      }
+   } 
+   
+   
+  /**
+   * 
+   *********************************************************/    
+   void calcInnerDiam() {
+      innerOuterRR=1.-2.*WcIn/WperUnitArea/PI/(meanDiam*meanDiam)*144.;
+      if (innerOuterRR <= 0.) { innerOuterRR = 0.; } 
+      innerOuterRR = sqrt(innerOuterRR);
+      innerDiam = innerOuterRR*meanDiam;
+   }
+   
+   
+  /**
+   * 
+   *********************************************************/    
+   void saveMechDesignData() {
+      des_Fl_I.copyFlowStatic(componentRef+".Fl_I");
+   }
+   
+   
+   /**
+    *
+    ************************************************************************/  
+   void calcGeometry() {
+//       real x[5],y[5];
+//       
+//       y[0] = inPort.innerRadius; //ri(1,iup1);
+//       y[1] = inPort.outerRadius; //ro(1,iup1);
+//       y[2] = outPort.outerRadiusDwn; //ro(2,idn1);
+//       y[3] = outPort.innerRadiusDwn; //ri(2,idn1);
+//       y[4] = y[0];
+//       x[0] = inPort.axialPosition;
+//       x[1] = x[0];
+//       x[2] = x[0] + length; // tleng(idn1);
+//       x[3] = x[2];
+//       x[4] = x[0];
+// 
+//       addPolyLine(x,y,drawDepth);
+//       
+//       int i;
+//       for(i=0; i<5; ++i) {
+//          y[i] = -y[i];
+//       }
+//       addPolyLine(x,y,drawDepth);
+      
+      
+      int ij,ik;
+      int resolution=30; // number of points in duct wall
+      real xdiff=length;
+      real diff,yo,ymax,theata,cnst,frLen,frGap;
+      real x[],y[],sy[4];
+      real xdf[4],ydf[4];
+      
+      if(length==0) { return; }
+      
+      if(x.entries() != resolution) {
+         x.resize(resolution);
+         y.resize(resolution);
+      }
+          
+      x[0]  = inPort.axialPosition; //tleng(idn1) - aleng(i);
+      x[1]  = x[0];
+      sy[0] = inPort.innerRadius; //ri(1,iup1);
+      sy[1] = inPort.outerRadius; //ro(1,iup1);
+      
+      addLine(x[0],sy[0],x[1],sy[1],drawDepth);
+      addLine(x[0],-sy[0],x[1],-sy[1],drawDepth);
+      
+      sy[2] = outPort.innerRadiusDwn; 
+      sy[3] = outPort.outerRadiusDwn; 
+      
+      for(ij=0; ij<2; ++ij) { //  each iteration is half of the annulus
+        diff   = sy[ij+2]-sy[ij];
+        yo     = sy[ij]+diff/2.;
+        ymax   = abs(diff/2.);
+        theata = 0.0;
+        if (diff > 0.0) { theata=PI; } 
+        for(ik=0; ik<resolution; ++ik) {
+          y[ik] = ymax*cos(theata)+yo;
+          if (ik != 0) { x[ik] = x[ik-1]+xdiff/(resolution-1.); }               
+          theata += PI/resolution;
+        } 
+
+        addPolyLine(x,y,drawDepth,1);
+      }
+      
+   }  
+   
+   
+}
+
+#endif
+
+   

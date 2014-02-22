@@ -1,0 +1,408 @@
+#ifndef _WATEHIBYPASSFAN_
+#define _WATEHIBYPASSFAN_
+ 
+//
+// LAST INSPECTION DATE: *not inspected*
+//
+//  EXTERNAL DEPENDENCIES
+//
+//    S_RearFrame.hubRadius
+//    S_RearFrame.isStator
+//    S_RearFrame.length
+//    S_RearFrame.tipRadius
+//    S_RearFrame.weight
+//    VCInterface* splitterRef
+ 
+extern int S_RearFrame.isStator;
+ 
+class WATEhiBypassFan extends WATEfan
+{
+   // defaults
+   bladeTaperRatio = 1.4;
+   stg1StatorAR = 2.5;
+   lastStgStatorAR = 2.5; 
+   bladeVolumeFactor = 0.0240;
+   statorVolumeFactor = 0.135;
+   
+   
+   //DESVAL(56)
+   real RSlenRatioPreSplit {
+     value = 0.25;    IOstatus = "input";    units = "none";
+     description = "Ratio of rotor-to-stator duct length before flow is split to rotor axial length";
+   }
+
+   //DESVAL(57)
+   real RSlenRatioPostSplit {
+     value = 2.0;    IOstatus = "input";    units = "none";
+     description = "Ratio of rotor-to-stator duct length in core stream after the flow is split to rotor axial length";
+   } 
+
+   //DESVAL(58)
+   real RSlenRatioBypass {
+     value = 0.0;    IOstatus = "input";    units = "none";
+     description = "Ratio of rotor-to-stator duct length in bypass stream after the flow is split to rotor axial length";
+   }  
+   
+   string splitterRef {
+      ptrType = "WATEelement";
+      IOstatus = "input";
+      description = "a reference to the WATE splitter element, which holds the bypass ratio";
+   } 
+   
+   defaultHideLevel = 1;
+   
+   real rtbb;
+   real xcld1;
+   real xcld1b;
+   real xcld2b;
+   real stgLengthPrimary;
+   
+   defaultHideLevel = 0;
+   
+   // ??? always 1 for HiBypassFan
+   numContainedStages = 1;
+   
+   FlowStation flowSt2;
+   flowSt2.hide(1);
+   
+/**
+ *
+ ****************************************************************/
+   void calcStgLength(int stgNum) {
+   //       calculate the component length for primary stream (stgLength)
+   //       and bypass stream (stgLengthBypass).
+   //       the axial length of rotor blades is divided by sqrt 2
+   //       to account for the average pitch setting of the blades.
+   //         bladeLen_stg - axial length of rotor
+   //         statorLen_stg - axial length of stator
+
+         real d1 = RSlenRatioPreSplit;
+         real d1b = RSlenRatioPostSplit;
+         real d2b = RSlenRatioBypass;
+
+         if (calcStatorWt  &&  d1b == 0.) { d1b = 2.0; }
+         if (!S_RearFrame.isEmpty()  &&  d2b == 0.) { d2b = 1.5; }
+         if (calcStatorWt == 0) { d2b = 0.0; }
+         if (!S_RearFrame.isEmpty() && S_RearFrame.isStator) { d2b=0.0; }
+              
+         bladeLen_stg[stgNum] = (bladeHt/stgAR) / (sqrt(2.));
+         xcld1 = d1 * bladeLen_stg[stgNum];
+         xcld1b = d1b * bladeLen_stg[stgNum];
+         xcld2b = d2b * bladeLen_stg[stgNum];
+         stgLength = bladeLen_stg[stgNum] + xcld1;
+         statorLen_stg[stgNum] = 0.;
+         if (calcStatorWt > 0) {  
+            statorLen_stg[stgNum] = statorHt / statorAR; 
+         }
+         stgLengthBypass = stgLength + xcld1b + statorLen_stg[stgNum] + xcld2b;
+   //  ***** the portion of the stage to account for gap beteen rows has
+   //        been cut in half mainly due to the already long stage lengths
+   //        in low rotorAR blades.
+
+         spacerLen_stg[stgNum]= rotorStatorSpacePct * bladeLen_stg[stgNum];
+   }
+
+
+   
+/**
+ *       calculate stator height (statorHt) in inches.
+ *
+ ****************************************************************/
+   real calcStatorHeight() {  
+      real rhbb;
+      real bpr = splitterRef->des_BPR;
+      
+      // ???
+      flowSt2.copyFlowStatic("des_Fl_I");
+      flowSt2.setTotalTP(stgTempOut,stgPout);
+      
+      real gam = flowSt2.gamt;
+      real wi = flowSt2.W;
+      real a1c1 = calcDuctArea(stgTempOut,stgPout,wi,gam,stgMN-deltaMN);
+      
+      if(geometryType == "ConstHubRadius") {
+        rhbb = bladeHubRadius - delrhb;
+        rtbb = sqrt(rhbb**2 + a1c1/PI);
+
+      } 
+      else if(geometryType == "ConstMeanRadius") {
+        rtbb = sqrt(rmean**2 + a1c1/(2*PI));
+        rhbb = sqrt(rmean**2 - a1c1/(2*PI));
+
+      } 
+      else if(geometryType == "ConstTipRadius") {
+        rtbb = bladeTipRadius - delrtb;
+        rhbb = sqrt(rtbb**2 - a1c1/PI);
+      }
+      rhbb *= 12.0;
+      rtbb *= 12.0;
+
+      return rtbb - sqrt((rtbb*rtbb+bpr*rhbb*rhbb)/(1.+bpr));
+   }
+
+      
+/**
+ *
+ ****************************************************************/
+   real calcNumStatorBlades() {
+      if (statorSolidity == 0.) { 
+         return 2*numBlades+2;
+      }
+      else {
+         return WATEaxialCompressor::calcNumStatorBlades();
+      }
+   }
+   
+/**
+ *
+ ****************************************************************/
+   void removeGapLength() { } // empty
+
+/**
+ * return blade length in inches
+ ****************************************************************/
+   real calcBladeLength() {
+      return bladeHt/stgAR/sqrt(2.); 
+   }
+   
+/**
+ *
+ ****************************************************************/
+   real calcFanContainmentRingWt()
+   {
+      if (numContainedStages)   {
+        return 2.0*bladeLen_stg[stage]*PI*
+               (2.*(12.*bladeHubRadius+bladeHt)+contRingRadialThickness)*
+               contRingRadialThickness*containmentDensity;
+      } 
+      return 0.;
+   }     
+
+/**
+ *  account for smaller stator height in a fanh component
+ ****************************************************************/
+   void calcRearFrame() {
+       if (!S_RearFrame.isEmpty()) {
+         S_RearFrame.tipRadius = rtbb;
+         S_RearFrame.hubRadius = rtbb-statorHt;
+         S_RearFrame.execute();
+         rearFrameWt = S_RearFrame.weight;
+         rearFrameLength = S_RearFrame.length;
+       }
+   }      
+ 
+   
+/**
+ *    compressor is fanh (hight bypass fan).
+ *    calculate component length for primary stream (stgLengthPrimary).
+ *    calculate component length for bypass stream (bypassLength).
+ ****************************************************************/
+  void calcTotalLengths() {  
+      stgLengthPrimary += frontFrameLength + igvLength;
+      bypassLength +=  frontFrameLength + igvLength + rearFrameLength;
+  } 
+
+
+/**
+ ****************************************************************/
+  real calcCaseThickness() {
+     return 0.15;
+  }  
+ 
+   
+/**
+ *
+ ****************************************************************/
+  int verify() {
+     int ret=WATEfan::verify();
+     if(splitterRef == "") {
+        splitterRef = findDownStreamComponent("WATEsplitter");
+        if(splitterRef == "") {
+           error("splitterRef must not be blank");
+           ret = 0;
+        }
+     }
+     return ret;
+  }  
+  
+  
+  
+/**
+ *
+ ****************************************************************/
+  void calcGeometry() {
+
+      real x[8], y[8], sx[7], sy[7];
+      real x1[2],y1[2],x2[2],y2[2];
+      real xaray[4], yaray[4], xaray2[4], yaray2[4],yarayn[4];
+
+      int ip;
+      int ii;
+ 
+//     draw outline of component.
+      
+      sx[0] = inPort.axialPosition; // tleng(idn1) - aleng(i);
+      sy[0] = inPort.innerRadius; //ri(1,iup1);
+      sx[1] = sx[0];
+      sy[1] = inPort.outerRadius; //ro(1,iup1);
+      sy[2] = outPort.outerRadius; //ro(2,idn1);      
+      sx[2] = sx[1] + length;
+      
+      sx[3] = sx[2] + (bypassLength-length);      
+      sx[4] = sx[3];      
+      
+      sy[3] = splitterRef->outPortSecondary.outerRadiusDwn;  //ro(2,idn2);
+      sy[4] = splitterRef->outPortSecondary.innerRadiusDwn;   // ri(2,idn2); 
+      
+      sx[5] = sx[2]; //sx[3] - (bypassLength-length);
+      sy[5] = sy[4];
+      sx[6] = sx[5];
+      sy[6] = outPort.innerRadiusDwn; //ri(2,idn1);
+      
+      addPolygon(sx,sy,drawDepth,1);
+ 
+      real xm1 = (sy[6]-sy[0])/(sx[6]-sx[0]);
+      real b1 = sy[0]-xm1*sx[0];
+      real xm2 = (sy[2]-sy[1])/(sx[2]-sx[1]);
+      real b2 = sy[1]-xm2*sx[1];
+      
+      real ffLen=0.;
+      if(!S_FrontFrame.isEmpty()) {
+         S_FrontFrame.child.calcGeometry();
+         ffLen = S_FrontFrame.length;
+      }
+ 
+//     do not shade igv
+      if(igvType != "NONE") {
+        xaray[0] = sx[0] + ffLen;
+        yaray[0] = xm1 * xaray[0] + b1;
+        xaray[1] = sx[1] + ffLen;
+        yaray[1] = xm2 * xaray[1] + b2;
+        xaray[3] = xaray[0] + igvLength - spacerLen_stg[0];
+        yaray[3] = xm1 * xaray[3] + b1;
+        xaray[2] = xaray[3];
+        yaray[2] = xm2 * xaray[2] + b2;       
+ 
+        setStyle("fill: white;");  
+        addPolygon(xaray,yaray, drawDepth);  
+
+        for(ii=0; ii<4; ++ii) { 
+          yarayn[ii] = -yaray[ii];
+        }
+        setStyle("fill: black;");  
+        addPolygon(xaray,yarayn, drawDepth);  
+                
+        setStyle(""); 
+         
+//
+//jjc  the following lines added to draw actuators for variable inlet
+//jjc  guide vanes only
+//
+        real hite=0.;
+        if(igvType=="VARIABLE") {
+          hite = 1.9;
+          if(hite < contRingRadialThickness && numContainedStages>= 1) { 
+             hite = contRingRadialThickness + 1.0; 
+          } 
+          x[0] = xaray[0] + 0.5*igvLength;
+          y[0] = xm2 * x[0] + b2;
+          x[1] = x[0];
+          y[1] = y[0] + hite;
+          x[2] = x[0] + 1.0;
+          y[2] = y[1];
+          x[3] = x[2];
+          y[3] = y[2] - 0.25;
+          x[4] = x[3] + 0.5;
+          y[4] = y[3];
+          x[5] = x[4];
+          y[5] = y[4] + 0.5;
+          x[6] = x[5] - 0.5;
+          y[6] = y[5];
+          x[7] = x[2];
+          y[7] = y[2];
+          
+          addPolyLine(x,y,drawDepth,1); 
+        }
+      } // end igvType=="NONE"
+ 
+//     ***   shade the rotor blade.   **
+      xaray2[0] = sx[0] + ffLen + igvLength;
+      yaray2[0] = xm1 * xaray2[0] + b1;
+      xaray2[1] = xaray2[0];
+      yaray2[1] = xm2 * xaray2[1] + b2;
+      xaray2[3]  = xaray2[0] + bladeLen_stg[0]; //xclr(1,i);
+      yaray2[3]  = xm1 * xaray2[3] + b1;
+      xaray2[2]  = xaray2[3];
+      yaray2[2]  = xm2 * xaray2[2] + b2;
+      
+      setStyle("fill: black;");  
+      addPolygon(xaray2,yaray2,drawDepth,1);
+      
+      S_Disk.child.calcGeometry();
+       
+//
+//jjc  the following lines will draw fan containment rings over the
+//jjc  rotors of the high bypass fan.
+//      
+      real x_cr[5],y_cr[5];
+      
+      x1[0] = xaray2[0] - 0.5*bladeLen_stg[0];//xclr(1,i);
+      y1[0] = xm2*x1[0] + b2;
+      x1[1] = x1[0];
+      y1[1] = y1[0] + contRingRadialThickness;//dcont[i];
+ 
+      x2[0] = xaray2[3] + 0.5*bladeLen_stg[0];//xclr(1,i);
+      y2[0] = xm2*x2[0] + b2;
+      x2[1] = x2[0];
+      y2[1] = y2[0] + contRingRadialThickness;//dcont[i];
+ 
+      x_cr[0] = x1[0];
+      y_cr[0] = y1[0];
+      x_cr[1] = x1[1];
+      y_cr[1] = y1[1];
+      x_cr[2] = x2[1];
+      y_cr[2] = y2[1];
+      x_cr[3] = x2[0];
+      y_cr[3] = y2[0];
+      x_cr[4] = x1[0];
+      y_cr[4] = y1[0];
+      addPolyLine(x_cr,y_cr,drawDepth,1);
+      
+      setStyle("fill: red;"); 
+      addPolygon(x_cr,y_cr,drawDepth,1);  
+      setStyle(""); 
+ 
+//     ***   do not shade stator blade.   **
+ 
+      xm1 = (sy[4]-sy[5])/(sx[4]-sx[5]);
+      b1 = sy[5]-xm1*sx[5];
+      xm2 = (sy[3]-sy[2])/(sx[3]-sx[2]);
+      b2 = sy[2]-xm2*sx[2];
+ 
+      xaray[0] = xaray2[3] + xcld1 + xcld1b;
+      xaray[1] = xaray[0];
+      xaray[2] = xaray[0] + statorLen_stg[0];//xcls(1,i);
+      xaray[3] = xaray[2];
+      
+      yaray[0] = xm1 * xaray[0] + b1;
+      yaray[1] = xm2 * xaray[1] + b2;
+      yaray[2] = xm2 * xaray[2] + b2;
+      yaray[3] = xm1 * xaray[3] + b1;
+      
+      if(calcStatorWt) {
+        setStyle("fill: white;"); 
+        addPolygon(xaray,yaray,drawDepth,1);  
+        setStyle(""); 
+      }
+      
+      if(!S_RearFrame.isEmpty()) {
+         S_RearFrame.child.calcGeometry();
+      }
+ }
+  
+             
+}
+
+#endif
+
+

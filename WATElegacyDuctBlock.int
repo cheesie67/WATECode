@@ -1,0 +1,91 @@
+
+#ifndef _WATELEGACYDUCTBLOCK_INT
+#define _WATELEGACYDUCTBLOCK_INT
+
+
+/**
+ *
+ ****************************************************************/
+class WATElegacyDuctBlock extends UserTextBlock
+{
+   SimpleBlock bodyBlock {
+     body = "\nGAMB=????.??" + 
+            "  WA=????.??" +
+            "  PO=?????.??" +
+            "  TO=????.??" +
+            "  FAI=????.??" +
+            "  AM=????.??\n\n"+      
+            "TOMAX=?????.???"+
+            "  POMAX=????.???\n\n"+            
+            "RH=  ??????.??"+ 
+            "   RT=????.??"+ 
+            "   LENG=????.??\n"+
+            "AREA=??????.???"+ 
+            "  RHO=  ?.???"+
+            "  MACH=  ??.???\n\n"+       
+            "WTC(OUTER)   WTC(INNER)   WT(TOTAL)    TMIN\n"+
+            "????.????   ????.????     ????.???? ????.???\n\n";
+          
+     vars = { 
+        "tmpFS.gamt",
+        "tmpFS.W",
+        "tmpFS.Pt*144.",
+        "tmpFS.Tt",
+        "tmpFS.FAR",
+        "MNin_in",
+        "max_TtIn.val",
+        "safetyFactor*max_PtIn.val",
+        "hubRadius",
+        "tipRadius",
+        "length",
+        "ductArea/144.",
+        "material.rho(max_TtIn.val)",
+        "MNin",
+        "caseWt",
+        "innerCaseWt",
+        "weight",
+        "tmin"
+     }          
+   } // end bodyBlock  
+          
+   WATElegacyFrameCustomBlock frameBlock;
+   
+   scopingObj.trigger = 1;
+
+
+  /**
+   *
+   ****************************************************************/
+   void variableChanged(string nm, any val) {
+      if(nm=="scopingObj") {
+         bodyBlock.scopingObj = scopingObj;
+         frameBlock.scopingObj = scopingObj+".S_Frame";
+      }      
+   }
+             
+  /**
+   *
+   ****************************************************************/
+   void update() {
+      int i;
+      
+      filledBlock = { };
+      filledBlock.append("");
+      filledBlock.append("****** "+scopingObj->isA()+
+                         " ("+scopingObj->getPathName()+") ******");
+      filledBlock.append("");
+      
+      bodyBlock.update();
+      filledBlock += bodyBlock.filledBlock;
+                             
+      if(!(scopingObj->S_Frame.isEmpty())) {
+         frameBlock.update();
+         filledBlock += frameBlock.filledBlock;
+      }
+   }
+}
+
+#endif
+
+
+

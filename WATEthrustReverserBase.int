@@ -1,0 +1,13 @@
+
+#ifndef WATETHRUSTREVERSERBASE_H
+#define WATETHRUSTREVERSERBASE_H
+
+
+class WATEthrustReverserBase extends WATEsubelement
+{
+}
+
+   
+#endif
+   
+   

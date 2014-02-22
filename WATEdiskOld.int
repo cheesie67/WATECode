@@ -1,0 +1,61 @@
+#ifndef _WATEDISKOLD_
+#define _WATEDISKOLD_
+
+extern int stage;
+extern real bladeStress;
+extern real bladeHubRadius;
+
+
+/*
+ * Performs weight estimation of disks using old calculation method
+ ***************************************************************************/
+class WATEdiskOld extends WATEdiskBase
+{
+   void calculate() {
+      int isFan = parent.parent.parent.hasInterface("WATEfan");
+      real density = material.rho(Tstress);
+      real volume=0.;
+      real bhd2 = bladeHubRadius*bladeHubRadius*4.;
+      
+      real stressFactor = bladeStress * bladeHubRadius / 100000.;
+      
+      // the if logic below has some holes, so I'm adding the following
+      // line to calculate a volume in the event we fall through all of the ifs
+      volume = (.11+.003875*stressFactor)*bhd2;
+      
+      if (density > .2) {
+         if (stressFactor > .8) { 
+            volume=(.172121-.1543155*stressFactor+.10808*stressFactor**2-
+                    .0090774*stressFactor**3)*bhd2; 
+         }
+         else if (stressFactor > 4.) { 
+            volume=(-.5015+.3*stressFactor)*bhd2; 
+         }
+      }
+      else if (isFan) {
+         if(stage > 2) {
+            volume = (.11+.00789*stressFactor)*bhd2;
+            if (stressFactor > .4) { 
+               volume=(.16262-.2138542*stressFactor+.23954613*stressFactor**2-
+                       .03515625*stressFactor**3)*bhd2;
+            }
+            else if (stressFactor > 2.4)  { 
+               volume=(-.2326+.3199*stressFactor)*bhd2; 
+            }
+         }
+         else if (stressFactor  <= 5.2)  {
+            volume = (.11+.4496*stressFactor)*bhd2;
+            if (stressFactor > 2.4)  { 
+               volume=(.9458+.1014*stressFactor)*bhd2; 
+            }
+         }
+      }
+      
+      diskWt = volume * density;
+      boreRadius = 1.1*shaftRef->outerDiameter*0.5; 
+      boreRadius_stg[stage] = boreRadius;
+   } // end calculate
+   
+}
+
+#endif

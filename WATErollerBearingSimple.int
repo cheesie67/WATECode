@@ -1,0 +1,42 @@
+#ifndef _WATEROLLERBEARINGSIMPLE_
+#define _WATEROLLERBEARINGSIMPLE_
+
+//
+// WATErollerBearingSimple is a subelement of WATEshaft. It calculates the 
+// weight of a group of roller bearings at a particular axial location along 
+// the shaft.
+
+class WATErollerBearingSimple extends WATEbearingBase
+{
+   real rollerWt;
+   
+//
+//     calculate bearing weight
+//
+   void calculate() {
+      real radius = diameter*0.5;
+      real tbear = 0.3;
+      real density = material.rho(maxTemp);
+
+      real r1 = outerDiameter*0.5; // outerDiameter comes from parent shaft
+
+      real r3 = r1 + radius + tbear;
+      real r4 = r3 + radius + tbear;
+      real nroller = PI/asin(radius/(r1+radius));
+
+      // set numBearings to nroller, rounding up if nroller has a fractional 
+      // part that's >= .5
+      numBearings = nroller;
+      if((nroller - numBearings) >= 0.5) { ++numBearings; }
+      nroller = numBearings;
+
+      length = 2.0*diameter;
+      rollerWt = density*nroller*PI*length*radius*radius;
+      
+      caseWt = 4.0*PI*r3*tbear*(diameter+length+2.0*tbear)*density;
+      weight = rollerWt + caseWt + PI*r4*(9.*diameter*tbear)*density;
+   }
+}
+
+#endif
+

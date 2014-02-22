@@ -1,0 +1,441 @@
+
+#ifndef WATEDUCTBASE_H
+#define WATEDUCTBASE_H
+
+//
+// LAST INSPECTION DATE: *not inspected*
+//
+//  EXTERNAL DEPENDENCIES
+//
+//    C_GRAVITY
+//    S_Frame.hubRadius
+//    S_Frame.tipRadius
+//    S_Frame.weight
+//    S_ThrustReverser.weight
+//    WATEOutputPort* radiusSettingPort
+
+extern real S_Frame.weight;
+extern real S_ThrustReverser.weight;
+
+class WATEductBase extends WATEelement
+{
+  //DESVAL[2]
+  real PtMax_in {
+    IOstatus = "input";    units = "psia" ;
+    description = "Max duct pressure. If zero, then WATE will determine the max value";
+  }  
+  
+  real TtMax_in {
+    IOstatus = "input"; //??? find out units
+    description = "Max duct temperature. If zero, then WATE will determine the max value";
+  }
+
+  real tinmax;
+
+  //DESVAL[6]
+  real lengthHeightRatio {
+    value = 1.0 ;    IOstatus = "input";    units = "none" ;
+    description = "Length to height ratio." ;
+  }     
+
+  //DESVAL[7]
+  string radiusSettingPort {
+    IOstatus = "input";
+    description = "Name of the Port used to set the mean radius if meanRadius_in is 0.0. If blank, then inPort is used" ;
+    ptrType = "WATEOutputPort";
+  }   
+
+  //DESVAL[8]
+  real meanRadius_in {
+    IOstatus = "input";    units = "in" ;
+    description = "Mean duct radius. If zero, mean radius set by radiusSettingPort or inPort" ;
+  }    
+
+  //DESVAL(11)
+  real outerRR {
+    IOstatus = "input";    units = "none" ;
+    description = "Duct outer radius ratio (used to move duct to specific radial location)" ;
+  } 
+
+  //DESVAL(12)
+  real reverserLR {
+    value = 0.2 ;    IOstatus = "input";    units = "none" ;
+    description = "Length ratio where reverser length is applied" ;
+  }
+
+  real length_in {
+     IOstatus = "input";  units = "ft";
+     description = "if set, this fixes the length of the duct";
+  }
+  
+  real MNin_in {
+     IOstatus = "input";  units = "none";
+     description = "if set, this fixes the entrance mach number";
+  }
+  
+  int prevComponentIsCentrif {
+     IOstatus = "input";
+     description = "if TRUE, the upstream component is centrifugal and we have to make adjustments to our geometry";
+  }
+  
+  real hubRadius;
+  real tipRadius;
+  real MNin;
+  real ductArea;
+  real tmin;
+  
+  real innerCaseWt;
+  real caseWt;
+  
+  real safetyFactor=1.5;
+  
+  FlowStation des_Fl_I; // design point FlowStation
+      
+  MaxSaver max_TtIn {
+     var = "Fl_I.Tt";
+  }
+  
+  MaxSaver max_PtIn {
+     var = "Fl_I.Pt";
+  }
+  
+  WATEmaterial material { type = "Ti_17"; }
+  
+  Socket S_ThrustReverser;
+  Socket S_Frame;
+  
+  WATEInputPort inPort;
+  WATEOutputPort outPort;
+
+  FlowStation tmpFS;
+   
+  /*
+   *
+   *****************************************************************/
+   void calculate() {
+      
+      real refHubRadius;
+      real refTipRadius;
+      real meanDiameter; // was in ft
+      real hubTipRatio;
+      real pinmax;
+      real refStress;
+      real rho;
+   
+      inPort.innerRadius = inPort.innerRadiusUp;
+      inPort.outerRadius = inPort.outerRadiusUp;
+
+      // ??? apparently the WATE code doesn't use flow values from the
+      // design point for the duct calculation, so just grab the 
+      // current values instead. This appears to be inconsistent with
+      // all of the other components - BAN
+#ifdef WATE_LEGACY
+      tmpFS.copyFlowStatic(componentRef+".Fl_I");
+#else
+      tmpFS.copyFlowStatic("des_Fl_I");
+#endif     
+      if(meanRadius_in == 0.0) {
+         if(radiusSettingPort != "") {
+            refHubRadius = radiusSettingPort->innerRadius;
+            refTipRadius = radiusSettingPort->outerRadius;
+         }
+         else {
+            refHubRadius = inPort.innerRadius;
+            refTipRadius = inPort.outerRadius;
+         }
+         meanDiameter=(refHubRadius+refTipRadius);
+      }
+      else {
+         meanDiameter=2.*meanRadius_in;
+      }
+      
+
+//  **** input for specified max. duct pressure
+      if(PtMax_in != 0.) { pinmax=PtMax_in; }
+      else {  // set up safety factor on max pressure        
+         pinmax = safetyFactor*max_PtIn.val;
+      }
+       
+      if(TtMax_in != 0.) { tinmax=TtMax_in; }
+      else {
+         tinmax = max_TtIn.val;
+      }
+      
+      rho = material.rho(tinmax);
+      
+      if(tinmax > 1160.) {
+         refStress = 70000.;
+      }
+      else {
+         refStress = 50000.;
+      }      
+      
+      if(MNin_in != 0.0) {
+         MNin = MNin_in;
+      }
+      else {
+         MNin = tmpFS.MN;
+      }
+      
+#ifdef WATE_LEGACY
+      if(ductArea == 0.0) {
+         ductArea = calcDuctArea (tmpFS.Tt, tmpFS.Pt, tmpFS.W, tmpFS.gamt,MNin); 
+      }
+#else
+      // just take area, mach from the aero model
+      ductArea = tmpFS.Aphy;
+      if(ductArea == 0.0) {
+        ductArea = calcDuctArea (tmpFS.Tt, tmpFS.Pt, tmpFS.W, tmpFS.gamt,
+                                 MNin); 
+      }
+#endif
+            
+      real tmp;
+      hubTipRatio=0.;
+
+      if(meanDiameter != 0.) { 
+         tmp = ductArea/(PI*meanDiameter*meanDiameter);
+         hubTipRatio=(1.-tmp)/(1.+tmp); 
+      } 
+      
+      if (radiusSettingPort != "") {
+         tipRadius = refTipRadius;
+         hubRadius = refHubRadius;
+      }
+      else {
+         tipRadius=meanDiameter/(1.+hubTipRatio);
+         hubRadius=tipRadius*hubTipRatio;
+      }
+      
+      if (length_in > 0.) { 
+         length = length_in; 
+      } 
+      else {
+         length = calcLength();
+      }
+      
+      tmin = pinmax * tipRadius/refStress;
+      if(tmin < 0.05) { tmin=0.05; } 
+      
+      real h,rtp,rhp;
+      if(outerRR != 0.0) {
+         h = length*reverserLR;
+         rtp = tipRadius * outerRR;
+         rhp = sqrt(rtp*rtp + hubRadius*hubRadius - tipRadius*tipRadius);
+         caseWt = PI*(tipRadius+rtp)*sqrt((tipRadius-rtp)**2+h*h)*rho*tmin;
+         caseWt += PI*2.*rtp*(1.-reverserLR)*length*rho*tmin;
+         innerCaseWt = PI*(hubRadius+rhp)*sqrt((hubRadius-rhp)**2+h*h)*rho*tmin;
+         innerCaseWt += PI*2.*rhp*(1.-reverserLR)*length*rho*tmin;
+      }
+      else {
+         caseWt = PI*tipRadius*2.0*length*rho*tmin;
+         innerCaseWt = PI*length*hubRadius*2.0*rho*tmin;
+      }
+ 
+      if(!S_ThrustReverser.isEmpty()) {
+         S_ThrustReverser.execute();
+         weight = caseWt+innerCaseWt+S_ThrustReverser.weight;
+      }
+      else {
+         weight = caseWt+innerCaseWt;
+      }
+   
+ 
+//
+//jjc  added following to allow frames in ducts
+//
+      if(!S_Frame.isEmpty()) {
+         S_Frame.tipRadius = tipRadius;
+         S_Frame.hubRadius = hubRadius;
+         S_Frame.execute();
+         weight += S_Frame.weight;
+      }
+      
+      if(prevComponentIsCentrif) {
+          length = (inPort.outerRadius-inPort.innerRadius)*lengthHeightRatio;
+          outPort.outerRadius  = inPort.outerRadius;
+	  outPort.innerRadius  = inPort.innerRadius;
+      }
+      else {
+          inPort.outerRadius  = tipRadius;
+          inPort.innerRadius  = hubRadius;
+          outPort.outerRadius  = tipRadius;
+          outPort.innerRadius  = hubRadius;
+      }
+ 
+      outPort.axialPosition = inPort.axialPosition + length;
+      cg = length/2.0 + inPort.axialPosition;
+   }
+      
+
+  /*
+   *
+   *****************************************************************/
+   real calcLength() {
+      return lengthHeightRatio*(tipRadius-hubRadius);
+   } 
+
+       
+  /*
+   *
+   *****************************************************************/
+   void saveMechDesignData() {
+     des_Fl_I.copyFlowStatic(componentRef+".Fl_I");
+  }
+
+  
+  /**
+   * 
+   ********************************************************************/    
+   real calcDuctArea (real inTemp, real Pinput, real Win, real gamma, 
+                      real machNum) 
+   {
+       real R = 53.34;
+
+       if (machNum <= 0.) { 
+          throwError("negative or 0 mach number in calcDuctArea()");
+       }
+       
+       real ret = Win/machNum*sqrt(R/gamma*C_GRAVITY*inTemp)/Pinput*
+                (1.+(gamma-1.)/2.*machNum*machNum)**((gamma+1.)/(gamma-1.)/2.)/C_GRAVITY;
+       return ret;
+   }
+   
+   
+  /**
+   * Calculates the inner radius at absolute position x
+   ********************************************************************/    
+   real findInnerRadius(real x) {
+      real y1 = inPort.innerRadius;
+      real y2 = outPort.innerRadius;
+      real x1 = inPort.axialPosition;
+      real x2 = outPort.axialPosition;
+      
+      if(y2>y1) {
+         return y1 + (x-x1)*((y2-y1)/(x2-x1));
+      }
+      
+      return y2 + (x2-x)*((y1-y2)/(x2-x1));
+   }
+   
+      
+  /**
+   * Calculates the outer radius at absolute position x
+   ********************************************************************/    
+   real findOuterRadius(real x) {
+      real y1 = inPort.outerRadius;
+      real y2 = outPort.outerRadius;
+      real x1 = inPort.axialPosition;
+      real x2 = outPort.axialPosition;
+      
+      if(y2>y1) {
+         return y1 + (x-x1)*((y2-y1)/(x2-x1));
+      }
+      
+      return y2 + (x2-x)*((y1-y2)/(x2-x1));
+   }
+   
+      
+  /**
+   * 
+   ********************************************************************/    
+   void calcGeometry()
+   {
+      int ij,ik;
+      int resolution=30; // number of points in duct wall
+      real xdiff=length;
+      real diff,yo,ymax,theata,cnst,frLen,frGap;
+      real x[],y[],sy[4];
+      real xdf[4],ydf[4];
+      
+      if(length==0) { return; }
+      
+      if(outerRR != 0.0 && x.entries() != 8) {
+         x.resize(8);
+         y.resize(8);
+      }
+      else if(x.entries() != resolution) {
+         x.resize(resolution);
+         y.resize(resolution);
+      }
+          
+      x[0]  = inPort.axialPosition; //tleng(idn1) - aleng(i);
+      x[1]  = x[0];
+      sy[0] = inPort.innerRadius; //ri(1,iup1);
+      sy[1] = inPort.outerRadius; //ro(1,iup1);
+      
+      addLine(x[0],sy[0],x[1],sy[1],drawDepth,1);
+      
+      sy[2] = outPort.innerRadiusDwn; 
+      sy[3] = outPort.outerRadiusDwn; 
+      
+      if(outerRR != 0.0) {
+        x[0] = inPort.axialPosition; 
+        y[0] = sy[1];
+        x[1] = x[0] + reverserLR*length;
+        y[1] = y[0] * outerRR;
+        x[2] = x[0] + (1.-reverserLR)*length;
+        y[2] = y[1];
+        x[3] = x[0] + length;
+        y[3] = sy[3];
+        x[4] = x[3];
+        y[4] = sy[2];
+        x[5] = x[2];
+        y[5] = sqrt(y[1]**2+sy[0]**2-y[0]**2);
+        x[6] = x[1];
+        y[6] = y[5];
+        x[7] = x[0];
+        y[7] = sy[0];
+        if(reverserLR >= 0.5) {
+          x[2] = x[3];
+          y[2] = y[3];
+          x[5] = x[4];
+          y[5] = y[4];
+        }
+        addPolyLine(x,y,drawDepth,1);
+      }
+      else {  // outerRR=0
+          for(ij=0; ij<2; ++ij) { //  each iteration is half of the annulus
+            diff   = sy[ij+2]-sy[ij];
+            yo     = sy[ij]+diff/2.;
+            ymax   = abs(diff/2.);
+            theata = 0.0;
+            if (diff > 0.0) { theata=PI; } 
+            for(ik=0; ik<resolution; ++ik) {
+              y[ik] = ymax*cos(theata)+yo;
+              if (ik != 0) { x[ik] = x[ik-1]+xdiff/(resolution-1.); }               
+              theata += PI/resolution;
+            } 
+            
+            addPolyLine(x,y,drawDepth,1);
+            
+ //
+ //jjc  find and store x & y locations for frames if present
+ //
+            if(!S_Frame.isEmpty()) {
+               cnst = 0.0;
+               frLen = S_Frame.length;
+               frGap = S_Frame.gap;
+               if(diff > 0.0) { cnst = PI; } 
+               ydf[ij] = ymax*cos(frGap/length*PI+cnst)+yo;
+               ydf[3-ij] = ymax*cos((frGap+frLen)/length*PI+cnst)+yo;
+            }
+          } // end loop over each annulus
+       }
+       
+ //
+ //  draw frame in duct if present
+ //
+       if(!S_Frame.isEmpty()) {
+          xdf[0] = S_Frame.frontAxialPosition;
+          xdf[1] = xdf[0];
+          xdf[2] = xdf[0]+S_Frame.length;
+          xdf[3] = xdf[2]; 
+      
+          S_Frame.child.calcDuctFrameGeometry(xdf,ydf);
+       }
+    } 
+}   
+
+#endif
+

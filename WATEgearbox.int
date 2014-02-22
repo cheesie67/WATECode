@@ -1,0 +1,70 @@
+#ifndef _WATEGEARBOX_
+#define _WATEGEARBOX_
+
+class WATEgearbox extends WATEsubelement
+{
+  //compressor DESVAL(10)
+  real gearRatio {
+    value = 1.0; IOstatus = "input";    units = "none";
+    description="for LPC only - Ratio of compressor RPM to connected fan RPM";
+  }
+
+  //compressor DESVAL(78)
+  real s_gearboxWt {
+    value = 1.0; IOstatus = "input";    units = "none";
+    description="Scalar on calculated gearbox weight If zero, no scaling done";
+  }
+
+  // compressor DESVAL(79)
+  real maxSHP {
+    IOstatus = "input";    units = "hp";
+    description = "Maximum shaft horsepower for gearbox calculations";
+  }
+
+  real rpmAtMaxSHP {
+    IOstatus = "input";    units = "rpm";
+    description = "RPM corresponding to max shaft horsepower";    
+  }
+
+  string shaftRef {
+    IOstatus = "input";
+    description = "name of Shaft that this gearbox connects to";
+  }
+
+  real torque {
+    IOstatus = "output";
+    description = "torque at maxSHP";
+  }
+
+
+  void calculate() {
+
+    string s;
+    real tmpArr[];
+
+    if (gearRatio  ==  0.) { gearRatio=1.; }
+
+    // Obtain maximum horsepower and its respective rpm.
+    // Calculate torque.
+    if(shaftRef == "") {
+       throwError("shaftRef is blank - aborting calculation");
+    }
+    maxSHP = shaftRef->max_pwr.val;
+//    rpmAtMaxSHP = shaftRef->max_pwr.associatedVals[0];
+    s = shaftRef+".max_pwr.associatedVals";
+    tmpArr = s->value;
+    rpmAtMaxSHP = tmpArr[0];
+
+    torque = maxSHP * 5252. / rpmAtMaxSHP; 
+
+    //     Gear box weight at DAC.
+    weight = 0.103 * gearRatio**0.15 * torque**0.81;
+    
+    if(s_gearboxWt != 0.) {
+      weight *= s_gearboxWt;
+    }
+  }
+}
+
+#endif
+

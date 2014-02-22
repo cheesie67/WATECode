@@ -1,0 +1,84 @@
+
+#ifndef _WATEDUCTBLOCK_INT
+#define _WATEDUCTBLOCK_INT
+
+
+/**
+ *
+ ****************************************************************/
+class WATEductBlock extends UserTextBlock
+{
+   WATElegacyFrameBaseBlock frameBlock;
+   
+   scopingObj.trigger = 1;
+
+
+  /**
+   *
+   ****************************************************************/
+   void variableChanged(string nm, any val) {
+      if(nm=="scopingObj") {
+         frameBlock.scopingObj = scopingObj+".S_Frame";
+      }      
+   }
+   
+   
+  /**
+   *
+   ****************************************************************/
+   void update() {
+      filledBlock = { };
+      
+      filledBlock.append("");
+      filledBlock.append("**** "+scopingObj->isA()+
+                         " ("+scopingObj->getPathName()+") ****");
+      filledBlock.append("");
+      
+      filledBlock.append("DESIGN FLOW CONDITIONS:");
+      filledBlock.append("   Pt:    "+toStr(scopingObj->des_FS.Pt*144.,"f9.2")+
+                         "  Tt: "+toStr(scopingObj->des_FS.Tt,"f9.2"));
+      
+      filledBlock.append("   gamma: "+toStr(scopingObj->des_FS.gamt,"f9.2")+
+                         "  W:  "+toStr(scopingObj->des_FS.W,"f9.2"));
+      
+      filledBlock.append("   MN:    "+toStr(scopingObj->MNin,"f9.2"));
+      filledBlock.append("");
+      
+      filledBlock.append("Max Temperature: "+toStr(scopingObj->max_TtIn.val,"f9.3"));
+      filledBlock.append("Max deltaP:      "+toStr(scopingObj->max_deltaP.val,"f9.3"));
+      filledBlock.append("");
+      
+      if(!(scopingObj->S_Frame.isEmpty())) {
+         frameBlock.update();
+         filledBlock += frameBlock.filledBlock;
+      }
+      
+      filledBlock.append("Duct material: '"+scopingObj->material.type+"'");
+      filledBlock.append("   density: "+toStr(scopingObj->material.rho(scopingObj->des_FS.Tt),"f7.3")+
+                         "  sy:"+toStr(scopingObj->material.sy(scopingObj->des_FS.Tt),"f12.3")); 
+      filledBlock.append("");
+       
+      filledBlock.append("Inner Wall Radius:  "+toStr(scopingObj->radiusInnerWall,"f8.3")+
+                         "  Inner Wall Thickness:  "+toStr(scopingObj->thicknessInnerWall,"f8.3"));
+      
+      filledBlock.append("Outer Wall Radius:  "+toStr(scopingObj->radiusOuterWall,"f8.3")+
+                         "  Outer Wall Thickness:  "+toStr(scopingObj->thicknessOuterWall,"f8.3"));
+      filledBlock.append("");
+      
+      filledBlock.append("Area:    "+toStr(scopingObj->areaIn/144.,"f8.3"));
+      
+      filledBlock.append("Length:  "+toStr( scopingObj->length,"f8.3"));
+      filledBlock.append("");
+      
+      filledBlock.append("WEIGHT SUMMARY:");
+      filledBlock.append("Inner Wall Weight:  "+toStr( scopingObj->innerWallWt,"f8.3"));
+      filledBlock.append("Outer Wall Weight:  "+toStr( scopingObj->outerWallWt,"f8.3"));
+      filledBlock.append("");
+      filledBlock.append("Total Weight:       "+toStr( scopingObj->weight,"f8.3"));
+    }
+} 
+
+#endif
+
+
+

@@ -1,0 +1,203 @@
+
+#ifndef _WATELEGACYAXIALTURBINEBLOCK_INT
+#define _WATELEGACYAXIALTURBINEBLOCK_INT
+
+/**
+ *
+ ****************************************************************/
+class WATElegacyAxialTurbineBlock extends UserTextBlock
+{
+   WATElegacyFrameCustomBlock rearFrameBlock_cust;   
+   WATElegacyFrameBaseBlock rearFrameBlock_base;   
+
+   scopingObj.trigger = 1;
+   
+  /**
+   *
+   ****************************************************************/
+   void variableChanged(string nm, any val) {
+      if(nm=="scopingObj") {
+         rearFrameBlock_cust.scopingObj = scopingObj+".S_RearFrame";
+         rearFrameBlock_base.scopingObj = scopingObj+".S_RearFrame";
+      }      
+   }
+
+  /**
+   *
+   ****************************************************************/
+   void updateStageInfo() {
+      int ns = scopingObj->numStages;
+      int stage;
+      
+      for(stage=0; stage<ns; ++stage) {
+         filledBlock.append("\nSTAGE   "+toStr(stage+1,"i"));
+         
+       if(!scopingObj->S_Disk.isEmpty() && scopingObj->S_Disk.child.hasInterface("WATEdiskMTC")) {
+          filledBlock.append("Material chosen for disk (" + 
+                             scopingObj->diskMaterial_stg[stage] + ")");
+          filledBlock.append("Disk shape = " + scopingObj->S_Disk.child.shape);
+       }
+       filledBlock.append("WDISK      WISD    WID    WBLADE  WVANE    WNB    WCASE     "
+                        + "AR     ARS   TLBLADE  TLVANE   RHOB    RHOD    RHOS    RHOC"
+                        + "   NS");
+       filledBlock.append(toStr( scopingObj->diskWt_stg[stage],"f7.2")
+                        +" "+toStr( scopingObj->interStgSealDiskWt_stg[stage],"f7.2") 
+                        +" "+toStr( scopingObj->inducerDiskWt_stg[stage],"f7.2")
+                        +" "+toStr( scopingObj->bladeWt_stg[stage],"f7.2")
+                        +" "+toStr( scopingObj->statorWt_stg[stage],"f7.2")
+                        +" "+toStr( scopingObj->nutsBoltsWt_stg[stage],"f7.2")
+                        +" "+toStr( scopingObj->caseWt_stg[stage],"f7.2")
+                        +" "+toStr( scopingObj->AR_stg[stage],"f7.2") 
+                        +" "+toStr( scopingObj->statorAR_stg[stage],"f7.2") 
+                        +" "+toStr( scopingObj->bladeLen_stg[stage],"f7.2") 
+                        +" "+toStr( scopingObj->statorLen_stg[stage],"f7.2") 
+                        +" "+toStr( scopingObj->bladeDensity_stg[stage],"f7.3") 
+                        +" "+toStr( scopingObj->diskDensity_stg[stage],"f7.3") 
+                        +" "+toStr( scopingObj->statorDensity_stg[stage],"f7.3") 
+                        +" "+toStr( scopingObj->caseDensity_stg[stage],"f7.3") 
+                        +" "+toStr( scopingObj->numStatorBlades_stg[stage],"i3"));
+       
+       filledBlock.append("WSSFX  WTRS  WTSHRD WDRUMX WTRSHD WTDSB  WTACC");
+       filledBlock.append(" " + toStr( scopingObj->statorFlangeWt_stg[stage],"f5.1") 
+                        + " " + toStr( scopingObj->rubStripWt_stg[stage],"f5.1")
+                        + " " + toStr( scopingObj->statorShroudWt_stg[stage],"f6.3")
+                        + " " + toStr( scopingObj->rotorDrumWt_stg[stage],"f6.3")
+                        + " " + toStr( scopingObj->rotorShroudWt_stg[stage],"f6.3")
+                        + " " + toStr( scopingObj->diskSpacerBarWt_stg[stage],"f6.3")
+                        + " " + toStr( scopingObj->activeCaseCoolingWt_stg[stage],"f6.3"));
+       
+       filledBlock.append("  PR     DEL H  MACH    AREA   R HUB   R TIP   NB  MAXUTIP"
+                        + "   STR    WEIGHT  LENGTH   STAGE I");
+       filledBlock.append(" " + toStr( scopingObj->PR_stg[stage],"f7.4")
+                        + " " + toStr( scopingObj->deltaStgEnthalpy_stg[stage],"f6.1")
+                        + " " + toStr( scopingObj->MNin_stg[stage],"f6.3")
+                        + " " + toStr( scopingObj->area_stg[stage],"f7.3")
+                        + " " + toStr( scopingObj->hubRadius_stg[stage],"f6.2")
+                        + " " + toStr( scopingObj->tipRadius_stg[stage],"f7.2")
+                        + " " + toStr( scopingObj->numBlades_stg[stage],"i4")
+                        + " " + toStr( scopingObj->bladeTipSpd_stg[stage],"f7.1")
+                        + " " + toStr( scopingObj->bladeStress_stg[stage],"f7.0")
+                        + " " + toStr( scopingObj->weight_stg[stage],"f7.1")
+                        + " " + toStr( scopingObj->length_stg[stage],"f6.2")
+                        + " " + toStr( scopingObj->inertia_stg[stage],"f10.1"));
+      } // end stage loop
+   }
+   
+                
+  /**
+   *
+   ****************************************************************/
+   void update() {
+      filledBlock = { };
+      filledBlock.append("");
+      filledBlock.append("******* "+scopingObj->isA()+" ("+scopingObj->getPathName()+
+                         ") *******");
+      filledBlock.append("");
+      
+       
+      filledBlock.append("DUCT (entrance)");
+      filledBlock.append(" M NO     VEL   T TOT   P TOT    P STAT    AREA     GAM");
+      filledBlock.append(" " + toStr( scopingObj->MNin,"f6.3")
+                       + " " + toStr( scopingObj->des_Fl_I.V,"f6.0")
+                       + " " + toStr( scopingObj->des_Fl_I.Tt,"f6.0")
+                       + " " + toStr( scopingObj->des_Fl_I.Pt*144.,"f8.0")
+                       + " " + toStr( scopingObj->des_Fl_I.Ps*144,"f8.0")
+                       + " " + toStr( scopingObj->areaIn,"f10.4")
+                       + " " + toStr( scopingObj->des_Fl_I.gamt,"f8.4"));
+      filledBlock.append("");
+
+      filledBlock.append("UTIPMAX   STRESS     DEN     TR      H/T");
+      filledBlock.append(" " + toStr( scopingObj->bladeTipSpd_stg[0],"f8.1")
+                       + " " + toStr( scopingObj->stg1BladeStress,"f8.1")
+                       + " " + toStr( scopingObj->bladeDensity_stg[0],"f8.3")
+                       + " " + toStr( scopingObj->bladeTaperRatio,"f8.3")
+                       + " " + toStr( scopingObj->hubTipRatio,"f8.3"));
+      filledBlock.append("");
+
+      filledBlock.append("TURBINE " + scopingObj->getName() + " MECHANICAL DESIGN");
+      filledBlock.append("");
+      filledBlock.append("  H/T       N STG   LOADING   AREA   GE LOADING");
+      filledBlock.append(" " + toStr( scopingObj->hubTipRatio,"f8.3")
+                       + " " + toStr( scopingObj->numStages,"i8")+" "
+                       + " " + toStr( scopingObj->loadingParam,"f8.3")
+                       + " " + toStr( scopingObj->areaIn,"f8.3")
+                       + " " + toStr( scopingObj->GEloadingParam,"f8.3"));
+
+      filledBlock.append("    UT        RTIP     RHUB   DEL H    RPM     MAXRPM    TORQ");
+      filledBlock.append(" " + toStr( scopingObj->bladeTipSpd_stg[0],"f9.2")
+                       + " " + toStr( scopingObj->bladeTipRadiusSave*12.,"f9.2")
+                       + " " + toStr( scopingObj->bladeHubRadiusSave*12.,"f9.2")
+                       + " " + toStr( abs(scopingObj->des_Fl_O.ht - scopingObj->des_Fl_I.ht),"f9.2")
+                       + " " + toStr( scopingObj->spoolRPM,"f9.2")
+                       + " " + toStr( scopingObj->maxRPM,"f9.2")
+                       + " " + toStr( scopingObj->torq,"f9.1"));
+      filledBlock.append("");
+    
+        
+      updateStageInfo();
+      
+
+      filledBlock.append("\nTURBINE COMPONENT SUMMARY");
+      filledBlock.append("  WTDSK     WTISD     WTID    WTDSB    WTBLD    WTRSH    "
+                       + "WTDRM    WTRBS     WTST    WTSSH     WTSF    WTCAS    WTNAB"
+                       + "     WTCC");
+      filledBlock.append(" " + toStr( scopingObj->totDiskWt,"f8.1") 
+                       + " " + toStr( scopingObj->totInterStgSealDiskWt,"f8.1") 
+                       + " " + toStr( scopingObj->totInducerDiskWt,"f8.1") 
+                       + " " + toStr( scopingObj->totDiskSpacerWt,"f8.1") 
+                       + " " + toStr( scopingObj->totBladeWt,"f8.1") 
+                       + " " + toStr( scopingObj->totRotorShroudWt,"f8.1") 
+                       + " " + toStr( scopingObj->totRotorDrumWt,"f8.1") 
+                       + " " + toStr( scopingObj->totRubStripWt,"f8.1") 
+                       + " " + toStr( scopingObj->totStatorWt,"f8.1") 
+                       + " " + toStr( scopingObj->totStatorShroudWt,"f8.1") 
+                       + " " + toStr( scopingObj->totStatorFlangeWt,"f8.1") 
+                       + " " + toStr( scopingObj->totCaseWt,"f8.1") 
+                       + " " + toStr( scopingObj->totNutsBoltsWt,"f8.1") 
+                       + " " + toStr( scopingObj->totActiveCaseCoolingWt,"f8.1"));
+      filledBlock.append("");
+
+      if(!scopingObj->S_RearFrame.isEmpty()) {
+         if(scopingObj->S_RearFrame.child.hasInterface("WATEframeCustom")) {
+            rearFrameBlock_cust.update();
+            filledBlock += rearFrameBlock_cust.filledBlock;
+         }
+         else {
+            rearFrameBlock_base.update();
+            filledBlock += rearFrameBlock_base.filledBlock;
+         }
+      }
+
+      filledBlock.append("  N STG   LENGTH   WEIGHT    CENGRA   INERTIA");
+      filledBlock.append(" " + toStr( scopingObj->numStages,"i6")
+                       + " " + toStr( scopingObj->length,"f8.2")
+                       + " " + toStr( scopingObj->weight,"f9.2")
+                       + " " + toStr( scopingObj->cgcomp,"f7.1")
+                       + " " + toStr( scopingObj->totInertia,"f10.1"));
+      filledBlock.append("");
+
+      filledBlock.append("    PR       TR      AD EF     PO       TO      TO.1");
+      filledBlock.append(" " + toStr( scopingObj->des_Fl_I.Pt*144./scopingObj->stgExitPt,"f8.2")
+                       + " " + toStr( scopingObj->des_Fl_I.Tt/scopingObj->stgExitTt,"f8.2")
+                       + " " + toStr( scopingObj->des_eff,"f8.4")
+                       + " " + toStr( scopingObj->stgExitPt,"f8.2")
+                       + " " + toStr( scopingObj->stgExitTt,"f8.2")
+                       + "        ");
+      filledBlock.append("  H IN     H OUT     AREA   FLOW     HP");
+      filledBlock.append(" " + toStr( scopingObj->enthalpyIn,"f8.2")
+                       + " " + toStr( scopingObj->stgExitEnthalpy,"f8.2")
+                       + "                "
+                       + " " + toStr( scopingObj->des_HP,"f8.2"));
+      filledBlock.append("");
+
+      filledBlock.append("\n******************* TOTAL COMP WEIGHT IS " + 
+                         " " + toStr(scopingObj->weight));
+      filledBlock.append("");
+   }
+}
+
+
+#endif
+
+
+

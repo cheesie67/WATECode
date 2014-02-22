@@ -1,0 +1,17 @@
+#ifndef WATEAUGMENTOR
+#define WATEAUGMENTOR
+
+
+class WATEaugmentor extends WATEburnerBase
+{
+   Vflow = 300.;   
+   
+   void calcMeanDiam() {      
+   }
+   
+   void calcInnerDiam() {
+      innerDiam = 0.;
+   }    
+}
+
+#endif

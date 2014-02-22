@@ -1,0 +1,34 @@
+   
+#ifndef _WATENOZZLE2DPLUG_
+#define _WATENOZZLE2DPLUG_
+   
+   
+class WATEnozzle2Dplug extends WATEnozzlePlug
+{
+   /**
+    *
+    ***********************************************************************/
+   real calcSurfaceArea() { // for 2D plug
+      real area1,area2,xplg,thetar,delr;      
+      real roplug = inPort.innerRadius; 
+      
+      if(lengthRatio  <=  1.0){
+        xplg  = length;
+        area1 = PI*roplug*sqrt(roplug*roplug+xplg*xplg);
+        return area1;
+      } 
+      else {
+        xplg  = axialPosition - throatLocation;
+        thetar = atan(-roplug/xplg);
+        area1 = 2.0*width*xplg/cos(thetar);
+        
+        xplg = throatLocation - transDuctLength - mixerEjLength;
+        delr = throatInnerRadius-inPort.innerRadius;
+        thetar = atan(delr/xplg);
+        area2 = 2.0*width*xplg/cos(thetar);
+     }
+     return area1 + area2;
+   }
+}
+   
+#endif

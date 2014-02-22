@@ -1,0 +1,60 @@
+
+
+#ifndef _WATELEGACYSHAFTBLOCK_INT
+#define _WATELEGACYSHAFTBLOCK_INT
+
+
+/**
+ *
+ ****************************************************************/
+class WATElegacyShaftBlock extends UserTextBlock
+{     
+  /**
+   *
+   ****************************************************************/
+   void update() {
+     filledBlock = { };
+
+     filledBlock.append("");
+     filledBlock.append("******** "+scopingObj->isA() + 
+                        " ("+scopingObj->getPathName()+ ")*********");
+     filledBlock.append("");
+     
+     filledBlock.append("MAX TORQUE CONDITION"); 
+     filledBlock.append("***********************");
+     filledBlock.append(" TORQUE");           
+     filledBlock.append(toStr( scopingObj->maxTorque,"f8.3"));
+     filledBlock.append("***********************");
+     filledBlock.append("SHAFT  " + scopingObj->getName());
+     filledBlock.append("      DO       DI      LENG      DN      WT");
+     filledBlock.append(toStr( scopingObj->outerDiameter,"f8.3")
+                      + " " + toStr( scopingObj->innerDiameter,"f8.3")
+                      + " " + toStr( scopingObj->length,"f8.3")
+                      + " " + toStr( scopingObj->outerDiameter*scopingObj->speed*25.4/1000000.,"f8.3")
+                      + " " + toStr( scopingObj->weight-scopingObj->bearWt,"f8.3"));
+     filledBlock.append("");
+     filledBlock.append("");
+
+     int i;
+     for(i=0; i<scopingObj->bearings.entries(); ++i) {
+        filledBlock.append("BEARING " + scopingObj->bearings[i]->getName() 
+                         + "  WT = " + toStr( scopingObj->bearings[i]->weight,"f8.3"));
+     }
+     filledBlock.append("");
+     filledBlock.append("TOTAL SHAFT WEIGHT = " + toStr( scopingObj->weight,"f8.3"));
+     filledBlock.append("");
+
+     filledBlock.append("TOTAL INERTIA OF THIS SPOOL IS   " 
+                      + toStr( scopingObj->inertia,"f12.2"));
+     
+   }
+}
+
+#endif
+
+
+
+
+
+
+

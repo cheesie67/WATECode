@@ -1,0 +1,14 @@
+#ifndef __WATELEGACYFRAMEBASEBLOCK__
+#define __WATELEGACYFRAMEBASEBLOCK__
+
+
+/**
+ *
+ ****************************************************************/
+class WATElegacyFrameBaseBlock extends SimpleBlock
+{
+   body = "\nFRAME WT  =   ?????.???\n\n";   
+   vars = { "weight" }
+}
+ 
+#endif

@@ -1,0 +1,308 @@
+#ifndef _WATECOMPRESSORBASE_
+#define _WATECOMPRESSORBASE_
+
+//
+// LAST INSPECTION DATE: *not inspected*
+//
+//  EXTERNAL DEPENDENCIES
+//
+//   C_GRAVITY
+
+#include <UnitNames.ncp> 
+ 
+/**
+ *  
+ ********************************************************************/    
+class WATEcompressorBase extends WATEelement
+{
+   // default values 
+   real areaIn = .55;
+
+   real maxPressureRatio = 1.7;
+
+   // aero design point data
+   FlowStation des_Fl_I;
+   FlowStation des_Fl_O;
+   real des_areaIn { units = LBF_PER_FT2; }
+   real des_eff;
+   real des_PR;
+   real des_Nmech;
+   real des_pwr; // only used for output
+   
+  //DESVAL(81)
+  real maxSpdRatio_in {
+    IOstatus = "input";    units = "none";
+    description = "Ratio of Nmax to Ndesign. Overrides calculation of maxSpdRatio";
+  }
+
+  real maxSpdRatio {
+    IOstatus = "output";    units = "none";
+    description = "Ratio of Nmax to Ndesign";
+  }
+      
+  //DESVAL(8)
+  real hubTipRatioIn {
+    value = 0.45;  IOstatus = "input";    units = "none";
+    description = "Hub to tip radius ratio of compressor inlet";
+  }            
+
+  //DESVAL(21)
+  real stg1BladeAR {
+    value = 4.;  IOstatus = "input";    units = "none";
+    description = "First stage blade aspect ratio";
+  }           
+
+  //DESVAL(22)
+  real lastStgBladeAR {
+    value = 3.;  IOstatus = "input";    units = "none";
+    description = "Last stage blade aspect ratio";
+  }    
+
+  //DESVAL(19)
+  real bladeVolumeFactor {
+    value = 0.199;  IOstatus = "input";    units = "none";
+    description = "Blade volume factor.";
+  }      
+
+  //DESVAL(39)
+  real statorVolumeFactor {
+    value = 0.199;  IOstatus = "input";    units = "none";
+    description = "Stator volume factor.";
+  }            
+
+  //DESVAL(23)
+  real bladeTaperRatio {
+    value = .556; IOstatus = "input";    units = "none";
+    description = "Blade taper ratio.";
+  }     
+
+  //DESVAL(1)
+  real MNin {
+    IOstatus = "input";    units = "none";
+    description = "Entrance MN";
+  }            
+
+  //DESVAL(2)
+  real MNout {
+    value = 0.45; IOstatus = "input";    units = "none";
+    description = "Exit MN";
+  }
+
+  //IWMEC(5)  
+  int numStages {
+    IOstatus = "output";
+    description = "Number of stages, calculated from pressure ratio";
+  }
+
+  //DESVAL(16)
+  int numBlades {
+    IOstatus = "input";    units = "none";
+    description = "Number of rotor blades.";
+  }   
+
+  // user overrides for variables that can be set to override calculations
+  int numStages_in {
+    IOstatus = "input";
+    description = "Number of stages. Overrides calculation of numStages";
+  }
+
+  int numBlades_in {
+    IOstatus = "input";
+    description = "Number of rotor blades. Overrides calculation of numBlades";
+  }  
+
+  real length_in {
+    IOstatus = "input";    units = "in";
+    description = "length of compressor. Overrides calculation of length";
+  }  
+
+
+  real spoolRPM;   
+  real s_Nmech {
+     value = 1.0;
+  }
+  
+  real workFactor;
+  
+  real frontFrameWt,rearFrameWt;
+  real frontFrameLength, rearFrameLength;
+  real totInertia;
+  
+  real inertia_stg[];
+  real hubRadius_stg[];            
+  real tipRadius_stg[];
+  real PR_stg[];
+  real length_stg[];
+  real weight_stg[];
+  real Tin_stg[];
+  real MNin_stg[];
+  real area_stg[];
+  real Tstress_stg[];
+  real deltaStgEnthalpy_stg[];   
+            
+  int numBlades_stg[];
+  real bladeWt_stg[];
+  real bladeDensity_stg[];
+  real bladeTipSpd_stg[];
+  real bladeStress_stg[];
+  real bladeLen_stg[];
+  string bladeMaterial_stg[];
+  
+
+  WATEInputPort inPort;
+  WATEOutputPort outPort;
+  
+   
+  Socket S_FrontFrame {
+	 description = "Socket for custom front frame subelement";
+	 socketType = "WATEframeBase";
+  }
+
+  Socket S_RearFrame {
+	 description = "Socket for custom rear frame subelement";
+	 socketType = "WATEframeBase";
+  }
+  
+  
+  /**
+   * this routine converts polytropic to adiabatic efficiency. 
+   ********************************************************************/    
+  real effd(real pr, real pefd, real ga)
+  {
+    real ef;
+    if(pr!=1.) {
+      if (pr <= 0.) {
+         pr=-1./pr;
+         if (pefd >= 0.) { 
+            pefd=log(1.-pefd*(1.-pr**((ga-1.)/ga)))/log(pr**((ga-1.)/ga)); 
+         }
+         if (pefd <= 0.) { pefd=-pefd; }
+         ef=(1.-pr**(pefd/ga*(ga-1.)))/(1.-pr**((ga-1.)/ga));
+      }
+      else {
+         if (pefd >= 0.) { 
+            pefd=log(pr**((ga-1.)/ga))/log(1.+(pr**((ga-1.)/ga)-1.)/pefd);
+         }
+         if (pefd <= 0.) { pefd=-pefd; }
+         ef=(pr**((ga-1.)/ga)-1.)/(pr**((ga-1.)/ga/pefd)-1.);
+      }
+    }
+
+    return ef;
+  }
+
+  /**
+   * this routine converts adiabatic to polytropic efficiency.
+   ********************************************************************/    
+  real peffd(real pr, real pefd, real ga)
+  {
+    if(pr!=1.) {
+      if (pr <= 0.) {
+         pr=-1./pr;
+         if (pefd >= 0.) { 
+            pefd=log(1.-pefd*(1.-pr**((ga-1.)/ga)))/log(pr**((ga-1.)/ga)); 
+         }
+         if (pefd <= 0.) { pefd=-pefd; }
+      }
+      else {
+         if (pefd >= 0.) { 
+            pefd=log(pr**((ga-1.)/ga))/log(1.+(pr**((ga-1.)/ga)-1.)/pefd);
+         }
+         if (pefd <= 0.) { pefd=-pefd; }
+      }
+      pefd=-pefd;
+    }
+
+    return pefd;
+  }
+
+
+  /**
+   * 
+   ********************************************************************/    
+  void saveMechDesignData() {
+     des_Nmech = componentRef->Sh_O.Nmech;
+     des_Fl_I.copyFlowStatic(componentRef+".Fl_I");
+     des_Fl_O.copyFlowStatic(componentRef+".Fl_O");
+     real des_Win = componentRef->Fl_I.W;
+     real des_PtIn = componentRef->Fl_I.Pt;
+     real des_TtIn = componentRef->Fl_I.Tt;
+     real des_gamIn = componentRef->Fl_I.gamt;
+     des_PR = componentRef->PR;
+     des_pwr = componentRef->pwr;
+     des_eff = componentRef->eff;
+     real des_MNin = des_Fl_I.MN;
+     
+     // ??? this doesn't make sense
+     if(des_MNin == 0.0) { des_MNin = areaIn; }
+     
+     des_areaIn = calcDuctArea(des_TtIn,des_PtIn,des_Win,des_gamIn,des_MNin);
+     des_areaIn /= 144.;
+  }
+  
+  
+  /**
+   * FOR DESIGN CASE  CALCULATE AN AREA (area)
+   ********************************************************************/    
+   real calcDuctArea (real inTemp, real Pinput, real Win, real gamma, 
+                      real machNum) 
+   {
+       real R = 53.34;
+
+       if (machNum <= 0.) { 
+          throwError("negative or 0 mach number in calcDuctArea()");
+       }
+       
+       return Win/machNum*sqrt(R/gamma*C_GRAVITY*inTemp)/Pinput*
+                (1.+(gamma-1.)/2.*machNum*machNum)**((gamma+1.)/(gamma-1.)/2.)/C_GRAVITY;
+   }
+
+
+  /**
+   *
+   ***************************************************************/
+  real[] getMaxRadiusInfo() {
+    real maxRadInfo[2];
+
+    if(inPort.outerRadius > outPort.outerRadius) {
+       maxRadInfo[0] = inPort.outerRadius;
+       maxRadInfo[1] = inPort.axialPosition;
+    }
+    else {
+       maxRadInfo[0] = outPort.outerRadius;
+       maxRadInfo[1] = outPort.axialPosition;
+    }
+    return maxRadInfo;
+  }
+
+  
+  /**
+   *
+   ***************************************************************/
+  void resizeStgArrays() {
+     // make sure all arrays are the correct size
+     if(weight_stg.entries() != numStages) {
+        weight_stg.resize(numStages);
+        length_stg.resize(numStages);
+        hubRadius_stg.resize(numStages);            
+        tipRadius_stg.resize(numStages);
+        PR_stg.resize(numStages);
+        bladeLen_stg.resize(numStages);
+        bladeWt_stg.resize(numStages);
+        bladeDensity_stg.resize(numStages);
+        deltaStgEnthalpy_stg.resize(numStages);
+        MNin_stg.resize(numStages);
+        area_stg.resize(numStages);
+        numBlades_stg.resize(numStages);
+        bladeTipSpd_stg.resize(numStages);
+        bladeStress_stg.resize(numStages);
+        Tin_stg.resize(numStages);
+        Tstress_stg.resize(numStages);
+        bladeMaterial_stg.resize(numStages);
+        inertia_stg.resize(numStages);         
+     }
+  }
+}
+
+ 
+#endif

@@ -1,0 +1,73 @@
+#ifndef WATEBYPASSDUCT
+#define WATEBYPASSDUCT
+
+/**
+ *  
+ ***************************************************************************/
+class WATEbypassDuct extends WATEductBase
+{
+   string otherMixerInPort;
+   otherMixerInPort.hide(2);
+
+  /**
+  *  
+  ***************************************************************************/
+  void calculate() {
+      WATEductBase::calculate();
+
+      //??? not sure about this one, but it's necessary to get
+      // agreement with FORTRAN version
+      outPort.axialPosition = otherMixerInPort->axialPosition;
+      cg = length/2.0 + (outPort.axialPosition - length);
+   }
+
+  /**
+   *  
+   ***************************************************************************/
+   real calcLength()
+   {
+      real xback = otherMixerInPort->axialPosition;
+      real xfront = inPort.axialPosition;
+      return xback - xfront;
+   }
+
+  /**
+   *  
+   ***************************************************************************/
+   int verify() {
+      findOtherMixerInPort();
+      if(otherMixerInPort=="") {
+         return 0;
+      }
+      
+      return 1;
+   }
+   
+   
+  /**
+   *  find the WATEmixer connected to this component through the outPort
+   ***************************************************************************/
+   void findOtherMixerInPort()
+   {
+      string pnames[] = outPort.getLinkedPortName();
+      string mixName  = pnames[0]->getParentName();
+      if(!mixName->hasInterface("WATEmixerBase")) {
+         error("this WATEbypassDuct is not connected to a WATEmixer");
+      }      
+      
+      // figure out which WATEmixer input port is not connected to us
+      string pname = mixName+".innerInPort";
+      pnames = pname->getLinkedPortName();
+      if(pnames[0] == getPathName()+".outPort") {  // it's ours
+         otherMixerInPort = mixName+".outerInPort";
+      }
+      else {  // it's the one we're not connected to
+         otherMixerInPort = mixName+".innerInPort";
+      }
+   }
+   
+}
+
+#endif
+
+

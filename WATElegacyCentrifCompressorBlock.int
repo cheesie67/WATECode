@@ -1,0 +1,146 @@
+
+#ifndef _WATELEGACYCENTRIFCOMPRESSORBLOCK_INT
+#define _WATELEGACYCENTRIFCOMPRESSORBLOCK_INT
+
+
+/**
+ *
+ ****************************************************************/
+class WATElegacyCentrifCompressorBlock extends UserTextBlock
+{
+  /**
+   *
+   ****************************************************************/
+   SimpleBlock bodyBlock1 {
+     body = "\n\nDUCT\n"+
+            " M NO     VEL    T TOT    P TOT   P STAT   AREA      GAM\n"+
+            "??.??? ?????? ?????? ???????? ???????? ?????.????  ???.????\n";
+            
+     vars = {
+        "MNin",
+        "des_Fl_I.V",
+        "Tin",
+        "Pin*144.",
+        "des_Fl_I.Ps*144.",
+        "areaIn",
+        "des_Fl_I.gamt"
+      };      
+   }
+   
+      
+   scopingObj.trigger = 1;
+   
+       
+  /**
+   *
+   ****************************************************************/
+   SimpleBlock bodyBlock2 {
+      body = "\n ***COMP HOUSING  ***\n"+
+             " WEIGHT=  ?????.?\n\n"+
+             " ***DIFFUSER***\n"+
+             " LENGTH= ???.??? WEIGHT=   ???.?\n\n"+
+             " ***GEAR BOX***\n"+
+             " SHP   =  ?????.? GEAR R=  ???.? SHAFT RPM=??????.?\n"+
+             " WEIGHT=  ????.?\n\n"+
+             "  N STG  WEIGHT   LENGTH  CENGRA  INERTIA\n"+
+             "   ??    ????.??  ???.??   ??.?   ?????.? \n\n"+
+             "\nDUCT\n"+
+             " M NO     VEL    T TOT    P TOT   P STAT   AREA      GAM\n"+
+             "??.???  ?????.? ?????.?  ??????.? ??????.? ?????.?  ???.???\n\n"+
+             "   PR    AD EF     PO       TO      HP\n"+
+             "  ??.??  ??.??   ?????.?  ????.?  ?????.?\n"+
+             "   HI      HO      WI     CWI\n"+ 
+             " ????.?  ????.?  ????.?   ???.??\n";
+            ;
+      
+      vars = {      
+            "housingWt",
+            "diffuserLength",
+            "diffuserWt",
+            "(S_Gearbox.isEmpty())?0.:S_GearBox.child.maxSHP",
+            "(S_Gearbox.isEmpty())?0.:S_GearBox.child.gearRatio",
+            "(S_Gearbox.isEmpty())?0.:S_GearBox.child.rpmAtMaxSHP",
+            "(S_Gearbox.isEmpty())?0.:S_GearBox.child.weight",
+            "numStages",
+            "weight",
+            "length",
+            "cgcomp",
+            "totInertia",
+            "des_Fl_O.MN", 
+            "des_Fl_O.V",
+            "des_Fl_O.Tt",
+            "des_Fl_O.Pt*144.",
+            "des_Fl_O.Ps*144.",
+            "areaOut",
+            "des_Fl_O.gamt",
+            "des_PR",
+            "des_eff",
+            "des_Fl_O.Pt*144.",
+            "des_Fl_O.Tt",
+            "-des_pwr",
+            "des_Fl_I.ht",
+            "des_Fl_O.ht",
+            "des_Fl_I.W",
+            "des_Fl_I.Wc"
+      };
+   }
+
+
+  /**
+   *
+   ****************************************************************/
+   void variableChanged(string nm, any val) {
+      if(nm=="scopingObj") {
+         bodyBlock1.scopingObj = scopingObj;
+         bodyBlock2.scopingObj = scopingObj;
+      }      
+   }
+
+  /**
+   *
+   ****************************************************************/
+   void updateStageInfo() {
+      int ns = scopingObj->numStages;
+      int stage;
+      
+      for(stage=0; stage<ns; ++stage) {
+         filledBlock.append("\nSTAGE   "+toStr(stage+1,"i"));
+
+          filledBlock.append(" STPR    RPM     RTIP     INERTIA   LENGTH    WEIGHT ");
+          filledBlock.append(toStr( scopingObj->PR_stg[stage],"f7.1") + " "
+               +toStr( scopingObj->spoolRPM,"f7.2") + " "
+               +toStr( scopingObj->tipRadius_stg[stage],"f7.2") + " "
+               +toStr( scopingObj->inertia_stg[stage],"f10.1") + " "
+               +toStr( scopingObj->length_stg[stage],"f7.1") + " "
+               +toStr( scopingObj->weight_stg[stage],"f7.1"));
+      } // end stage loop
+   }
+   
+                
+  /**
+   *
+   ****************************************************************/
+   void update() {
+      int i;
+      
+      filledBlock = { };
+      filledBlock.append("");
+      filledBlock.append("******* "+scopingObj->isA()+" ("+scopingObj->getPathName()+
+                         ") *******");
+      filledBlock.append("");
+      
+      bodyBlock1.update();
+      filledBlock += bodyBlock1.filledBlock;
+                             
+      updateStageInfo();
+      
+      bodyBlock2.update();
+      filledBlock += bodyBlock2.filledBlock;           
+   }
+}
+
+
+#endif
+
+
+

@@ -1,0 +1,41 @@
+#ifndef _WATEFRAMEBASE_H_
+#define _WATEFRAMEBASE_H_
+
+extern int parent.parent.parent.hasInterface(string);
+
+class WATEframeBase extends WATEsubelement
+{ 
+  real tipRadius;
+  real hubRadius;
+  
+  real frontAxialPosition;
+  real backAxialPosition;
+  real frontOuterRadius;
+  real backOuterRadius;
+  
+  int isFrontFrame; // if TRUE this is a front frame. If FALSE, it's a rear frame
+     
+  
+  real calcLength() {
+     real byp,spc;
+     int ns;
+     if(parent.parent.parent.hasInterface("WATEcompressorBase")) {
+        ns = numStages;
+        byp = bypassLength;
+        if(isFrontFrame) {
+           spc = spacerLen_stg[0];
+//           return bypassLength/(2.*numStages) + spacerLen_stg[0];        
+           return byp/(2.*ns) + spc;        
+        }
+        else {
+           return bypassLength/(2.*numStages);
+        }
+     }
+     return 0.0;
+  }
+  
+} // end class
+
+
+#endif
+

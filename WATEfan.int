@@ -1,0 +1,45 @@
+#ifndef _WATEFAN_
+#define _WATEFAN_
+
+//
+// LAST INSPECTION DATE: *not inspected*
+//
+//  EXTERNAL DEPENDENCIES
+//
+
+/*
+ *
+ ***************************************************************/
+class WATEfan extends WATEaxialCompressor 
+{
+   bladeSolidity = 1.10;
+   statorSolidity = 0.88;
+   bladeVolumeFactor = 0.199;
+   statorVolumeFactor = 0.109;
+   
+   maxLimit_stgPR = 2.15;
+   
+   
+   /*
+    *
+    ***************************************************************/
+   real calcCG() 
+   {
+      return length/2.0+inPort.axialPosition;
+   }
+
+   /*
+    *
+    ***************************************************************/
+   real calcNutsBoltsWt(int stg)
+   {
+      if(stg == 0) {
+         return 0;
+      }
+      else {
+         return (stg1HubRadius*12.*.75) * 2.* PI *.075 * bypassLength* .286;
+      }
+   } 
+}
+
+#endif

@@ -1,0 +1,109 @@
+
+#ifndef _WATENOZZLEPLUG_
+#define _WATENOZZLEPLUG_
+
+//
+// LAST INSPECTION DATE: *not inspected*
+//
+//  EXTERNAL DEPENDENCIES
+//
+//    parent.parent.length
+//    S_AcousticLiner.area
+//    S_AcousticLiner.weight
+//    max_TtIn.val
+//    inPort.innerRadius
+//    mixerEjLength
+//    throatInnerRadius
+//    throatLocation
+//    transDuctLength
+
+extern real S_AcousticLiner.weight;
+
+class WATEnozzlePlug extends WATEsubelement
+{
+   //DESVAL(13)
+   real lengthRatio {
+     value = 0.25;    IOstatus = "input";    units = "none" ;
+     description = "Nozzle to plug length ratio. 0 - 1.0 internal plug, >1 external plug" ;
+   }
+
+   real thickness {
+      value = 0.1 ;    IOstatus = "input";    units = "in" ;
+      description = "Plug material thickness. Default = 0.1" ;
+   }
+   
+   real wtCorrelation {
+      value = 1.0;    IOstatus = "input";    units = "none" ;
+      description = "Plug weight correlation factor." ;
+   }
+   
+   int isVariable {
+      IOstatus = "input";
+      description = "if TRUE, plug is moveable";
+   }
+   
+   real dplug;
+   
+   Socket S_AcousticLiner;
+   
+   WATEmaterial material { type = "A_286"; }
+   
+   /**
+    *
+    ***********************************************************************/
+   void calculate() {     
+      real timax = parent.parent.parent.max_TtIn.val;
+      real rho = material.rho(timax);
+      real area;
+      
+      length = lengthRatio * parent.parent.parent.length;
+
+      area = calcSurfaceArea();
+      weight = area*thickness*rho;
+      
+      if(isVariable) { weight *= 2.75; } // account for plug actuator weight
+      
+      
+      if(!S_AcousticLiner.isEmpty()) {
+         S_AcousticLiner.area = area;
+         S_AcousticLiner.execute();
+         weight += S_AcousticLiner.weight; 
+      }
+      
+      weight *= wtCorrelation;
+      
+      if(lengthRatio  >  1.) { 
+         dplug = length - parent.parent.parent.length; 
+      }
+      if(dplug  <=  0.0) { dplug = 0.0; }
+   }     
+          
+   /**
+    *
+    ***********************************************************************/
+   real calcSurfaceArea() { 
+      real xplg,roplug,area=0.0,r1,r2;
+
+      roplug = inPort.innerRadius; 
+      if(lengthRatio > 1.0) { 
+         xplg = length - throatLocation; 
+         roplug = throatInnerRadius; 
+      }
+      else { 
+         xplg = length; 
+      }
+      area = PI*roplug*sqrt(roplug*roplug+xplg*xplg);
+      
+      if(lengthRatio > 1.0) { 
+         r1 = inPort.innerRadius;
+         r2 = throatInnerRadius;
+         xplg = throatLocation - transDuctLength - mixerEjLength;
+         area += PI*(r1+r2)*sqrt((r1-r2)**2+xplg*xplg);
+      }
+      return area;
+   }
+   
+}
+
+#endif
+

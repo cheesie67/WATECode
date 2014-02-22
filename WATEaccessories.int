@@ -1,0 +1,47 @@
+#ifndef __WATEACCESSORIES__
+#define __WATEACCESSORIES__
+
+
+/*
+ * Calculates the engine accessory weight
+ ************************************************************************/  
+class WATEaccessories extends WATEsubelement {
+
+  real weight_in {
+     description = "if set, weight is fixed at this value";
+  }
+  real s_Wt = 0.095;
+
+  string inlets[];
+  inlets.ptrType = "WATEinletBase";
+
+  int verify() {
+     inlets = parent.parent.parent.list("WATEinletBase",0);
+     return WATEsubelement::verify();
+  }
+
+  void calculate() {
+      real bareWt = 0.0;
+      int i;
+
+      if(weight_in == 0.) {
+         bareWt = parent.parent.parent.weight;
+
+         if(s_Wt <= 0) { s_Wt = 0.1; } 
+         if(s_Wt > 1) { s_Wt = 1.; } 
+
+         for(i=0; i<inlets.entries(); ++i) {
+            bareWt = bareWt - inlets[i]->weight;
+         } 
+         weight = s_Wt*bareWt;
+      }
+      else {
+         weight = weight_in;
+      }
+  }
+
+} 
+
+#endif
+
+

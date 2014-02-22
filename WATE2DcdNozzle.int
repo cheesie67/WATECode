@@ -1,0 +1,665 @@
+
+#ifndef _WATE2DCDNOZZLE_
+#define _WATE2DCDNOZZLE_
+
+extern real S_Plug.length;
+
+class WATE2DcdNozzle extends WATEnozzleBase
+{
+   //IWMEC(12)
+   Option  hingePoint{
+     trigger = 0;
+     allowedValues = { "Inlet", "Throat" }
+     value = "Inlet";    IOstatus = "input" ;    units = "none";
+     description = "Variable nozzle hinge point" ;
+   }
+   
+   //DESVAL(10)
+   real  exitHeightWidthRatio{
+     value = 1.0; IOstatus = "input";    units = "none" ;
+     description = "Exit height to width ratio for 2-D nozzle types" ;
+   }
+   
+   //DESVAL(38)
+   real  splitterPlateLength_in {
+     IOstatus = "input";    units = "in" ;
+     description = "Acoustic splitter plate length. If zero, internal plug end to nozzle exit length is used" ;
+   }
+   real  splitterPlateLength {
+     IOstatus = "output";    units = "in" ;
+     description = "Acoustic splitter plate length." ;
+   }
+
+   //DESVAL(39)
+   real  splitterPlateThickness{
+     IOstatus = "input";    units = "in" ;
+     description = "Thickness of acoustic splitter plate measured from engine centerline" ;
+   }
+
+   real width;
+   real height;
+   
+//   real exitOuterRadius; 
+   real plugThickness;
+   real splitterWt;
+   real nozzleAcousticCoverage;
+   real sidewallThickness;
+   real acousticLinerThickness;
+   
+   real sidewallWt;
+   real wtacnz;
+   real wtacsw;
+   real wtconv;
+   real wtaccv;
+   real wtdiv;
+   real rhodiv;
+   real wtacdv;
+   
+   string AcousticTreatment;
+   string variability;
+  
+   defaultHideLevel = 2;
+   
+   real delr;
+   real thetao;
+   real thetai;
+   real f1;
+   real tin;
+   real caseThickness;
+   real rhocase;
+   real area;
+   real acarea;
+   real tacarea;
+   real rhoAcoustic;
+   real thetar;
+   real rhocon;
+   real strc;
+   real strd;
+   real ductThickness;
+   real tpluga;
+   
+   defaultHideLevel = 0;
+   
+   Socket S_SplitterAcousticLiner;
+
+   
+   WATEmaterial divPlateMaterial { type = "A_286"; }
+   
+   //DESVAL(22)
+   real divPlateThickness;
+   
+   WATEmaterial convPlateMaterial { type = "A_286"; }
+   
+   //DESVAL(24)
+   real convPlateThickness;
+   
+   
+   transDuctLDratio = 0.3;  // set default value
+
+
+   /**
+    *
+    ***********************************************************************/
+   void setDefaults()
+   {     
+       WATEnozzleBase::setDefaults();
+//
+//  add density & thickness spec. for divergent plate
+      rhodiv = divPlateMaterial.rho(timax);
+      if (rhodiv  ==  0.) { rhodiv = material.rho(timax); }
+//
+//  add density & thickness spec. for conergent plate
+      rhocon = convPlateMaterial.rho(timax);
+      if (rhocon  ==  0.) { rhocon = material.rho(timax); }
+
+//
+// set thickness variables equal to thickness as default value.
+// these values will be changed if thickness calculations are
+// called for (calcComponentThickness=1).
+ 
+      if (convPlateThickness  ==  0.) { convPlateThickness  = thickness; }
+      if (divPlateThickness  ==  0.) { divPlateThickness   = thickness; }
+ 
+//      if (divPlateMaterial.sy(timax)  ==  0.) { divPlateMaterial.sy = 80000.; }
+//      if (convPlateMaterial.sy(timax)  ==  0.) { convPlateMaterial.sy = 80000.; }
+      
+      strd = divPlateMaterial.sy(timax);
+      strc = convPlateMaterial.sy(timax);     
+   }
+   
+   
+     
+   /**
+    *
+    ***********************************************************************/
+   void calcNozzleExitRadii(){
+      
+      width = sqrt(exitArea/exitHeightWidthRatio);
+      height = width*exitHeightWidthRatio;
+
+//      if(exitOuterRadius  >  0) { xrout = exitOuterRadius; }
+//      if(exitOuterRadius  ==  0  ||  
+      if( (!S_Plug.isEmpty() && S_Plug.lengthRatio  <  1.0)) {
+        rin = 0.0;
+        xrout = exitArea/(2.0*width);
+      } 
+      else {
+        rin = xrout - throatArea/(2.0*width);
+      }
+ 
+      outPort.innerRadius = rin;
+      outPort.outerRadius = xrout;
+   }  
+
+   
+   /*
+    *
+    ***********************************************************************/
+   void calcNozzleWt() {
+     real r1,r2,f2,fd,beta,xdiv,xconv;
+     real rhoNozzle = material.rho(timax);
+     real pluglen = 0.0;
+     nozzleWt = 0.0;
+     
+     sidewallWt = 0.0;
+     innerCaseWt = 0.0;
+     
+     real delthr = length - throatLocation;
+     delr=ro2-ro1;
+     thetao=atan(delr/xnz);
+     delr=ri2-ri1;
+     thetai=atan(delr/xnz);
+     
+     if(!S_Plug.isEmpty()) {
+        pluglen = S_Plug.length;
+     }     
+          
+//
+//  calculate weight of sidewalls
+//
+// compute the thickness of the sidewall
+     if(calcComponentThickness  ==  1){
+       if (!S_Plug.isEmpty() && S_Plug.lengthRatio > 1.0) { 
+          fd = pluglen-throatLocation; 
+       }
+       else { fd=length-throatLocation; }
+       f1=(ro2+throatOuterRadius)/fd;
+       beta=.079806- f1*(.50594+ f1*(1.6598- f1*(.64442+ f1*.078385)));
+
+       sidewallThickness=sqrt(beta*pomax/str) * fd - acousticLinerThickness;
+       if(sidewallThickness  <  0.10) { sidewallThickness=0.10; }
+     }
+     if(!S_Plug.isEmpty() && S_Plug.lengthRatio > 1.0){
+       sidewallWt = 2.0*(ro2+throatOuterRadius)*(pluglen-throatLocation)*sidewallThickness*rhoNozzle;
+     } 
+     else {
+       sidewallWt = 2.0*(ro2+throatOuterRadius)*(length-throatLocation)*sidewallThickness*rhoNozzle;
+     }
+     sidewallWt += 2.0*(ro1+throatOuterRadius)*throatLocation*sidewallThickness*rhoNozzle;
+     nozzleWt += sidewallWt * wtCorrelation;
+     
+     if(!S_AcousticLiner.isEmpty()) {
+        S_AcousticLiner.area = sidewallWt/(sidewallThickness*rhoNozzle);
+        S_AcousticLiner.execute();
+        nozzleWt += S_AcousticLiner.weight * wtCorrelation;
+     }
+     
+//
+//  calculate weight of the top and bottom panels
+//
+// compute the thickness of the top and bottom panels
+     if(calcComponentThickness  ==  1){
+        f1=width/(xnz/cos(thetai));
+        beta=.079806-.50594*(f1)+1.6598*(f1)**2-.64442*(f1)**3+.078385*(f1)**4;
+        tin=sqrt(beta*pomax/str) * (xnz/cos(thetai)) - acousticLinerThickness;
+        if(tin  <  0.10) { tin=0.10; }
+//
+// compute the thickness of the case
+        f1=width/(xnz/cos(thetao));
+        beta=.079806-.50594*(f1)+1.6598*(f1)**2-.64442*(f1)**3+.078385*(f1)**4;
+        caseThickness=sqrt(beta*pomax/str) * xnz/cos(thetao);
+        if(caseThickness  <  0.10) { caseThickness=0.10; }
+     }
+
+     rhocase = rhoNozzle;
+     caseWt = 2.0*width*xnz*caseThickness/cos(thetao)*rhocase;
+     if(!S_Plug.isEmpty() && S_Plug.lengthRatio > 1.0) {
+       if(outerCaseInletRR  !=  1.){
+         delthr = length - throatLocation;
+         ro6 = throatOuterRadius + delthr*tan(flapThicknessAng*PI/180.);
+         outerCaseWt=2.0*width*throatLocation/cos(atan((ro5-ro6)/throatLocation))*caseThickness*rhocase;
+         outerCaseWt=outerCaseWt+2.0*width*delthr/cos(atan((ro6-ro2)/delthr))*caseThickness*rhocase;
+       }
+       if(AcousticTreatment=="NozzleOnly" || AcousticTreatment=="Nozzle&Plug" ||
+          AcousticTreatment=="Splitter&Nozzle" || AcousticTreatment=="Splitter&Nozzle&Plug"){
+         area = caseWt/(caseThickness*rhoNozzle);
+         acarea = acarea + area;
+         tacarea = tacarea + area*nozzleAcousticCoverage;
+         wtacnz = area*acousticLinerThickness*rhoAcoustic*nozzleAcousticCoverage + wtacsw;
+       }
+       if(!S_VariableGeometry.isEmpty()){
+         if (calcComponentThickness  !=  1.) { caseWt *= 2.75; }
+       }
+       caseWt += outerCaseWt;
+       nozzleWt = (caseWt + sidewallWt + transDuctWt) * wtCorrelation;
+     }
+     else { // plug length ratio <=1
+       if(outerCaseInletRR  !=  1.){
+         caseWt = 0.0;
+         delthr = length - throatLocation;
+         outerCaseWt=2.0*width*length/cos(atan((ro5-ro2)/length))*caseThickness*rhocase;
+         ro6 = ro2 + delthr*tan(flapThicknessAng*PI/180.);
+         if(S_Plug.isEmpty() || S_Plug.lengthRatio == 0.) {
+            ro6=throatOuterRadius+delthr*tan(flapThicknessAng*PI/180.);
+         }
+       }
+       r1 = inPort.outerRadius; // ro(1,nodei);
+       r2 = throatOuterRadius;
+       xconv = throatLocation - transDuctLength - mixerEjLength;
+       delr=r2-r1;
+       thetar=atan(delr/xconv);
+        if(calcComponentThickness  ==  1){
+           f2=(xconv/cos(thetar))/(ro2+throatOuterRadius);
+           beta=-.64452+f2*(1.9787+ f2*(-1.0692+ f2*(.25815 - f2*.023333)));
+           convPlateThickness=sqrt(beta*pomax/strc) * (xconv/cos(thetar));
+           if(convPlateThickness  <  0.10) { convPlateThickness=0.10; }
+       }
+
+       wtconv = 2.0*width*xconv/cos(thetar)*convPlateThickness*rhocon;
+       if(AcousticTreatment=="NozzleOnly" || AcousticTreatment=="Nozzle&Plug" ||
+          AcousticTreatment=="Splitter&Nozzle" || AcousticTreatment=="Splitter&Nozzle&Plug"){
+         area = wtconv/(convPlateThickness*rhocon);
+         acarea = acarea + area;
+         tacarea = tacarea + area*nozzleAcousticCoverage;
+         wtaccv = area*acousticLinerThickness*rhoAcoustic*nozzleAcousticCoverage;
+       }
+       if(!S_VariableGeometry.isEmpty()){
+         if (calcComponentThickness  !=  1.) { wtconv *= 2.75; }
+       }
+       r1 = throatOuterRadius;
+       r2 = outPort.outerRadius;
+       xdiv  = length - throatLocation;
+       delr=r2-r1;
+       thetar=atan(delr/xdiv);
+// compute the thickness of the divergent flaps
+       if(calcComponentThickness  ==  1){
+          f2=width/(xdiv/cos(thetar));
+          beta=-.0081153+.097849*(f2)+.39022*(f2)**2-.1845*(f2)**3+.02531*(f2)**4;
+          divPlateThickness=(beta*pomax/strd)**.5 * (xdiv/cos(thetar)) - acousticLinerThickness;
+          if(divPlateThickness  <  0.10) { divPlateThickness=0.10; }
+       }
+
+       wtdiv = 2.0*width*xdiv/cos(thetar)*divPlateThickness*rhodiv;
+       if(AcousticTreatment=="NozzleOnly" || AcousticTreatment=="Nozzle&Plug" ||
+          AcousticTreatment=="Splitter&Nozzle" || AcousticTreatment=="Splitter&Nozzle&Plug"){
+         area = wtdiv/(divPlateThickness*rhodiv);
+         acarea = acarea + area;
+         tacarea = tacarea + area*nozzleAcousticCoverage;
+         wtacdv = area*acousticLinerThickness*rhoAcoustic*nozzleAcousticCoverage;
+       }
+       if(!S_VariableGeometry.isEmpty()){
+         if (calcComponentThickness  !=  1.) { wtdiv = wtdiv * 2.75; }
+       }
+       caseWt += outerCaseWt;
+       nozzleWt = (caseWt + wtconv + wtdiv + sidewallWt + transDuctWt) * wtCorrelation;
+       wtacnz = wtaccv + wtacdv + wtacsw;
+    }
+
+       
+//
+//  calculate 2-d splitter plate weight
+//
+    if(!S_SplitterAcousticLiner.isEmpty()) {
+       if(splitterPlateLength_in  ==  0.) { 
+          splitterPlateLength = length - 2.0*S_SplitterAcousticLiner.thickness; 
+       }
+       else {
+          splitterPlateLength = splitterPlateLength_in;
+       }
+       S_SplitterAcousticLiner.area = width*splitterPlateLength*2.0; 
+       S_SplitterAcousticLiner.execute();
+       splitterWt = S_SplitterAcousticLiner.weight;
+       splitterWt += 0.2*width*splitterPlateLength*rhoNozzle;
+    } 
+  }
+  
+   /**
+    *
+    ***********************************************************************/
+   void calcThroatRadii() {
+      real pluglen=0;
+      
+      if(!S_Plug.isEmpty() && S_Plug.lengthRatio  <=  1.0) {
+        pluglen = S_Plug.length;
+        if(throatLocation  <=  pluglen) {
+          throatInnerRadius = inPort.innerRadius*(1.0-throatLocation/pluglen);
+          throatOuterRadius = throatInnerRadius + throatArea/(2.0*width);
+        } 
+        else {
+          throatInnerRadius = 0.0;
+          throatOuterRadius = throatArea/(2.0*width);
+        }
+      } 
+      else {
+        throatOuterRadius = (outPort.outerRadius-inPort.outerRadius)/xnz*(throatLocation-transDuctLength-mixerEjLength)+inPort.outerRadius;
+        if(hingePoint  == "Throat") { throatOuterRadius = inPort.outerRadius; }
+        throatInnerRadius = throatOuterRadius - throatArea/(2.0*width);
+      }
+      
+// increase throat and exit outer radii by splitter plate thickness
+//  if one is selected.
+//
+      if(!S_SplitterAcousticLiner.isEmpty()) {
+         outPort.outerRadius = outPort.outerRadius + S_SplitterAcousticLiner.thickness;
+         throatOuterRadius = throatOuterRadius + S_SplitterAcousticLiner.thickness;
+      }      
+   }
+
+
+   /**
+    *
+    ***********************************************************************/
+   void calcTransDuctWt()
+   {
+      real xl;
+   //  compute transition duct thickness if calcComponentThickness=1.  compute plug
+   //  thickness if calcComponentThickness=1.
+      if(calcComponentThickness  ==  1){
+         ductThickness = pomax*ro1/(str);
+         if(ductThickness  <  0.10) { ductThickness=0.10; }
+      }
+      transDuctWt = 2.0*PI*ro1*transDuctLength*ductThickness*material.rho(timax);
+      if(!S_Plug.isEmpty() && S_Plug.lengthRatio  >  1.0){
+        xl = 0.8 * transDuctLength;
+// compute thickness for conical plug.
+        if(calcComponentThickness  ==  1){
+           tpluga = atan2(ri1,xl);
+           plugThickness = pomax*ri1/(S_Plug.material.sy(timax)*cos(tpluga));
+           if(plugThickness  <  0.10) { plugThickness=0.10; }
+        }
+        transDuctWt += PI*ri1*sqrt(ri1*ri1 + xl*xl)*plugThickness*S_Plug.material.rho(timax);
+      } 
+   } 
+   
+   /**
+    *
+    ***********************************************************************/
+   void calcThickness()
+   {
+      WATEnozzleBase::calcThickness();
+      
+      if(sidewallThickness==0.) { sidewallThickness=thickness; }
+      if(ductThickness==0.) { ductThickness=thickness; }
+      if(plugThickness==0.) { plugThickness=thickness; }
+      if(caseThickness==0.) { caseThickness=thickness; }
+   }    
+ 
+   
+   /**
+    * draw transition duct
+    ***********************************************************************/
+   void drawTransDuct()
+   {
+       real pluglen = 0;
+       real x[4],y[4];
+
+       if(!S_Plug.isEmpty()) {
+          pluglen = S_Plug.length;
+       }
+       
+       x[0] = inPort.axialPosition; //tleng(iup1);
+       y[0] = inPort.outerRadius; // ro(1,iup1);
+       x[1] = x[0] + transDuctLength;
+       y[1] = y[0];
+       
+       addLine(x[0],y[0],x[1],y[1],drawDepth,1);       
+       
+       x[2] = x[0];
+       y[2] = inPort.innerRadius; // ri(1,iup1);
+       
+       if(S_MixerEjector.isEmpty()) {
+          y[3] = 0.0;
+          if(pluglen < length) { 
+             x[3] = x[0] + pluglen; 
+          } 
+          else {
+             x[3] = x[0] + 0.8*transDuctLength;
+          }          
+          addLine(x[2],y[2],x[3],y[3],drawDepth,1);
+       }
+       else {
+          S_MixerEjector.child.drawTransDuct(x[3],y[3],pluglen);
+       }
+    }
+    
+    
+     
+   /**
+    * draw acoustic splitter plate if present
+    ***********************************************************************/
+   void drawAcousticSplitterPlate()
+   {
+     int j;
+     real x[4],y[4];
+     real pluglen = 0;
+     
+     if(splitterPlateLength > 0) {
+       if(!S_Plug.isEmpty()) {
+          pluglen = S_Plug.length;
+       }
+       x[0] = inPort.axialPosition + pluglen;
+       y[0] = 0.0;
+       x[1] = x[0] + splitterPlateThickness;
+       y[1] = splitterPlateThickness;
+       x[2] = x[0] + splitterPlateLength - splitterPlateThickness;
+       y[2] = y[1];
+       x[3] = x[0] + splitterPlateLength;
+       y[3] = 0.0;
+       addPolyLine(x,y,drawDepth,1); 
+     }
+  }
+
+  
+   /**
+    * draw nozzle outer case if requested.
+    ***********************************************************************/
+   void drawOuterCase()
+   {
+     int j;
+     real pluglen = 0;
+     real x[3],y[3];
+     real x2[3],y2[3];
+     //real x3,y3;
+      
+     int bypnoz = 0;
+     if(ro5 > inPort.outerRadius) {
+       x[0] = inPort.axialPosition;
+       y[0] = ro5;
+       x[1] = x[0] + throatLocation;
+       y[1] = ro6;
+       x[2] = x[0] + length;
+       y[2] = outPort.outerRadius;
+       
+       if(!S_Plug.isEmpty()) {
+          pluglen = S_Plug.length;
+       }
+       if(pluglen > length) {
+         // call psplin;  // spline
+         x2[0] = x[1];
+         y2[0] = y[1];
+         x2[2] = x2[0];
+         y2[2] = throatOuterRadius;
+         x2[1] = x2[0] - 0.5*(y2[0]-y2[2]);
+         y2[1] = (y2[0] + y2[2])/2.0;
+         //x3 = x2[0];
+         //y3 = (y2[0] + y2[2])/2.0;
+         if( ! bypnoz) {
+            addPolyLine(x2,y2,drawDepth,1);
+         }
+          //call reset('psplin'); // turn off spline 
+          //call marker(15);  
+          //call sclpic(0.1);  
+         if( ! bypnoz) {
+            // ??? not sure what kind of symbol they're plotting here...
+            //call curve(x3,y3,1,1);  
+         }
+          //call reset('sclpic');  
+          //call reset('marker');  
+       }
+       if( ! bypnoz) {
+          addPolyLine(x,y,drawDepth,1);
+          
+          if(pluglen > length) {
+             //call marker(15);  
+             //call sclpic(0.1); 
+             // ??? again, not sure what symbol this is supposed to be 
+             //call curve(x3,-y3,1,1);  
+             //call reset('marker');  
+             //call reset('sclpic');  
+          }
+       }
+     }
+  }    
+    
+  
+  /**
+   * 
+   ******************************************************************/
+   void calcGeometry() {     
+
+     int j;
+     real x[],y[];
+      
+     drawTransDuct();
+
+     if(!S_MixerEjector.isEmpty()) {
+       S_MixerEjector.child.calcGeometry();
+     }
+     
+     real axPosIn = inPort.axialPosition; // tleng(iup1);
+     real axPosOut = inPort.axialPosition + length; // tleng(idn1)
+     real outerRin = inPort.outerRadius; /*ro(1,iup1) */
+     real innerRin = inPort.innerRadius; /*ri(1,iup1) */
+     real outerRout = outPort.outerRadius; /*ro(2,idn1) */
+     real innerRout = outPort.innerRadius; /*ri(2,idn1) */
+     real pluglen = 0;
+     
+     if(!S_Plug.isEmpty()) {
+        pluglen = S_Plug.length;
+     }
+       
+     
+     if(pluglen <= length && pluglen > 0) { // if plug is shorter than nozzle
+        if((pluglen== 0. || transDuctLength > 0.)) { 
+           if(x.entries() != 8) { x.resize(6); y.resize(6); }
+        }
+        else { 
+           if(x.entries() != 8) { x.resize(8); y.resize(8); }
+        }
+        x[0] = axPosIn + mixerEjLength + transDuctLength;
+        y[0] = outerRin;
+        x[1] = axPosOut;
+        y[1] = outerRout;
+        x[2] = x[1];
+        y[2] = innerRout;
+        x[3] = x[1];
+        y[3] = y[1];
+        x[4] = axPosIn + throatLocation;
+        y[4] = throatOuterRadius;
+        x[5] = x[0];
+        y[5] = y[0];
+        if((pluglen == 0. || transDuctLength > 0.)) { 
+        }
+        else {
+           x[6] = x[5];
+           y[6] = innerRin;
+           x[7] = x[0] + pluglen - mixerEjLength - transDuctLength;
+           y[7] = 0.0;
+        }
+
+        if(ro5 > outerRin) {
+          x[0] = x[1];
+          y[0] = y[1];
+        }
+     }
+     else {
+
+        if(x.entries() != 8) { x.resize(8); y.resize(8); }
+        x[0] = axPosIn + mixerEjLength + transDuctLength;
+        y[0] = outerRin;
+        x[1] = axPosIn + throatLocation;
+        y[1] = throatOuterRadius;
+        x[2] = axPosIn + length;
+        y[2] = outerRout;
+        x[3] = axPosIn + length;
+        y[3] = innerRout;
+        x[4] = axPosIn + pluglen;
+        y[4] = 0.0;
+        x[5] = x[3];
+        y[5] = y[3];
+        x[6] = axPosIn + throatLocation;
+        y[6] = throatInnerRadius;
+        x[7] = axPosIn + mixerEjLength + 1.1*transDuctLength;
+        y[7] = 0.0;
+     }
+
+     addPolyLine(x,y,drawDepth,1);
+
+     drawOuterCase();
+
+ //
+ // get x locations for fairing line
+ //
+//     fx[0] = axPosIn+length;
+     
+     drawAcousticSplitterPlate();
+ //
+ //jjc  draw plug suppressor if present
+ //
+//     if(plugsup) {
+//        x[0] = axPosIn + throatLocation;
+//        y[0] = throatInnerRadius;
+//        x[1] = x[0];
+//        y[1] = 0.5*throatInnerRadius;
+//        x[2] = x[1]-(y[1]-throatInnerRadius)*(pluglen-throatLocation)/throatInnerRadius;
+//        y[2] = y[1];
+//         call dot;  
+//         call curve (x, y, 3, 0);  
+//        if(symm == yes) {
+//          for(j=1; j<=3; ++j) { //;
+//            yneg(j)=-y(j);
+//          }
+//           call curve(x,yneg,3,0);  
+//        }
+//         call reset('dot');  
+//      }
+
+
+ //
+ //jjc  draw deployable supressor if present
+ //
+//      if(nozsup) {
+//        x[0] = axPosIn + throatLocation;
+//        y[0] = throatOuterRadius;
+//        x[1] = x[0];
+//        y[1] = throatOuterRadius + 0.75*(outerRin - throatOuterRadius);
+//        x[2] = axPosIn + mixerEjLength + transDuctLength +(y[1]-outerRin)/(throatOuterRadius-outerRin)*(throatLocation - mixerEjLength - transDuctLength);
+//        y[2] = y[1];
+//         call dot;  
+//         call curve (x, y, 3, 0);  
+//        if(symm == yes) {
+//          for(j=1; j<=3; ++j) { //;
+//            yneg(j)=-y(j);
+//          }
+//           call curve(x,yneg,3,0);  
+//        }
+//         call reset('dot');  
+//      }
+   }  
+        
+}
+
+
+#endif
+
+  

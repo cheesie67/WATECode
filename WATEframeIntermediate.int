@@ -1,0 +1,23 @@
+
+#ifndef _WATEFRAMEINTERMEDIATE_H_
+#define _WATEFRAMEINTERMEDIATE_H_
+
+// two bearings
+class WATEframeIntermediate extends WATEframeBase
+{
+   void calculate()
+   {
+      real rt2=(tipRadius/12.)**2;
+      if (rt2 > 5.6) { 
+         weight=29.02*rt2+567.68; 
+      } 
+      else { 
+         weight=130.77*rt2; 
+      }
+      length = calcLength();
+   }
+}   
+
+
+#endif
+

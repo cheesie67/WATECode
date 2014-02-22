@@ -1,0 +1,12 @@
+#ifndef _WATELPSHAFT_
+#define _WATELPSHAFT_
+
+
+class WATElpShaft extends WATEshaftBase 
+{
+  material.type = "_17_4PH";
+} 
+
+#endif
+
+

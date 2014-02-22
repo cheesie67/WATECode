@@ -1,0 +1,35 @@
+
+#ifndef WATEINLETBOEINGTRANSCENTER
+#define WATEINLETBOEINGTRANSCENTER
+
+
+// itype=11
+// boeing translating center body
+//
+class WATEinletBoeingTransCenter extends WATEinletBase
+{
+   def_length = 1.95;
+   max_length = 2.96;
+   in_length = 1.95;
+   
+   wall_x = {   0,-.05,-.404,-.921,-1.524, -1.95 }
+   wall_y = { 0.5,.495, .459, .451,  .503,   .5   } 
+   
+   center_x = {    0, -.25,-.852, -1.294, -1.95, -2.96 }
+   center_y = { .163, .163,  .28,   .288,  .163,     0 }
+     
+   frame_x = { -.05,-.05,-.404,-.25 }
+   frame_y = { .163,.495, .459,.163 }
+          
+   /*
+    * 
+    ******************************************************************/
+   real getInletWt() {  
+      return 3017.*des_Wc/650.;
+   }
+   
+}
+
+
+#endif
+

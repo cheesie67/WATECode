@@ -1,0 +1,23 @@
+#ifndef _WATEFRAMESINGLEBEARINGNOHPX_H_
+#define _WATEFRAMESINGLEBEARINGNOHPX_H_
+
+
+// type 1 frame - tj/tf w/o pto
+class WATEframeSingleBearingNoHPX extends WATEframeBase
+{
+   void calculate()
+   {
+      real rt2=(tipRadius/12.)**2;
+      if (rt2 > 2.9) { 
+         weight=47.869*rt2-38.82; 
+      } 
+      else { 
+         weight=34.48*rt2; 
+      }
+      length = calcLength();
+   }
+}   
+
+
+#endif
+

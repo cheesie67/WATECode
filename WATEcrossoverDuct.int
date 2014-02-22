@@ -1,0 +1,25 @@
+#ifndef WATECROSSOVERDUCT
+#define WATECROSSOVERDUCT
+
+class WATEcrossoverDuct extends WATEductBase
+{
+   void calculate()
+   {   
+       tipRadius    = inPort.outerRadius;
+       hubRadius    = inPort.innerRadius;
+       
+       real diacc = tipRadius/6.*1.6;
+       real lencc = diacc*.2;
+       
+       weight = 33.5*lencc*diacc;
+       length = lencc*12.;
+       
+       outPort.outerRadius  = diacc*6.;
+       outPort.innerRadius  = hubRadius;
+       outPort.axialPosition = inPort.axialPosition + length;
+   }
+}
+
+#endif
+
+

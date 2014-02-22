@@ -1,0 +1,25 @@
+#ifndef WATEDIFFUSERDUCT
+#define WATEDIFFUSERDUCT
+
+class WATEdiffuserDuct extends WATEductBase
+{
+   void calculate() 
+   {
+       tipRadius = inPort.outerRadius;
+       hubRadius = inPort.innerRadius;
+       
+       real diacc = tipRadius/6.*1.6;
+       real lencc=diacc*0.07;
+       
+       weight = 32.8*lencc*diacc;
+       length = lencc*12.;
+       
+       outPort.outerRadius  = diacc*6.;
+       outPort.innerRadius  = hubRadius;
+       outPort.axialPosition = inPort.axialPosition + length;
+   }
+}   
+
+#endif
+
+

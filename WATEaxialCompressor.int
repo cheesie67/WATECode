@@ -1,0 +1,2014 @@
+//
+// LAST INSPECTION DATE: *not inspected*
+//
+//  EXTERNAL DEPENDENCIES
+
+//    C_GRAVITY
+//    C_PSTD
+//    C_TSTD
+//    S_Disk.currentMaterial.rho
+//    S_Disk.weight
+//    S_FrontFrame.hubRadius
+//    S_FrontFrame.lengthWithGap
+//    S_FrontFrame.tipRadius
+//    S_FrontFrame.weight
+//    S_RearFrame.hubRadius
+//    S_RearFrame.length
+//    S_RearFrame.tipRadius
+//    S_RearFrame.weight
+//    S_Gearbox.gearRatio
+//    S_Gearbox.weight
+//    TB_PRvsTipSpd()
+//    VCInterface* maxODrefPort
+
+
+#ifndef _WATEAXIALCOMPRESSOR_
+#define _WATEAXIALCOMPRESSOR_
+ 
+extern real S_Gearbox.weight;
+extern real S_Disk.weight;
+extern real S_FrontFrame.length;
+extern real S_RearFrame.gap;
+extern int S_Disk.child.hasInterface(string);
+extern int parent.parent.parent.hasInterface(string);
+extern int S_Disk.child.hasInterface(string);
+extern int S_FrontFrame.child.hasInterface(string);
+extern int S_RearFrame.child.hasInterface(string);
+
+class WATEaxialCompressor extends WATEcompressorBase
+{
+  //IWMEC(2)
+  Option geometryType {
+     trigger = 0;
+     allowedValues = { "ConstHubRadius", "ConstMeanRadius", "ConstTipRadius" };
+     value = "ConstTipRadius";    IOstatus = "input";    units = "none";
+     description = "Determines which part of each blade row is held to the same radius";
+  }    
+
+  int calcStatorWt {
+    value = TRUE;  IOstatus = "input";
+    description = "selector flag to turn stator weight calculation on or off";
+  }
+  
+  //IWMEC(9)
+  int structCaseStg {
+    IOstatus = "input";
+    description = "Stage number from front of compressor where the structural case begins. 0 = no case";
+  }
+
+  //IWMEC(10)  
+  int numContainedStages {
+    value = 0;    IOstatus = "input";
+    description = "Number of fan stages with containment rings. If zero, then it is set equal to numStages";
+  } 
+
+  //IWMEC(11)
+  Option igvType {
+    trigger=0;
+    allowedValues = { "NONE", "FIXED", "VARIABLE" }
+    IOstatus = "input";
+    description = "Indicates whether WATE should calculate the weight of IGVs or not.";
+  }
+
+
+  string maxODrefPort {
+    IOstatus = "input";
+    description = "WATEport used to set the maximum O.D. of the compressor. For example, if splitter primary out port is specified, program will iteratively adjust the hub-tip ratio until O.D. of the compressor is the same as the splitter primary out port";
+  }
+  
+  string rpmCompRef {
+    IOstatus = "input";
+    description = "name of compressor that RPM is read from";
+    ptrType = "WATEcompressorBase";
+  }
+
+  //DESVAL(3)
+  real TtMaxIn_in {
+    IOstatus = "input";    units = "R";
+    description = "Maximum total temperature of the compressor inlet. Overrides max value obtained from running the aero model.";
+  } 
+
+  real TtMaxIn {
+    IOstatus = "output";  units = "R";
+    description = "Maximum total temperature of the compressor inlet";
+  }
+
+  //DESVAL(4)
+  real TtMaxOut_in {
+    IOstatus = "input";    units = "R";
+    description = "Maximum total temperature of the compressor exit. Overrides max value obtained from running the aero model.";
+  }    
+
+  real TtMaxOut {
+    IOstatus = "output";  units = "R";
+    description = "Maximum total temperature of the compressor exit";
+  }
+     
+  //DESVAL(5)
+  real stg1MaxPR {
+    IOstatus = "input";    units = "none";
+    description = "Maximum pressure ratio of the first compressor stage";
+  }   
+
+  //DESVAL(6)
+  int radiusChangeStg {
+    IOstatus = "input"; 
+    description = "The compressor stage where the radius begins to vary";
+  }  
+
+  //DESVAL(7)
+  real outletInletRR {
+    value = 1.0;    IOstatus = "input";    units = "none";
+    description = "Ratio of the radius at the exit the radius at the inlet. Use with radiusChangeState to allow variation on constant hub or tip design";
+  }         
+
+  //DESVAL(9)
+  real ductLenInnerRR {
+    IOstatus = "input";    units = "none";
+    description = "???";
+  }             
+
+  //DESVAL(18)
+  real bladeSolidity {
+    value = 1.1; IOstatus = "input";    units = "none";
+    description = "blade cord to spacing ratio. Ignored if numBlades_in != 0";
+  }     
+
+  //DESVAL(20)
+  real bladeThicknessRatio {
+    IOstatus = "input";    units = "none";
+    description = "Blade thickness ratio";
+  }           
+
+  //DESVAL24()
+  real hollowRotorFactor {
+    IOstatus = "input";    units = "none";
+    description = "fraction of the rotor blade volume that is hollow";
+  }      
+
+  //DESVAL(25)
+  int numHollowRotorStages {
+    IOstatus = "input";
+    description = "number of rotor stages that have hollow blades";
+  }     
+
+  //DESVAL(36)
+  int numStatorBlades_in {
+    IOstatus = "input";
+    description = "Number of stator blades. Overrides calculation of numStatorBlades";
+  } 
+   
+  int numStatorBlades {
+    IOstatus = "output";
+    description = "Number of stator blades.";
+  }  
+
+  //DESVAL(38)
+  real statorSolidity {
+    value = 1.0; IOstatus = "input";    units = "none";
+    description = "Stator blade cord to spacing ratio.";
+  }      
+
+  //DESVAL(40)
+  real rotorStatorSpacePct {
+    value = 0.085;    IOstatus = "input";    units = "none";
+    description = "distance between rotor trailing edge and stator leading edge. as % of stage length";
+  }          
+
+  //DESVAL(41)
+  real stg1StatorRotorLR {
+    value = 1.0;    IOstatus = "input";    units = "none";
+    description = "Ratio of the stator to rotor length of the first stage";
+  } 
+
+  //DESVAL(42)
+  real lastStgStatorRotorLR {
+    value = 1.0;    IOstatus = "input";    units = "none";
+    description = "Ratio of the stator to rotor length of the last stage";
+  }            
+
+  //DESVAL(43)
+  real stg1StatorAR {
+    IOstatus = "input";    units = "none";
+    description = "First stage stator aspect ratio.";
+  }           
+
+  //DESVAL(44)
+  real lastStgStatorAR {
+    IOstatus = "input";    units = "none";
+    description = "Last stage stator aspect ratio.";
+  }            
+
+  //DESVAL(45)
+  real hollowStatorFactor {
+    IOstatus = "input";    units = "none";
+    description = "fraction of the stator blade volume that is hollow";
+  }      
+
+  //DESVAL(46)
+  int numHollowStatorStages {
+    IOstatus = "input";
+    description = "number of stator stages that have hollow blades";
+  }       
+
+  //DESVAL(47)
+  int numVariableStages {
+    IOstatus = "input";
+    description = "Number of compressor stages with variable stators";
+  }            
+
+  //DESVAL(59)
+  real contRingRadialThickness {
+    value = 3.0;    IOstatus = "input";    units = "in";
+    description = "radial thickness of the fan blade containment ring.";
+  }    
+
+  //DESVAL(66)
+  int numIGVblades_in {
+    IOstatus = "input";
+    description = "Number of IGV blades. If zero, then use igvSolidity to calculate the number of IGV blades";
+  }   
+  int numIGVblades {
+    IOstatus = "output";
+    description = "Number of IGV blades.";
+  }   
+
+  //DESVAL(68)
+  real igvSolidity {
+    IOstatus = "input";    units = "none";
+    description = "blade cord to spacing ratio. If zero, then use statorSolidity";
+  }           
+
+  //DESVAL(69)
+  real igvAR_in {
+    IOstatus = "input";    units = "none";
+    description = "IGV blade aspect ratio. If zero, use 1st stage stator aspect ratio";
+  }  
+  real igvAR {
+    IOstatus = "output";    units = "none";
+    description = "IGV blade aspect ratio.";
+  }  
+
+  //DESVAL(83)
+  real stg1NcTip {
+    IOstatus = "input";    units = "ft/sec";
+    description = "Corrected linear tip speed of the first stage";
+  }        
+
+  //DESVAL(96)
+  int  bladeMaterial2StartStg {
+    value = 999;    IOstatus = "input"; 
+    description = "This gives the stage number where blade material changes to bladeMaterial2";
+  }        
+
+  //DESVAL(98)
+  int  statorMaterial2StartStg {
+    value = 999;    IOstatus = "input"; 
+    description = "This gives the stage number where stator material changes to statorMaterial2";
+  }            
+
+//   int  caseMaterial2StartStg {
+//     value = 999;    IOstatus = "input";
+//     description = "This gives the stage number where case material changes to caseMaterial2";
+//   }            
+
+  //DESVAL(99)
+  real  diskRimBoreDeltaT {
+    IOstatus = "input";    units = "none";
+    description = "If not zero, program will calculate thermal stress using the given delta T asuming linear thermal gradient";
+  }             
+
+  //DESVAL(101)
+  real avgLenPerStg {
+    IOstatus = "input";    units = "in";
+    description = "Sets the compressor length. Default = program will calculate compressor length based on stage1bladeAR and lastStgBladeAR or length_in";
+  }
+
+  //DESVAL(102)
+  real minHubRadius {
+    IOstatus = "input";    units = "in";
+    description = "Sets the minimum 1st stage blade hub radius.";
+  }
+
+  // design limits
+  real minLimit_hubTipRatio = .32;
+  real maxLimit_hubTipRatio = .935;
+  real maxLimit_stgPR = 1.8;
+  real maxLimit_stgMN = .7;
+  real minLimit_bladeHt = .4;
+  
+  real stgWt;
+  
+  real bladeWt;
+  real totBladeWt;
+  real bladeTipSpd; 
+  real bladeStress;
+  real bladeHt;
+  real bladeLength;
+  real bladeDensity;
+  real bladeHubRadius { units = "ft"; }
+  real bladeTipRadius { units = "ft"; }
+  
+  real stg1TipSpd { hide(1); }
+  
+  real caseWt;
+  real totCaseWt;
+  real caseDensity;
+  
+  real totDiskWt;
+  
+  real nutsBoltsWt;
+  real totNutsBoltsWt;
+  
+  real statorWt;
+  real totStatorWt;
+  real statorDensity;
+  real statorAR;
+  real statorHt;
+   
+  real rotorDrumWt;
+  real totRotorDrumWt;
+  
+  real statorSupportFlangeWt;
+  real totStatorSupportFlangeWt;
+  
+  real fanContRingWt;
+  real totFanContRingWt;
+  
+  real cgcomp;
+  real tcgmom;
+  
+  real Tin;
+  real Nc;
+  
+  real delrtb;
+  real delrhb;
+  real rmean;
+      
+  real weightPerBlade;
+  real gearRatio;
+  real stg1TipRadius { units="ft"; }
+  
+  int stage;
+  
+  real stgLengthBypass; 
+  real containmentDensity; 
+  containmentDensity.hide(2);
+  
+  real splitterRadius;
+  real polytropicEfficiency;
+  real deltaHideal;
+  real Hin;
+  real Hexit;
+  real Pin;
+//  real pr;
+  real ef;
+  real deltaH;
+  real bypassLength;
+  real loadingParam;
+  real deltaMN;
+//  int ides=1;
+    
+  real igvVolRatio; 
+  real igvDensity; 
+  real igvLength; // cligv
+  real igvWt {
+     value = 0.0; IOstatus = "output"; units = "lbf";
+     description = "weight of IGV.";
+  }
+  
+  real stgAR; //  aspect ratio of stage
+  real stgLength;
+  real Tstress;
+  real stgTempIn;
+  real stgTempOut;
+  real stgPout;
+  real stgMN;
+  real deltaStgEnthalpy;
+  real stgArea;
+  real stg1HubRadius; // for nuts & bolts calc
+  real hubTipRatio; 
+  
+  real s_RSprimaryLen;
+  real s_RSbypassLen;
+  real s_statorExitFrameLen;
+    
+  real containmentDensity_stg[];
+  real contRingRadialThickness_stg[];
+  real workFactor_stg[];
+  real AR_stg[];
+  real nutsBoltsWt_stg[];
+  int numStatorBlades_stg[];
+  real statorLen_stg[];
+  real statorWt_stg[];
+  real statorSupportFlangeWt_stg[];
+  real statorAR_stg[];
+  real statorDensity_stg[];
+  string statorMaterial_stg[];
+  real caseWt_stg[];
+  real caseDensity_stg[];  
+  real spacerLen_stg[];
+  real fanContRingWt_stg[];
+  real rotorDrumWt_stg[]; 
+  real bypassLen_stg[];
+  
+ 
+  // ********************* Sockets *************************
+
+  
+  Socket S_Gearbox {
+     socketType = "WATEgearbox";
+  }
+  
+  Socket S_Disk {
+     socketType = "WATEdiskBase";
+     required = 1;
+  }
+  
+  // ******************** Materials ***************************
+  
+  WATEmaterial bladeMaterial;
+  WATEmaterial bladeMaterial2;
+  WATEmaterial statorMaterial;
+  WATEmaterial statorMaterial2;
+  WATEmaterial igvMaterial;
+  WATEmaterial caseMaterial;
+  
+  WATEmaterial containmentMaterial { type = "kevlar_49"; }
+  
+  // ******************* Max Savers ***************************
+  
+  MaxSaver max_TtIn {
+     var = "Fl_I.Tt";
+  }
+  
+  MaxSaver max_TtOut {
+     var = "Fl_O.Tt";
+  }
+  
+  MaxSaver max_PtIn {
+     var = "Fl_I.Pt";
+  }
+  
+  MaxSaver max_WcIn {
+     var = "Fl_I.Wc";
+  }
+  
+  MaxSaver max_N {
+     var = "Sh_O.Nmech";
+  }  
+  
+#ifdef WATE_LEGACY
+  // ??? keep track of max horsepower coming from the compressor and its
+  // associated Nmech. WATE updates max Nmech when max pwr changes *AND*
+  // when Nmech increases above current max Nmech. This means that you 
+  // get different max values depending upon the order in which the
+  // cases are executed. :(
+  MaxSaver pwr_max {
+     var = "-pwr";  // pwr is negative
+     associatedVars = { "Sh_O.Nmech" };
+  } 
+  
+  // if true, use max Nmech that corresponds to max pwr instead of 
+  // absolute max Nmech
+  int useNmaxAtpwrMax = 0; 
+#endif
+    
+  // ******************* Flow Stations ***************************
+  
+  FlowStation stgFS;
+  FlowStation flowSt;
+  FlowStation Fl_Oideal; 
+  FlowStation Fl_Otmp;        
+    
+  Socket TB_PRvsTipSpd {
+     socketType = "Function";
+     returnType = "real";
+     argTypes = { "real" }
+  }
+  
+  SecantSolver slv;
+  
+  /**
+   *
+   ********************************************************************/    
+  void calculate() {
+     
+      string errmsg;
+      real wi = des_Fl_I.W; 
+      Pin  = des_Fl_I.Pt; 
+      real Pin_psf   = Pin*144.;
+      Tin  = des_Fl_I.Tt;
+      real gam = des_Fl_I.gamt; 
+      ef = des_eff; 
+      
+      if(S_Gearbox.isEmpty()) {
+         gearRatio = 1.0;
+      }
+      else {
+         gearRatio = S_Gearbox.gearRatio;
+      }
+ 
+      preCalcCorInletFlow();
+
+//     check for bad inlet total temperature (Tin)
+//
+      if (Tin  <  200. )  { 
+         errmsg = "entrance total temperature too low ("+toStr(Tin)+
+                  "). Setting to 200.";
+         provisionalWarning(errmsg);
+         Tin=200.; 
+      }
+      if (Tin  >  6000.)  {   
+         errmsg = "entrance total temperature too high ("+toStr(Tin)+
+                  "). Setting to 6000."; 
+         provisionalWarning(errmsg);
+         Tin=6000.; 
+      }
+ 
+//     initialize design case values
+//
+      polytropicEfficiency = ef;
+ 
+//     calculate adiabatic (ef) or polytropic (polytropicEfficiency) component design
+//     efficiency
+//
+      polytropicEfficiency = peffd(des_PR,polytropicEfficiency,gam);
+      ef = effd (des_PR,polytropicEfficiency,gam);
+ 
+//     calculate inlet enthalpy (Hin), ideal exit enthalpy (HoutIdeal), ideal del
+//     enthalpy (deltaHideal), actual delta enthalpy (deltaH), actual exit enthalpy
+//     (Hexit) and exit total temperature (Tt_exit)
+      
+      Hin  = des_Fl_I.ht; 
+      real pio = Pin*des_PR;
+
+      Fl_Oideal.copyFlowStatic( "des_Fl_I" );
+      Fl_Otmp.copyFlowStatic("Fl_Oideal");
+      
+      Fl_Oideal.setTotalSP( des_Fl_I.s, pio );
+      real HoutIdeal = Fl_Oideal.ht;
+      Hexit = ( HoutIdeal - des_Fl_I.ht )/ef+des_Fl_I.ht;
+      deltaHideal = HoutIdeal-Hin;
+      deltaH = deltaHideal/ef;
+      
+      Fl_Otmp.setTotal_hP( Hexit, pio );
+      //real Tt_exit = Fl_Otmp.Tt;
+ 
+      areaIn = calcDuctArea (Tin,Pin_psf,wi,gam,MNin);
+      
+//     calculate component mechanical design and dimensions
+//
+      cmech (MNin,wi); 
+      
+      postMechDesign();
+ 
+//     calculate component exit area (ao)
+//
+//      real ao = calcDuctArea (Tt_exit,Pin_psf*des_PR,wi,gam,MNin);
+      
+      if(!S_Gearbox.isEmpty()) {
+         S_Gearbox.execute();
+         weight += S_Gearbox.weight;
+      }
+      
+      outPort.axialPosition = inPort.axialPosition + length; 
+      
+      cg = calcCG();
+   } // end calculate
+   
+   
+  /**
+   *
+   ********************************************************************/    
+   real calcCG() {
+      return cgcomp+inPort.axialPosition;
+   }
+   
+  /**
+   *
+   ********************************************************************/    
+   void postMechDesign() {
+      // by default, do nothing
+   }
+   
+  /**
+   *
+   ********************************************************************/    
+   void preCalcCorInletFlow() {
+      // by default, do nothing
+   }
+   
+   
+  /**
+   *       calculate rotor blade axial length.
+   *
+   ********************************************************************/    
+   void calcStgLength(int stgNum) {
+      bladeLen_stg[stgNum] = bladeHt/stgAR;
+
+//       calculate stator blade axial length.
+      if (calcStatorWt > 0)    { // stator length is dependent on stator aspect ratio.
+        statorLen_stg[stgNum] = statorHt/statorAR;
+      } 
+      else {
+        statorLen_stg[stgNum] = 0.0;
+      }
+
+//  ***** the portion of the stage to account for gap beteen rows has
+//        been cut in half mainly due to the already long stage lengths
+//        in low stgAR blades.
+
+
+      spacerLen_stg[stgNum]= rotorStatorSpacePct * 
+                   (bladeLen_stg[stgNum]+statorLen_stg[stgNum]);
+
+//           calculate the spacer and the stage length.
+      if (calcStatorWt > 0)    {
+        stgLength = bladeLen_stg[stgNum] + statorLen_stg[stgNum] +
+                        2.0*spacerLen_stg[stgNum];
+      } 
+      else { //           calculate the stage length.
+        stgLength = bladeLen_stg[stgNum] + spacerLen_stg[stgNum];
+      }
+      
+      stgLengthBypass = stgLength; 
+   }
+   
+  /**
+   *
+   ********************************************************************/    
+   real calcStatorHeight() {
+      return bladeHt;
+   }
+   
+  /**
+   *
+   ********************************************************************/    
+   real calcNumStatorBlades() {
+      return 2.*PI*bladeTipRadius*statorSolidity*statorAR/statorHt*12.;
+   }
+   
+  /**
+   *
+   ********************************************************************/    
+   real calcSplitterRadius() {
+      return 0;
+   }
+     
+  /**
+   * this routine calculates the centrifugal root stress for the first 
+   * blade of each component
+   ********************************************************************/    
+   real stress(real tipRadius,real tipSpd, real htRatio, real rpm, 
+               real taperRatio, real rho) {
+      if (tipSpd == 0.) { tipSpd=2.*PI/60.*rpm*tipRadius; }
+      real st = rho/386.*(tipSpd*12.)**2*
+             ((1.-htRatio**2)/2.+(taperRatio-1.)/12.*(1.-htRatio)*(4.+2.*htRatio));
+      return st;
+   }
+   
+  
+  /**
+   * this used to be part of the duct1 routine in the FOTRAN version
+   ********************************************************************/    
+   real calcDuctMachNumber(real inTemp, real Pinput, real Win, real gamma, 
+                           real area) {
+      real R = 53.34;
+
+//
+//     CALCULATE MASS FLOW PARAMETER (flowPerArea) AND CONSTANTS
+//
+      real machTest;
+      real flowPerArea=Win*sqrt(inTemp)/(Pinput*area);
+
+      real machNum=flowPerArea*20./17.;
+
+      real CON1=sqrt(gamma*C_GRAVITY/R);
+      real GP1=gamma+1.;
+      real GM1=gamma-1.;
+//
+//     FOR OFF-DESIGN CASE  ITERATE TO A MACH NUMBER (machNum)
+//
+      int i;
+      real machTmp;
+      for(i=0; i<30; ++i) {
+        real CON2=1.+(GM1/2.)*machNum*machNum;
+        machTest=machNum*CON1*CON2**(-GP1/(2.*GM1));
+        if (abs(flowPerArea-machTest) <= .0004) { return machNum; }
+        real SL=CON1*CON2**(-GP1/(2.*GM1))-machNum*machNum*(GP1/2.)*CON1*CON2**((-3.*gamma+1.)/(2.*GM1));
+        if (SL == 0.) { return machNum; }
+        machTmp=machNum+((flowPerArea-machTest)/SL);
+        if (machTmp >= 1.) { machTmp=1.; }
+        if (machTmp <= 0.) { machTmp=.001; }
+        if (machTmp == .001 && machNum == .001) { return machNum; }
+        if (machTmp == 1. && machNum == 1.) { return machNum; }
+        machNum=machTmp;
+      }
+      error("Duct is not converging after 30 iterations in calcDuctMachNumber()");
+      return 0.;
+   }
+
+  /**
+   *
+   ********************************************************************/    
+   void removeGapLength() { 
+      if(S_RearFrame.isEmpty() || S_RearFrame.child.hasInterface("WATEframeCustom")) { 
+         stgLength -= spacerLen_stg[stage];
+      }
+   } 
+   
+   
+  /**
+   * this routine calculates the mechanical design
+   * parameters of the compressors and fans, i.e., number
+   * of stages,spoolRPM,diameter, etc.
+   ********************************************************************/                     
+   void cmech (real xm, real wi)
+   {
+      real alpha,kcond,v,duc;
+      real rbhol;
+      real rt3ot2[],sncc[];
+      real srat, ga;
+      real enthalpyStgIn, stgPin;
+      real deltaMaxT;
+
+      real tstd=C_TSTD;
+      real stg1ExitEnthalpy;
+      real rp2;
+      real pr1;
+      real f1,f2;
+      real roRef;
+      real deltaAR;
+      real delars;
+      real cgmomt;
+      real Pin_sqf;
+      //real rpmax;
+      real rtfr;
+      real enthalpyStgOut;
+      real delsr;
+      real tgam;
+      real gav;
+      real desiredLength;
+         
+  
+      int iterComplete=0;
+      
+      while(1) {
+         weight = 0.;
+         length = 0.;
+         bypassLength = 0.;
+         cgmomt = 0.;
+         frontFrameWt = 0.;
+         rearFrameWt = 0.;
+         cgmomt = 0.;
+         totInertia = 0.;
+         Tstress = 0.;
+
+         totDiskWt = 0.;
+         totBladeWt  = 0.;
+         totStatorWt = 0.;
+         totStatorSupportFlangeWt = 0.;
+         totNutsBoltsWt = 0.;
+         totCaseWt = 0.;
+         totFanContRingWt = 0.;
+         totRotorDrumWt = 0.;
+      
+         maxPressureRatio = stg1MaxPR;
+         TtMaxIn = TtMaxIn_in;
+         if (TtMaxIn == 0.) { TtMaxIn = max_TtIn.val; }
+
+         TtMaxOut = TtMaxOut_in;
+         if (TtMaxOut == 0.) { TtMaxOut = max_TtOut.val; }
+
+         real nmax;
+#ifdef WATE_LEGACY
+         if(useNmaxAtpwrMax) {
+            nmax = pwr_max.associatedVals[0];
+         }
+         else {
+            nmax = max_N.val;
+         }
+#else
+         nmax = max_N.val;
+#endif
+         maxSpdRatio = maxSpdRatio_in;
+         if (maxSpdRatio == 0.) { 
+            maxSpdRatio = nmax / des_Nmech; 
+         }
+         
+         if(bladeMaterial.type == "") {
+            if(TtMaxOut < 790) { bladeMaterial.type = "Ti_17"; }
+            else { bladeMaterial.type = "Inconel_718"; }
+         }
+
+         containmentDensity = containmentMaterial.rho(TtMaxOut);
+         
+         if(igvMaterial.type=="") {
+            igvDensity = bladeMaterial.rho(TtMaxOut);
+         }
+         else {
+            igvDensity = igvMaterial.rho(TtMaxOut);
+         }
+
+         if (stg1StatorAR == 0.) { stg1StatorAR = stg1BladeAR; }
+         if (lastStgStatorAR == 0.) { lastStgStatorAR = lastStgBladeAR; }
+         if (igvAR_in == 0.) { igvAR = stg1StatorAR; }
+         else                { igvAR = igvAR_in; }
+         if (igvSolidity == 0.) { igvSolidity = statorSolidity; }
+
+   //
+   //     for design case  calculate number of stages based on enthalpy
+   //     change per stage and maximum pressure ratio
+
+         numStages = 0;
+         pr1 = des_PR;
+         
+         // grab starting flow conditions
+         stgFS.copyFlowStatic("des_Fl_I");
+         real entropy = stgFS.s;
+         
+         
+         do {
+            ++numStages;
+            if (numStages > 20.) { 
+               throwError("compressor pressure ratio is too high (numStages > 20)");
+            }
+      //
+      //     calculate pressure ratio (pr1) across the component
+      //
+      //  override stage number calculation if numStages_in is input
+            if (numStages_in  != 0) { numStages = numStages_in; }
+
+            stg1ExitEnthalpy = Hin+deltaHideal/numStages;
+            rp2 = Pin+des_PR/numStages;
+            
+            slv.initialize(rp2);
+            
+            do {
+              stgFS.setTotal_hP(stg1ExitEnthalpy, rp2);
+              rp2 = slv.iterate(entropy-stgFS.s);
+              if(rp2<0.00001) { rp2 = 0.00001; }
+            } while(!(slv.isConverged()) && !(slv.errorType));
+
+            pr1 = rp2/Pin;
+         } while(pr1 > maxPressureRatio && numStages_in == 0);
+
+         
+         resizeStgArrays();
+         
+         
+   //
+   //     calculate corrected tip speed (correctedTipSpd), tip
+   //     radius (stg1TipRadius), corrected rotor speed (Nc), and rotor speed (spoolRPM)
+   //
+         if(hubTipRatioIn > 1.) {
+            provisionalError("hubTipRatioIn is greater than 1. Resetting to .999");
+            hubTipRatioIn = 0.999;
+            hubTipRatio = 0.999;
+         }
+         stg1TipRadius = sqrt(areaIn/PI/(1.-hubTipRatioIn*hubTipRatioIn));
+         
+         if(!TB_PRvsTipSpd.isEmpty()) {
+            stg1TipSpd = TB_PRvsTipSpd(pr1)*s_Nmech;
+            Nc = stg1TipSpd*60./(2.*PI*stg1TipRadius);
+            stg1TipSpd *= sqrt(Tin/tstd);
+            spoolRPM = Nc*sqrt(Tin/tstd)*gearRatio;
+         }
+         else if(rpmCompRef != "") {
+            spoolRPM = rpmCompRef->spoolRPM*gearRatio*s_Nmech;
+            Nc = spoolRPM/sqrt(Tin/tstd);
+            stg1TipSpd = Nc/60.*2.*stg1TipRadius*PI*sqrt(Tin/tstd);
+         }
+         else if(stg1NcTip == 0.0) {
+            spoolRPM = des_Nmech*gearRatio*s_Nmech;
+            Nc = spoolRPM/sqrt(Tin/tstd);
+            stg1TipSpd = Nc/60.*2.*stg1TipRadius*PI*sqrt(Tin/tstd);
+         }
+         else {
+            Nc = stg1NcTip*60./(2.*stg1TipRadius*PI);
+            spoolRPM = Nc*sqrt(Tin/tstd)*gearRatio*s_Nmech;
+            stg1TipSpd = stg1NcTip*sqrt(Tin/tstd);
+         }
+
+//         tpu = stg1TipSpd*maxSpdRatio;
+
+         loadingParam = 200412./stg1TipSpd*(deltaHideal/numStages)/
+                                     stg1TipSpd/(hubTipRatioIn+1.)**2;
+
+   //
+   //     calculate compressor design data
+   //
+         //rpmax = spoolRPM*maxSpdRatio;
+
+         rmean = stg1TipRadius*sqrt(0.5*(1.+hubTipRatioIn*hubTipRatioIn));
+         bladeTipRadius = stg1TipRadius;
+         bladeHubRadius = bladeTipRadius*hubTipRatioIn;
+         
+         rtfr = stg1TipRadius*12.;
+         frontFrameWt = 0.;
+
+         frontFrameLength=0.;
+         rearFrameLength=0.;
+
+         if (!S_FrontFrame.isEmpty()) { 
+            S_FrontFrame.tipRadius = rtfr;
+            S_FrontFrame.hubRadius = bladeHubRadius*12.;
+         }
+
+         inPort.innerRadius = bladeHubRadius*12.; 
+
+         if (minHubRadius > 0.) { // ??? this is supposed to occur only on last pass
+            if (bladeHubRadius  <  minHubRadius) {
+              f1 = minHubRadius/12./bladeHubRadius;
+              f2 = abs(minHubRadius-bladeHubRadius*12.)/minHubRadius;
+              if (f2 > .01) {
+                 hubTipRatioIn *= sqrt(f1);
+                 continue; 
+              }
+            }
+         }
+
+         inPort.outerRadius = rtfr;
+
+         if (maxODrefPort != "") {
+            roRef = maxODrefPort->outerRadius;
+            f1 = roRef/rtfr;
+            f2 = abs(rtfr-roRef)/roRef;
+            if (f2 > .003) {
+              hubTipRatioIn *= f1**.333;
+              continue; 
+            }
+            else {
+               if(!iterComplete) { iterComplete=1; continue; }
+            }
+         }
+
+         if (numStages  <= 1) {
+           lastStgBladeAR=stg1BladeAR;
+           lastStgStatorAR=stg1StatorAR;
+         }
+         deltaMN = (xm-MNout)/numStages;
+         deltaAR = stg1BladeAR-lastStgBladeAR;
+         delars = stg1StatorAR - lastStgStatorAR;
+         if (numStages > 1) { 
+            deltaAR =deltaAR /(numStages-1.); 
+            delars=delars/(numStages-1.); 
+         }
+         else {
+           lastStgBladeAR=stg1BladeAR;
+           lastStgStatorAR=stg1StatorAR;
+           deltaAR=0.;
+           delars=0.;
+           lastStgStatorRotorLR=stg1StatorRotorLR;
+         }
+         deltaStgEnthalpy = deltaH/numStages;
+
+   //
+   //     initialize design values for stage-by-stage compressor design
+   //
+         weight = 0.;
+         length = 0.;
+
+   //       initialize bypass stream component length.
+         bypassLength = 0.;
+         stgPout = Pin*144.;
+         stgTempOut = Tin;
+         deltaMaxT = (TtMaxOut-TtMaxIn)/numStages;
+         enthalpyStgOut = Hin;
+         stgMN = xm+deltaMN;
+         stgAR = stg1BladeAR+deltaAR;
+         statorAR = stg1StatorAR+delars;
+         delsr = lastStgStatorRotorLR-stg1StatorRotorLR;
+         if (delsr!=0. && numStages>2) { delsr /= (numStages-1.); }
+         srat = stg1StatorRotorLR-delsr;
+         if (radiusChangeStg==0 || radiusChangeStg>numStages) { 
+            radiusChangeStg=numStages; 
+         }
+         delrtb = (bladeTipRadius-outletInletRR*bladeTipRadius)/((numStages+1.)-radiusChangeStg);
+         delrhb = (bladeHubRadius-outletInletRR*bladeHubRadius)/((numStages+1.)-radiusChangeStg);
+
+   //
+   //     begin stage-by-stage compressor design
+   //
+         
+         igvWt = 0.0;
+         
+         string currentBladeMatType;
+         string currentStatorMatType;
+         
+         real stgPtmp;
+
+   // loop over each stage
+        
+       for(stage=0; stage < numStages+1; ++stage) { 
+   //
+   //       initialize stage inlet values mach (stgMN), enthalpy (enthalpyStageIn), total
+   //       temperature (stgTempIn), total pressure (stgPin) and aspect ratio (stgAR)
+   //
+           stgMN -= deltaMN;
+           if (stgMN  <= 0.) { 
+              throwError("stgMN is less than 0");
+           }
+           enthalpyStgIn = enthalpyStgOut;
+           stgTempIn = stgTempOut;
+           stgPin = stgPout;
+
+           if (stgAR   != 0.) { stgAR -= deltaAR; }
+           if (statorAR  != 0.) { statorAR -= delars; }
+           srat += delsr;
+
+   //     stator aspect ratio is now a function of stator/rotor length &
+   //     rotor aspect ratio.
+           if (srat  != 1.) { 
+              statorAR = stgAR / srat; 
+           }
+
+           if(igvAR_in == 0 && stage == 0) { 
+              igvAR = statorAR; 
+           }
+
+   //       calculate stage inlet gamma (ga), stage exit enthalpy (enthalpyStageOut) and
+   //       total temperature (stgTempOut)
+
+           flowSt.copyFlowStatic("des_Fl_I");
+           flowSt.setTotalTP(stgTempIn,stgPin);
+
+           ga = flowSt.gamt;
+
+           enthalpyStgOut = enthalpyStgIn+deltaStgEnthalpy;
+           flowSt.setTotal_hP(enthalpyStgOut,stgPin);
+
+           stgTempOut = flowSt.Tt;
+
+   //
+   //       calculate average total temperature (tgam), gamma (gav) and
+   //       pressue ratio (PR_stg) across the stage and stage exit total
+   //       pressure (stgPout)
+   //
+           tgam = (stgTempIn+stgTempOut)/2.;
+           flowSt.setTotalTP(tgam,stgPin);
+
+           gav = flowSt.gamt;
+
+           stgPtmp = 
+              exp(-polytropicEfficiency*log(stgTempOut/stgTempIn))**(gav/(gav-1.));
+           stgPout = stgPin*stgPtmp;
+
+   //
+   //       calculate stage inlet corrected flow (stgCorFlowIn) and
+   //       stage inlet area (stgArea)
+   //
+           
+           stgArea = calcDuctArea(stgTempIn,stgPin,wi,ga,stgMN);
+           calcRadii(stgArea);
+           
+           if(stage==numStages) { break; }
+           
+           PR_stg[stage] = stgPtmp;
+           
+           bladeHt = 12.*(bladeTipRadius-bladeHubRadius);
+           statorHt = bladeHt;
+
+           if (numBlades_in == 0) {
+             numBlades = 2.*PI*bladeSolidity*stgAR*bladeTipRadius*12./bladeHt;
+           } 
+           else {
+             numBlades = numBlades_in;
+           }
+           
+   //       save hub and tip radius of each stage for plotting.
+
+           hubRadius_stg[stage] = bladeHubRadius*12.;
+           tipRadius_stg[stage] = bladeTipRadius*12.;
+
+           hubTipRatio = bladeHubRadius/bladeTipRadius;
+
+           statorHt = calcStatorHeight();
+           if (calcStatorWt) {
+             if (numStatorBlades_in == 0) {
+                numStatorBlades = calcNumStatorBlades();
+             } 
+             else {
+                numStatorBlades = numStatorBlades_in;
+             }
+           } 
+           else {
+             numStatorBlades = 0;
+           }
+
+           if(stage==0) {
+              if (igvType != "NONE") {
+                if (numIGVblades_in == 0) {
+                   numIGVblades = 2.*PI*bladeTipRadius*igvSolidity*igvAR/statorHt*12.;
+                }
+                else {
+                   numIGVblades = numIGVblades_in;
+                }
+              } 
+              else {
+                numIGVblades = 0;
+              }
+           }           
+   //
+   //jjc calculate density of rotor and stator blades, by stage
+   //
+           if (TtMaxOut == 0.) { 
+              Tstress=stgTempIn; 
+           }           
+           else if(stage == 0) { 
+               Tstress=TtMaxIn; 
+           }
+           else { 
+               Tstress += deltaMaxT; 
+           }
+
+     //
+     //
+     //   following lines were added so that blade densities can be
+     //   input as function of stages - by mike tong on 3-30-98
+     //
+           if (stage < (bladeMaterial2StartStg-1)) {
+              if(bladeMaterial.type == "") {
+                 if(Tstress < 790) { bladeMaterial.type = "Ti_17"; }
+                 else { bladeMaterial.type = "Inconel_718"; }
+              }
+              bladeDensity = bladeMaterial.rho(Tstress);
+              currentBladeMatType = bladeMaterial.type;
+           }
+           else {
+              if(bladeMaterial2.type == "") {
+                 if(Tstress < 790) { bladeMaterial2.type = "Ti_17"; }
+                 else { bladeMaterial2.type = "Inconel_718"; }
+              }
+              bladeDensity = bladeMaterial2.rho(Tstress);
+              currentBladeMatType = bladeMaterial2.type;
+           }
+           
+           if (stage < (statorMaterial2StartStg-1)) {
+              if(statorMaterial.type == "") {
+                 statorMaterial.type = bladeMaterial.type;
+              }
+              statorDensity = statorMaterial.rho(Tstress);
+              currentStatorMatType = statorMaterial.type;
+           }
+           else {
+              if(statorMaterial2.type == "") {
+                 statorMaterial2.type = bladeMaterial2.type;
+              }
+              statorDensity = statorMaterial2.rho(Tstress);
+              currentStatorMatType = statorMaterial2.type;
+           }
+
+           if(statorDensity == 0.) { statorDensity=bladeDensity; }
+     //
+     //  added following lines to account for hollow rotor and stator blades.
+     //
+           if(stage < numHollowRotorStages) { 
+              bladeDensity = (1.0-hollowRotorFactor)*bladeDensity; 
+           }
+           if(stage < numHollowStatorStages) { 
+              statorDensity = (1.0-hollowStatorFactor)*statorDensity; 
+           }
+     //
+     //       calculate blade tip speed (bladeTipSpd) and stress (bladeStress)
+     //
+           bladeTipSpd = spoolRPM*2.*PI/60.*bladeTipRadius;
+           if (maxSpdRatio  != 0.) { bladeTipSpd *= maxSpdRatio; }
+           workFactor = deltaStgEnthalpy*778.*32.2/(bladeTipSpd*bladeTipSpd);
+
+           bladeStress = stress(bladeTipRadius,bladeTipSpd,hubTipRatio,
+                                spoolRPM,bladeTaperRatio, bladeDensity);
+
+     //       calculate stage weight (stgWt) and length (stgLength) and total
+     //       component weight (weight) and length (length)
+
+           splitterRadius = calcSplitterRadius();
+
+   //jjc    calculate igv volume ratio and material density.
+           igvVolRatio = 0.0;
+           if (igvType != "NONE") {
+             igvVolRatio = statorVolumeFactor;
+             if(igvDensity == 0.) { igvDensity = statorDensity; }
+           }
+   //
+   //jjc check if stage has a fan containment ring
+   //
+           if(stage >= numContainedStages) { containmentDensity = 0.0; }
+
+           calcStgWt();
+
+           //
+           //jjc   remove gap length if last stage and no rear frame present
+           //jjc   remove gap length if last stage and generic rear frame present
+           //
+           if(stage == numStages-1) {
+              removeGapLength();
+           }
+
+   //       save component length of each stage for plotting.
+           length_stg[stage] = stgLength;
+           bypassLen_stg[stage] = stgLengthBypass;
+           weight += stgWt;
+           length += stgLength;
+
+   //         calculate bypass stream component length.
+           bypassLength += stgLengthBypass;
+
+   //         use bypassLength (bypass) per jkw 4/24/92.
+           cgmomt += stgWt*bypassLength;
+
+           checkDesignLimits();
+           
+           bladeWt_stg[stage] = bladeWt;
+           statorWt_stg[stage] = statorWt;
+           statorSupportFlangeWt_stg[stage] = statorSupportFlangeWt;
+           nutsBoltsWt_stg[stage] = nutsBoltsWt;
+           caseWt_stg[stage] = caseWt;
+           fanContRingWt_stg[stage] = fanContRingWt;
+           rotorDrumWt_stg[stage] = rotorDrumWt;           
+           bladeDensity_stg[stage] = bladeDensity;
+           statorDensity_stg[stage] = statorDensity;
+           caseDensity_stg[stage] = caseDensity;
+           containmentDensity_stg[stage] = containmentDensity;
+           AR_stg[stage] = stgAR;
+           statorAR_stg[stage] = statorAR;
+           numStatorBlades_stg[stage] = numStatorBlades;
+           contRingRadialThickness_stg[stage] = contRingRadialThickness;
+           deltaStgEnthalpy_stg[stage] = deltaStgEnthalpy;
+           MNin_stg[stage] = stgMN;
+           area_stg[stage] = stgArea;
+           numBlades_stg[stage] = numBlades;
+           bladeTipSpd_stg[stage] = bladeTipSpd;
+           bladeStress_stg[stage] = bladeStress;
+           weight_stg[stage] = stgWt;
+           Tin_stg[stage] = stgTempIn;
+           Tstress_stg[stage] = Tstress;
+           workFactor_stg[stage] = workFactor;
+           bladeMaterial_stg[stage] = currentBladeMatType;
+           statorMaterial_stg[stage] = currentStatorMatType;
+           
+           totDiskWt += S_Disk.weight;
+           totBladeWt += bladeWt;
+           totStatorWt += statorWt;
+           if(stage==0) { totStatorWt += igvWt; }
+           totStatorSupportFlangeWt += statorSupportFlangeWt;
+           totNutsBoltsWt += nutsBoltsWt;
+           totCaseWt += caseWt;
+           totFanContRingWt += fanContRingWt;
+           totRotorDrumWt += rotorDrumWt;           
+        } // end loop over each stage
+
+        // the following two lines have been added here to match the downstream
+        // inner radius from the FORTRAN version.
+//         real area = calcDuctArea(stgTempOut,stgPout,wi,ga,stgMN-deltaMN);
+//         calcRadii(area);
+           
+         rearFrameWt = 0.;
+
+         if (!S_FrontFrame.isEmpty()) { 
+            S_FrontFrame.execute();
+            frontFrameWt = S_FrontFrame.weight;
+            if(S_FrontFrame.child.hasInterface("WATEframeCustom")) {
+               frontFrameLength = S_FrontFrame.lengthWithGap;
+            }
+            else {
+               frontFrameLength = S_FrontFrame.length;
+            }
+         }
+
+         calcRearFrame();
+         
+         calcTotalLengths();
+
+         weight += (rearFrameWt+frontFrameWt);
+         tcgmom = cgmomt+frontFrameWt*frontFrameLength+
+                         rearFrameWt*bypassLength;
+
+         //??? this appears to generate a bogus answer, but it
+         // agrees with the FORTRAN version of WATE
+         cgcomp = tcgmom/weight;
+         
+   //     added on 10/12/00 to iterate for desired component length
+   //       specified by the user, by adjusting blade aspect ratios
+   //
+         desiredLength = length_in;
+         if (avgLenPerStg > 0.) { 
+            desiredLength=avgLenPerStg*numStages; 
+         }
+         if (desiredLength > 0.) {
+           f1 = length / desiredLength;
+           f2 = abs(length-desiredLength)/desiredLength;
+           if (f2 > .003) {
+             stg1BladeAR *= f1;
+             lastStgBladeAR *= f1;
+             stg1StatorAR *= f1;
+             lastStgStatorAR *= f1;
+             continue; 
+           }
+         }
+         
+         outPort.innerRadius = bladeHubRadius*12.;
+         outPort.outerRadius = bladeTipRadius*12.;
+         break;
+      } // end huge while(1) loop
+   } // end cmech
+   
+
+  /**
+   *   calculate total blade and stator weight for a stage
+   ********************************************************************/    
+    void calcStgWt() {
+
+      real vi,bladeVolume,statorVolume;
+      real ha;
+      real tcase = calcCaseThickness();
+      real diskWt;
+      
+      if(stage==0) { stg1HubRadius = bladeHubRadius; }
+      
+      calcStgLength(stage);
+      
+//jjc  calculate igv axial length
+      if(stage == 0  &&  igvType  != "NONE") { 
+         igvLength = statorHt/igvAR + spacerLen_stg[stage]; 
+      }
+ 
+//jjc  calculate blade volume & stator volume & igv volume
+ 
+      real thick,thicks,thicki;
+      
+      if (bladeThicknessRatio == 0.0)     {
+         bladeVolume = bladeVolumeFactor*bladeHt**3/stgAR **2;
+         statorVolume = statorVolumeFactor*statorHt**3/statorAR**2;
+         vi = igvVolRatio*statorHt**3/igvAR**2;
+      } 
+      else {
+         thick  = bladeHt/stgAR*bladeThicknessRatio;
+         thicks = statorHt/statorAR*bladeThicknessRatio;
+         thicki = statorHt/igvAR*bladeThicknessRatio;
+         
+         bladeVolume = PI*bladeHt*bladeHt/stgAR*thick/3.*
+               (bladeTaperRatio+1.+sqrt(bladeTaperRatio))/(1.+bladeTaperRatio)**2;
+         statorVolume = PI*statorHt*statorHt/statorAR*thicks/3.*
+               (bladeTaperRatio+1.+sqrt(bladeTaperRatio))/(1.+bladeTaperRatio)**2;
+         vi = PI*statorHt*statorHt/igvAR*thicki/3.*
+               (bladeTaperRatio+1.+sqrt(bladeTaperRatio))/(1.+bladeTaperRatio)**2;
+      }
+ 
+      bladeWt = bladeVolume*bladeDensity*numBlades+
+            .2*PI*bladeHt**2/stgAR**2*bladeDensity*splitterRadius;
+      
+//     calculate stator weight.
+ 
+//     stator weight is now dependent on stator aspect ratio.
+      if (calcStatorWt > 0)    {
+         statorWt = statorVolume*statorDensity*numStatorBlades+
+               .2*PI*statorHt*statorHt/statorAR**2*
+               statorDensity*splitterRadius;
+      } 
+      else {
+         statorWt = 0.0;
+      }
+//
+//jjc add 20% to stator weight if variable stator
+//
+      if(stage < numVariableStages) {
+        ha = 0.5 * statorLen_stg[stage];
+        if(ha  <  1.0) { ha = 1.0; }
+        if(ha > 3.0) { ha = 3.0; }
+        statorWt += (numStatorBlades*(PI*.25*.09*statorLen_stg[stage]**2*ha+.1*.25*.75*statorLen_stg[stage])
+             + (.25 -.09)*2.*PI*(bladeTipRadius+ha))*statorDensity;
+      }
+ 
+//     igv weight is now dependent on igv aspect ratio.
+      if (igvType != "NONE"  &&  stage == 0)    {
+         igvWt = vi*igvDensity*numIGVblades+.2*PI*statorHt**2/igvAR**2*
+                 igvDensity*splitterRadius;
+         if(igvType == "VARIABLE") {
+           ha = 0.5 * statorLen_stg[stage];
+           if(ha  <  1.0) { ha = 1.0; }
+           if(ha > 3.0) { ha = 3.0; }
+           igvWt =(numIGVblades*(PI/4.*.3**2*igvLength**2*ha+.1*.25*.75*igvLength)
+                + (.5**2 - .3**2)*2.*PI*(bladeTipRadius+ha))*igvDensity + igvWt;
+         }
+      } 
+
+      weightPerBlade = bladeWt / numBlades;
+      bladeLength = calcBladeLength();
+      
+//
+//     calculate disk weight
+      S_Disk.execute(); 
+      diskWt = S_Disk.weight;
+ 
+//     ***  calculate nuts and bolts weight  **
+//          use stgLengthBypass (bypass) per jkw 4/24/92
+      nutsBoltsWt = calcNutsBoltsWt(stage);
+ 
+//     ***  calculate the case weight  **
+//          use stgLengthBypass (bypass) per jkw 4/24/92
+      if (caseMaterial.type == "") { 
+         caseDensity = S_Disk.currentMaterial.rho(Tstress); 
+      }
+      else {
+         caseDensity = caseMaterial.rho(Tstress);
+      }
+      caseWt = (bladeHubRadius*12.+bladeHt) * 2. * PI * stgLengthBypass* tcase * caseDensity;
+ 
+//     ***  calculate the rotor drum weight ***
+      rotorDrumWt = bladeHubRadius*24.*PI*(stgLengthBypass-bladeLen_stg[stage])*
+                    0.1*caseDensity;
+//     
+//     ***  calculate the fan containment ring weight  **
+      fanContRingWt = calcFanContainmentRingWt();
+ 
+//     ***  calculate the stator support flange weight  **
+      statorSupportFlangeWt=2.0*PI*(bladeHubRadius*12.+statorHt)*
+            statorLen_stg[stage]*0.15*statorDensity;
+ 
+ 
+//     ***  calculate the total stage weight  **
+      stgWt = diskWt+statorWt+bladeWt+nutsBoltsWt+caseWt+
+                fanContRingWt+statorSupportFlangeWt+rotorDrumWt;
+      
+      if(stage==0) { stgWt += igvWt; }
+           
+      real rimomp = (diskWt*(2.*bladeHubRadius*12.)**2)/8.;
+      real rimomd = bladeWt*((bladeHt**2/3.)+(bladeHubRadius*12.)**2);
+      inertia_stg[stage] = rimomp+rimomd;
+      totInertia += inertia_stg[stage];
+      
+   } // end calcStgWt
+
+   
+/*
+ *
+ ****************************************************************/
+   real calcFanContainmentRingWt()
+   {
+      if (numContainedStages)   {
+        return (bladeLen_stg[stage]+2.0*spacerLen_stg[stage])*PI*
+               (2.*(12.*bladeHubRadius+bladeHt)+contRingRadialThickness)*
+                contRingRadialThickness*containmentDensity;
+      } 
+      return 0;
+   } 
+
+   
+/*
+ *
+ ****************************************************************/
+   real calcNutsBoltsWt(int stg)
+   {
+      return (stg1HubRadius*12.*.75) * 2.* PI *.075 * stgLengthBypass* .286;
+   } 
+   
+   
+/*
+ * return blade length in inches
+ ****************************************************************/
+   real calcBladeLength() {
+      return bladeHt/stgAR;
+   } 
+   
+   
+/*
+ *
+ ****************************************************************/
+   void calcRearFrame() {
+      if (!S_RearFrame.isEmpty()) {
+         S_RearFrame.tipRadius = bladeTipRadius*12.;
+         S_RearFrame.hubRadius = bladeHubRadius*12.;
+         S_RearFrame.execute();
+         rearFrameWt = S_RearFrame.weight;                 
+         rearFrameLength = S_RearFrame.length;
+         if(S_RearFrame.child.hasInterface("WATEframeCustom")) {
+            rearFrameLength += S_RearFrame.gap;
+         }
+      }
+  }
+  
+
+/*
+ *         primary stream and bypass stream are the same.
+ *
+ ****************************************************************/
+  void calcTotalLengths() { 
+      length += frontFrameLength+rearFrameLength+igvLength;
+      bypassLength = length;
+  }
+
+ 
+  /**
+   * 
+   *********************************************************/    
+  real calcCaseThickness() { 
+      return 0.15 * 1.5;
+  }
+
+  
+  /**
+   * 
+   *********************************************************/    
+  void calcRadii(real area) {
+      string msg;
+      real checka;
+      
+     if(geometryType == "ConstHubRadius") {
+        if (stage >=  radiusChangeStg) { 
+           bladeHubRadius -= delrhb;
+        }
+        bladeTipRadius = sqrt(bladeHubRadius*bladeHubRadius+area/PI);
+     }
+     else if(geometryType == "ConstMeanRadius") {
+//       check for meaningless stage and blade parameters. calculate
+//       blade height (bladeHt) and number of blades (numBlades)
+//
+        checka = rmean*rmean-area/(2.*PI);
+        if (checka  <= 0.) { 
+           msg = "stage and blade parameters are meaningless. rmean="+
+                 toStr(rmean)+"  area="+toStr(area);
+           throwError(msg);
+        }
+
+        bladeTipRadius = sqrt(rmean*rmean+area/(2.*PI));
+        bladeHubRadius = sqrt(checka);
+     }
+     else if(geometryType == "ConstTipRadius") {
+       if (stage >=  radiusChangeStg) { 
+         bladeTipRadius -= delrtb;
+       } 
+       bladeHubRadius = bladeTipRadius*bladeTipRadius-area/PI;
+       if (bladeHubRadius  <= 0.) {
+          msg = "Bad value: bladeHubRadius="+toStr(bladeHubRadius);
+          throwError(msg); 
+       }
+       bladeHubRadius = sqrt(bladeHubRadius);
+     }
+ }  
+
+ 
+ /**
+  * 
+  *********************************************************/    
+ void prePass() {
+    real tstd=C_TSTD/*518.67*/;
+
+    if(S_Gearbox.isEmpty()) {
+       gearRatio = 1.0;
+    }
+    else {
+       gearRatio = S_Gearbox.gearRatio;
+    }
+
+    if(stg1NcTip == 0.0) {
+       spoolRPM = des_Nmech*gearRatio*s_Nmech;
+    }
+    else {
+       Tin = des_Fl_I.Tt;
+       real Pin_psf = des_Fl_I.Pt*144.;
+       real wi = des_Fl_I.W;
+       real gam = des_Fl_I.gamt;
+       areaIn = calcDuctArea (Tin,Pin_psf,wi,gam,MNin);
+       stg1TipRadius = sqrt(areaIn/PI/(1.-hubTipRatioIn*hubTipRatioIn));
+       
+       Nc = stg1NcTip*60./(2.*stg1TipRadius*PI);
+       spoolRPM = Nc*sqrt(Tin/tstd)*gearRatio*s_Nmech;
+    }
+
+    ElementBase::prePass();
+ }
+
+ 
+ /**
+  * 
+  *********************************************************/    
+ void checkDesignLimits() { 
+    string msg;
+    real sy;
+    real su;
+    
+    if (stage >= (bladeMaterial2StartStg-1)) {
+       sy = bladeMaterial2.sy(Tstress);
+       su = bladeMaterial2.su(Tstress);
+    }
+    else {
+       sy = bladeMaterial.sy(Tstress);
+       su = bladeMaterial.su(Tstress);
+    }
+
+    sy *= 0.9;
+    su *= 0.47;
+           
+    if(bladeStress > min(sy,su)) {
+       msg = "bladeStress of "+toStr(bladeStress)+" exceeds the limit of "+
+             toStr(min(sy,su))+" for material '"+bladeMaterial.type+
+             "' at stage "+toStr(stage+1);
+       provisionalWarning(msg);
+    }
+
+    if(hubTipRatio > maxLimit_hubTipRatio) {
+       msg = "design limit exceeded - stage "
+            + toStr(stage+1)+" hubTipRatio is "+toStr(hubTipRatio)+
+             ", design max limit is "+toStr(maxLimit_hubTipRatio); 
+       provisionalWarning(msg);
+    }
+    if(hubTipRatio < minLimit_hubTipRatio) {
+       msg = "design limit exceeded - stage "+toStr(stage+1)+
+             " hubTipRatio is "+toStr(hubTipRatio)+", design min limit is "+
+             toStr(minLimit_hubTipRatio);
+       provisionalWarning(msg);
+    }
+
+    if(PR_stg[stage] > maxLimit_stgPR) {
+       msg = "design limit exceeded - stage "+toStr(stage+1)+" PR_stg["+
+             toStr(stage)+"] is "+toStr(PR_stg[stage])+", design max limit is "+
+             toStr(maxLimit_stgPR);
+       provisionalWarning(msg);
+    }
+
+    if(stgMN > maxLimit_stgMN) {
+       msg = "design limit exceeded - stage "+toStr(stage+1)+
+             " stgMN is "+toStr(stgMN)+", design max limit is "+
+             toStr(maxLimit_stgMN);
+       provisionalWarning(msg);
+    }
+
+    if(bladeHt < minLimit_bladeHt) {
+       msg = "design limit exceeded - stage "+toStr(stage+1)+
+             " bladeHt is "+toStr(bladeHt)+", design min limit is "+
+             toStr(minLimit_bladeHt)+
+             "  change des opr or reduce hubTipRatio";
+       provisionalWarning(msg);
+    }
+  }  
+  
+  
+  /**
+   * Calculates the inner radius at absolute position x
+   ********************************************************************/    
+   real findInnerRadius(real x) {
+      real y1 = inPort.innerRadius;
+      real y2 = outPort.innerRadiusDwn;
+      real x1 = inPort.axialPosition;
+      real x2 = outPort.axialPosition;
+      
+      if(y2>y1) {
+         return y1 + (x-x1)*((y2-y1)/(x2-x1));
+      }
+      
+      return y2 + (x2-x)*((y1-y2)/(x2-x1));
+   }
+   
+      
+  /**
+   * Calculates the outer radius at absolute position x
+   ********************************************************************/    
+   real findOuterRadius(real x) {
+      real y1 = inPort.outerRadius;
+      real y2 = outPort.outerRadius;
+      real x1 = inPort.axialPosition;
+      real x2 = outPort.axialPosition;
+      
+      if(y2>y1) {
+         return y1 + (x-x1)*((y2-y1)/(x2-x1));
+      }
+      
+      return y2 + (x2-x)*((y1-y2)/(x2-x1));
+   }
+   
+   
+ /**
+  * 
+  *********************************************************/    
+  void calcGeometry() {
+ 
+      int ipt,istage,ii;
+      real x[],y[],y3[];
+      real xaray[4],yaray[4],yarayn[4];
+      real x1,y1,x2,y2;
+      real hite;
+      real tmpx;
+ 
+      real ffLen=0.;
+      real ffGap=0.;
+      real rfLen=0.;
+      if(!S_FrontFrame.isEmpty()) {
+         S_FrontFrame.child.calcGeometry();
+         ffLen = S_FrontFrame.length;
+         if(S_FrontFrame.child.hasInterface("WATEframeCustom")) {
+            ffGap = S_FrontFrame.gap;
+         }
+      }
+      
+      if(!S_RearFrame.isEmpty()) {
+         S_RearFrame.child.calcGeometry();
+         rfLen = S_RearFrame.length;
+      }
+      
+//     draw a smooth outline of the fan/compressor.
+      x1 = inPort.axialPosition;
+      y1 = inPort.innerRadius; //ri(1,iup1);
+      x2 = inPort.axialPosition;
+      y2 = inPort.outerRadius; //ro(1,iup1);
+      addLine(x1, y1, x2, y2, drawDepth,1);  
+      
+      x = { };
+      y = { };
+      y3 = { };
+      x.append(inPort.axialPosition);
+      x.append(x[0] + ffLen);
+      tmpx = x[1] + igvLength; //cligv(i);
+      x.append(tmpx); 
+      
+      y.append(inPort.outerRadius); //ro(1,iup1);
+      y.append(tipRadius_stg[0]); //rostage(1,i);
+      y.append(y[1]);
+      
+      y3.append(inPort.innerRadius); //ri(1,iup1);
+      y3.append(hubRadius_stg[0]);  //ristage(1,i);
+      y3.append(y3[1]);
+      
+      for(istage=0; istage<numStages-1; ++istage) { 
+         tmpx = tmpx + length_stg[istage];
+         x.append(tmpx);
+         y.append(tipRadius_stg[istage+1]); //rostage(istage+1,i);
+         y3.append(hubRadius_stg[istage+1]); //ristage(istage+1,i);
+      }
+      
+      tmpx += length_stg[numStages-1];
+      x.append(tmpx);
+      tmpx += rfLen;
+      y.append(outPort.outerRadiusDwn); // ro(2,idn1);
+      y3.append(outPort.innerRadius); //ri(2,idn1);
+      addPolyLine(x,y,drawDepth,1); // ???should curve fit this...  
+      addPolyLine(x,y3,drawDepth,1);
+      
+      x1 = tmpx;
+      y1 = outPort.innerRadius; //ri(2,idn1);
+      x2 = x1;
+      y2 = outPort.outerRadius; //ro(2,idn1);
+      addLine(x1,y1,x2,y2,drawDepth,1);  
+      
+      S_Disk.child.calcGeometry();
+      
+//  
+//   save data for igv
+      if(igvType != "NONE") {
+        xaray[0] = inPort.axialPosition + ffLen + ffGap;
+        yaray[0] = inPort.outerRadius; //ro[1,iup1];
+        xaray[1] = xaray[0];
+        yaray[1] = inPort.innerRadius; //ri[1,iup1];
+        xaray[3] = xaray[0] + igvLength - spacerLen_stg[0];
+        yaray[3] = tipRadius_stg[0]; //rostage[1,i];
+        xaray[2] = xaray[3];
+        yaray[2] = hubRadius_stg[0]; //ristage[1,i];
+        setStyle("fill: white;");
+        addPolygon(xaray,yaray,drawDepth,1);
+        setStyle("");
+        
+//
+//jjc  the following lines added to draw actuators for variable inlet
+//jjc  guide vanes only
+//
+        if(igvType == "VARIABLE") {
+          x.resize(8);
+          y.resize(8);
+          
+          hite = 1.9;
+          if(hite < contRingRadialThickness && numContainedStages >= 1) { 
+             hite = contRingRadialThickness + 1.0; 
+          } 
+          x[0] = inPort.axialPosition + ffLen + ffGap + 0.5*igvLength;
+          y[0] = inPort.outerRadius;
+          x[1] = x[0];
+          y[1] = y[0] + hite;
+          x[2] = x[0] + 1.0;
+          y[2] = y[1];
+          x[3] = x[2];
+          y[3] = y[2] - 0.25;
+          x[4] = x[3] + 0.5;
+          y[4] = y[3];
+          x[5] = x[4];
+          y[5] = y[4] + 0.5;
+          x[6] = x[5] - 0.5;
+          y[6] = y[5];
+          x[7] = x[2];
+          y[7] = y[2];
+          
+          addPolyLine(x,y,drawDepth,1);
+        } // end variable igv
+      } // end igvType != "NONE"
+ 
+      drawBlades();     
+     
+   }
+   
+  
+   /**
+    *
+    ************************************************************************/  
+   void drawBlades() {
+      real x,y;
+      int i;
+      
+      real stgPosition = inPort.axialPosition;
+      
+      if(!S_FrontFrame.isEmpty()) {
+         stgPosition += S_FrontFrame.length;
+      }
+      if(parent.hasInterface("WATEaxialCompressor")) {
+         stgPosition += igvLength;
+      }
+      
+      for(i=0; i<numStages; ++i) {
+         drawStage(stgPosition, i);
+         stgPosition = stgPosition + length_stg[i];
+      }       
+   }  
+       
+   
+        
+  /**
+   *  
+   ***************************************************************************/
+   void drawStage(real stgPosition, int stg)
+   {
+      real sx[4],sy[4];
+      real xaray[4],yaray[4], yarayn[4];
+      
+      setStyle("fill: black;");
+      
+      sx[0] = stgPosition;
+      if(stg == 0) {
+        sy[0] = inPort.outerRadius; //ro(1,iup1);
+      }
+      else {
+        sy[0] = tipRadius_stg[stg];
+      }
+
+      sx[1] = sx[0] + length_stg[stg];
+      sx[2] = sx[1];
+      sx[3] = sx[0];
+      if(stg==numStages-1) {
+        sy[1] = outPort.outerRadius; //rostage(stg+1,i);
+        sy[2] = outPort.innerRadius; //ristage(stg+1,i);
+      }
+      else {
+        sy[1] = tipRadius_stg[stg+1]; //rostage(stg+1,i);
+        sy[2] = hubRadius_stg[stg+1]; //ristage(stg+1,i);
+      }
+      sy[3] = hubRadius_stg[stg]; //ristage(stg,i);
+
+      xaray[0] = sx[0];
+      xaray[1] = sx[3];
+      yaray[0] = sy[0];
+      yaray[1] = sy[3];
+
+//       determine size of spacer of each stage.
+      real xspacer = spacerLen_stg[stg]; //xcld(stg,i);
+
+//       determine slope & y-intercept of hub & tip radius.
+      real xm1 = (sy[0]-sy[1])/(sx[0]-sx[1]);
+      real b1 = sy[0]-xm1*sx[0];
+      real xm2 = (sy[2]-sy[3])/(sx[2]-sx[3]);
+      real b2 = sy[2]-xm2*sx[2];
+
+//   draw the rotor blade
+      xaray[2] = sx[0] + bladeLen_stg[stg]; //xclr(stg,i);
+      xaray[3] = xaray[2];
+      yaray[2] = xm2*xaray[2]+b2;
+      yaray[3] = xm1*xaray[3]+b1;
+
+      addPolygon(xaray,yaray,drawDepth,1);
+
+//    draw the stator. 
+      xaray[0] = sx[0] + bladeLen_stg[stg] + xspacer;
+      xaray[1] = xaray[0];
+      xaray[2] = xaray[0] + statorLen_stg[stg];
+      xaray[3] = xaray[2];
+      
+      yaray[0] = xm1*xaray[0]+b1;
+      yaray[1] = xm2*xaray[1]+b2;      
+      yaray[3] = xm1*xaray[3]+b1;
+      yaray[2] = xm2*xaray[2]+b2;
+      
+      setStyle("fill: white;");
+      addPolygon(xaray,yaray,drawDepth,1);
+      setStyle("");
+      
+      drawContainmentRing(stg,stgPosition,xm1,b1);
+      drawStatorActuator(stg,stgPosition,xm1,b1);
+   }
+      
+
+  /**
+   * draw fan containment rings over the
+   * rotors of the requested stages.
+   **********************************************************************/
+   void drawContainmentRing(int stg, real stgPosition, real xm1, real b1) { 
+     real x[5],y[5],x1[4],y1[4];
+     int i;
+              
+     if(stg < numContainedStages) {
+       x1[0] = stgPosition - spacerLen_stg[stg];
+       y1[0] = xm1*x1[0] + b1;
+       x1[1] = x1[0];
+       y1[1] = y1[0] + contRingRadialThickness;
+
+       x1[2] = stgPosition + bladeLen_stg[stg] + spacerLen_stg[stg];
+       x1[3] = x1[2];
+       y1[3] = xm1*x1[3] + b1;
+       y1[2] = y1[3] + contRingRadialThickness;
+
+       x[0] = x1[0];
+       y[0] = y1[0];
+       x[1] = x1[1];
+       y[1] = y1[1];
+       x[2] = x1[2];
+       y[2] = y1[2];
+       x[3] = x1[3];
+       y[3] = y1[3];
+       x[4] = x1[0];
+       y[4] = y1[0];
+       
+       addPolyLine(x,y,drawDepth,1);       
+
+       setStyle("fill: red;"); 
+       addPolygon(x1,y1,drawDepth,1);       
+       setStyle("");  
+    }
+   }
+   
+   
+
+  /**
+   * draw actuators for variable stators
+   **********************************************************************/
+   void drawStatorActuator(int stg, real stgPosition, real xm1, real b1) {
+      real x[8],y[8];
+      real hite;
+      int i;
+       
+      if(stg < numVariableStages) {
+        hite = 1.9;
+        if(hite < contRingRadialThickness && stg < numContainedStages) { 
+           hite = contRingRadialThickness + 1.0; 
+        } 
+        x[0] =  stgPosition + bladeLen_stg[stg] + spacerLen_stg[stg] + 0.5*statorLen_stg[stg];
+        y[0] = xm1*x[0] + b1;
+        x[1] = x[0];
+        y[1] = y[0] + hite;
+        x[2] = x[0] + 1.0;
+        y[2] = y[1];
+        x[3] = x[2];
+        y[3] = y[2] - 0.25;
+        x[4] = x[3] + 0.5;
+        y[4] = y[3];
+        x[5] = x[4];
+        y[5] = y[4] + 0.5;
+        x[6] = x[5] - 0.5;
+        y[6] = y[5];
+        x[7] = x[2];
+        y[7] = y[2];
+
+        addPolyLine(x,y,drawDepth,1);
+     }
+  }
+
+  
+  /**
+   *
+   ***************************************************************/
+  void resizeStgArrays() {    
+      if(statorAR_stg.entries() != numStages) {
+         WATEcompressorBase::resizeStgArrays();
+         contRingRadialThickness_stg.resize(numStages);
+         workFactor_stg.resize(numStages);
+         AR_stg.resize(numStages);
+         statorAR_stg.resize(numStages);
+         nutsBoltsWt_stg.resize(numStages);
+         caseWt_stg.resize(numStages);
+         fanContRingWt_stg.resize(numStages);
+         rotorDrumWt_stg.resize(numStages);           
+         numStatorBlades_stg.resize(numStages);
+         statorWt_stg.resize(numStages);
+         statorDensity_stg.resize(numStages);
+         statorSupportFlangeWt_stg.resize(numStages);
+         statorLen_stg.resize(numStages);
+         statorMaterial_stg.resize(numStages);
+         caseDensity_stg.resize(numStages);
+         containmentDensity_stg.resize(numStages);
+         spacerLen_stg.resize(numStages); 
+         bypassLen_stg.resize(numStages);
+     }
+  }
+  
+
+} // end class WATEcompressorBase
+
+
+#endif
+      
+

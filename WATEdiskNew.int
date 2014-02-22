@@ -1,0 +1,338 @@
+#ifndef _WATEDISKNEW_
+#define _WATEDISKNEW_
+
+
+// external dependencies
+//    ParentVar ___stage;
+//    ParentVar ___numStages;
+//    ParentVar ___bladeTipRadius;
+//    ParentVar ___bladeHubRadius;
+//    ParentVar ___bladeDensity;
+//    ParentVar ___bladeLength;
+//    ParentVar ___spoolRPM;
+//    ParentVar ___weightPerBlade;
+//    ParentVar ___numBlades;
+//    ParentVar ___bladeStress;
+//    ParentVar ___Tstress;
+
+extern int numStages;
+   
+/**
+ *     this disc weight method uses a design procedure
+ *     developed by garrett - airesearch. particularly
+ *     suited for small turbine engines. it is non-
+ *     proprietary, and given to nasa under the wate-2
+ *     program development.  g. w. klees, sept 28,1978.
+ ***************************************************************************/
+class WATEdiskNew extends WATEdiskBase
+{
+   real rtx; 
+   real rhx; 
+   real rhodsk; 
+   real rhobld; 
+   real hubcrd; 
+   real tipcrd; 
+   real rpmx; 
+   real wblade; 
+   real bladex; 
+   real sig; 
+   real ahub; 
+   real rimhgt; 
+   real rimden; 
+   real angdsk; 
+   real sy {
+      units = "psia";
+      description = "yield stress";
+   }
+   real su {
+      units = "psia";
+      description = "ultimate stress";
+   }
+   real sigdsk; 
+   real sigrim; 
+   real wrotor; 
+   real wdisk; 
+   real wrim; 
+   real wshrod; 
+   real fbt; 
+   real outerThk; 
+   real phidk; 
+   real hubThk; 
+   real rox; 
+   real rix; 
+   real sdis; 
+   real volt;
+   int hasShroud; 
+   int insertedBlades=1;
+   
+  /**
+   *
+   ***************************************************************************/
+   void calculate() {
+            
+      real w1;
+      
+      setStage(stage);
+      
+      rtx=bladeTipRadius*12.;
+      rhx=bladeHubRadius*12.;
+      
+      rhodsk=currentMaterial.rho(Tstress);
+      rhobld=bladeDensity;
+      rhodsk *= 1728.;
+      rhobld *= 1728.;
+      
+      hubcrd=bladeLength;
+      tipcrd=bladeLength;
+      hasShroud=0;
+      rpmx=spoolRPM;
+      wblade=weightPerBlade;
+      bladex=numBlades;
+      sig=bladeStress;
+      boreRadius=0.;
+      ahub=.6*hubcrd*PI*rhx/bladex;
+ 
+      sy = currentMaterial.sy(Tstress) * 0.9;
+      su = currentMaterial.su(Tstress) * 0.47;
+      sigdsk = (sy < su) ? sy : su;
+      sigrim = (sy < su) ? su : sy;
+ 
+      rimhgt=max(.1*rhx,.75);
+      rimden=.90;
+      angdsk=30.;
+      
+      wblade *= bladex;
+ 
+      disk();
+
+      do {
+         w1=wrotor;
+         boreRadius += .05;
+         
+         if(disk()) { break; }
+         
+         if(boreRadius  >= (rhx-rimhgt)) {
+            provisionalError("bore radius opt failed, r,rh,rimhgt,wrotor,w1 ="+
+                  toStr(boreRadius)+","+toStr(rhx)+","+toStr(rimhgt)+","+
+                  toStr(wrotor)+","+toStr(w1));
+            break;
+         }
+      } while (wrotor <= w1);
+ 
+      weight=wdisk+wrim;
+
+      updateStageArrays(stage);
+
+   } // end calculate
+   
+   
+  /**
+   *
+   ***************************************************************************/
+   int disk() {
+      real ps,bra1=0,bra2=0,rho=0;
+      int ret=0;
+      
+      if (hasShroud == 1) {
+         rho=rhobld*5.787e-4;
+         bra1=(2.*PI*rpmx/60.)**2;
+         bra2=(2.*PI*rtx**2*tipcrd**2*.1)/bladex;
+         ps=rho*bra1*bra2/386.;
+         wshrod=2.*PI*rtx*tipcrd*.1*rho;
+      }
+      else {
+         ps=0.;
+         wshrod=0.;
+      }
+ 
+      int mm;
+      real fp,fb=sig*ahub/1.2;
+      real dtd,tdtip,tdtip1;
+      fb += ps;
+      if (insertedBlades == 1) { 
+         fp=rimden*(2.*(rhx-rimhgt))**2*rimhgt*2.*hubcrd*.25/144.**2;
+         fp=fp*rhobld*(rpmx*PI/30.)**2*PI/(bladex*32.2);
+         fbt=fb+fp;
+         outerThk=1./(2.*PI*sigrim*(rhx-rimhgt)/(fbt*bladex));
+      }
+      else {
+         tdtip=hubcrd;
+         for(mm=1; mm<=100; ++mm) {
+            fp=rimden*(2.0*(rhx-rimhgt))**2*rimhgt*(hubcrd+tdtip)*0.25/144.0**2;
+            fp=fp*rhobld/32.2*(rpmx*2.0*PI/60.0)**2*PI/bladex;
+            fbt=fb+fp;
+            tdtip1=1./(2.*PI*sigrim*(rhx-rimhgt)/(fbt*bladex));
+            tdtip1=max(tdtip1,.15);
+            dtd=(tdtip1-tdtip)/tdtip1;
+            if (abs(dtd)-0.001 <= 0.0) {
+                break;
+            }
+            else {
+               tdtip=tdtip1;
+            }
+         }
+         if(mm>=100) { 
+            provisionalError("iteration limit for disk outerThk exceeded, value used = "+ 
+                 toStr(tdtip1));
+         }
+         outerThk = tdtip1;
+      }
+      
+      outerThk=max(outerThk,.15);
+      phidk=boreRadius/(rhx-rimhgt);
+      hubThk=outerThk+2.0*(rhx-rimhgt)*(1.0-phidk)*tan(angdsk/57.2958);
+      rox=rhx-rimhgt;
+      rix=phidk*rox;
+      real rbr=rix+(rox-rix)*(hubThk+2.0*outerThk)/(3.0*(hubThk+outerThk));
+      real acd=0.5*(outerThk+hubThk)*(rox-rix);
+      real aicg=(rox-rix)**3*(hubThk**2+4.*hubThk*outerThk+outerThk**2)/(36.*(hubThk+outerThk));
+      real ai=aicg+acd*rbr**2;
+      real sdisk=rhodsk/32.2*(rpmx*2.0*PI/60.0)**2/144.0**2*ai/acd;      
+      sdisk += bladex*fbt/(2.0*PI*acd);
+      
+      real temp=outerThk;
+      if (insertedBlades == 1) { 
+         temp=hubcrd; 
+      }
+      real vrim = calcBladeVolume (rox,temp,rhx,hubcrd);
+      if (sdisk-sigdsk <= 0.0) {
+         sdis=sigdsk;
+         size12();
+      }
+      else {
+         provisionalWarning("average disk stress greater than allowable stress: "+
+              toStr(sdisk)+" < "+toStr(sigdsk));
+         ret=1;
+         volt = calcBladeVolume(rix,hubThk,rox,outerThk);
+      }
+      wrim=vrim*rhobld/1728.0;
+      wdisk=volt*rhodsk/1728.0;
+      
+      wrotor=wshrod+wblade+wrim+wdisk;
+      
+      return ret;
+   } // end disk   
+   
+
+  /**
+   *  calculates blade volume.
+   ***************************************************************************/
+   real calcBladeVolume (real rh,real _th,real rt,real _tt) {
+         real a=(_tt-_th)/(rt-rh);
+         real b=_th-rh*a;
+         return 2.*PI*(a/3.0*(rt*rt*rt-rh*rh*rh)+b*.5*(rt*rt-rh*rh));
+   } 
+
+   
+  /**
+   *   calculates disk stress parameters.
+   ***************************************************************************/
+   void size12() {
+      real dt=angdsk/57.2958*0.05;
+      real te3=0.,te2=0.,te1=0.,thm=0.,the=0.,dstr=0.,dst=0.;
+      real thbb=0.,st1=0.,st2=0.,st3=0.;
+      int j,m;
+      for(j=1; j<=21; ++j) {
+         the=angdsk/57.2958-(j-1)*dt;
+         dstr = stres (boreRadius,the,bladex,rox);
+         te3=the;
+         dst=dstr-sdis;
+         if (dst < 0.) { 
+            continue;
+         }
+         else if(dst == 0.) {
+            thm=the;
+            thbb=outerThk+2.0*(rox-boreRadius)*sin(thm)/cos(thm);
+            volt = calcBladeVolume (boreRadius,thbb,rox,outerThk);
+            sdis = stres (boreRadius,thm,bladex,rox);
+         }
+         else  {  // if(dst >= 0.)
+            te1=the;
+            for(m=1; m<20; ++m) {
+               st1 = stres (boreRadius,te1,bladex,rox);
+               te2=te1+0.01*dt;
+               st2 = stres (boreRadius,te2,bladex,rox);
+               te3=te1+(te2-te1)*((sdis-st1)/(st2-st1));
+               st3 = stres (boreRadius,te3,bladex,rox);
+               if (abs((st3-sdis)/sdis) <= 0.001) {
+                  thm=te3;
+                  thbb=outerThk+2.0*(rox-boreRadius)*sin(thm)/cos(thm);
+                  volt = calcBladeVolume (boreRadius,thbb,rox,outerThk);
+                  sdis = stres (boreRadius,thm,bladex,rox);
+                  return;
+               }
+               else {
+                  te1=te3;
+               }
+            } // end inner loop 
+         } 
+      } // end outer loop
+      
+      thm=te3;
+      thbb=outerThk+2.0*(rox-boreRadius)*sin(thm)/cos(thm);
+      volt = calcBladeVolume (boreRadius,thbb,rox,outerThk);
+      sdis = stres (boreRadius,thm,bladex,rox);
+  } // end size12
+
+  
+  /**
+   *  calculates stress in disks.
+   ***************************************************************************/
+  real stres(real rh,real tht,real blades,real rt)
+  {
+      real th_ = 2.0*(rt-rh)*sin(tht)/cos(tht)+outerThk;
+      real a = 0.5*(outerThk+th_)*(rt-rh);
+      real rb = rh+(rt-rh)*(th_+2.0*outerThk)/(3.0*(th_+outerThk));
+      real aicc = (rt-rh)**3*(th_*th_+4.*th_*outerThk+outerThk*outerThk)/(36.*(th_+outerThk));
+      real ai = aicc+a*rb*rb;
+      return (rhodsk/32.2*(rpmx*2.*PI/60.0)**2/144.0**2*ai/a)+blades*fbt/(2.*PI*a);
+  }
+  
+  
+  /**
+   *  
+   ***************************************************************************/
+   void drawStage(real stgPosition, int stg)
+   {
+      real x0,y0,x1,y1,tmp;
+      real bl = bladeLen_stg[stg]; 
+      real shaftRadius = 0.5*shaftRef->outerDiameter;
+
+      if(parent.parent.parent.hasInterface("WATEaxialTurbine")) {
+         tmp = statorLen_stg[stg]+spacerLen_stg[stg];
+         stgPosition += tmp;
+      }
+      
+      x0 = stgPosition + 0.5*bl;
+      x1 = x0;
+      y0 = boreRadius_stg[stg];
+      
+      if(y0 < 1.1*shaftRadius) { y0 = 1.1*shaftRadius; }
+      
+      if(stg==0) {
+         y1 = inPort.innerRadius;
+         if(numStages<2) { y1 = 0.5*(y1+outPort.innerRadius); }
+         else {
+            y1 = 0.5*(y1+hubRadius_stg[stg+1]);
+         }
+      }
+      else {
+         if(stg == numStages-1) {
+            y1 = 0.5*(hubRadius_stg[stg]+outPort.innerRadius);
+         }
+         else {
+            y1 = 0.5*(hubRadius_stg[stg]+hubRadius_stg[stg+1]);
+         }
+      }
+      
+      setStyle("stroke-width: .4;");
+
+      addLine(x0,y0,x1,y1,drawDepth);
+      addLine(x0,-y0,x1,-y1,drawDepth);
+
+      setStyle("");
+   }
+   
+}
+
+#endif

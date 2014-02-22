@@ -1,0 +1,184 @@
+
+#ifndef _WATEDISKBASE_
+#define _WATEDISKBASE_
+
+//
+// LAST INSPECTION DATE: *not inspected*
+//
+//  EXTERNAL DEPENDENCIES
+//
+//   Shaft* shaftRef
+
+extern int S_FrontFrame.isEmpty();
+extern real S_FrontFrame.length;
+extern real igvLength;
+extern int parent.parent.parent.hasInterface(string);
+
+/*
+ * Base class for WATE disks
+ ***************************************************************************/
+class WATEdiskBase extends WATEsubelement
+{
+  //DESVAL(85)
+  int  material2StartStg {
+    value = 999;    IOstatus = "input";    units = "none";
+    description = "If diskDensity2 not zero, then this gives the stage number where disk material changes to material 2";
+  }         
+
+  //DESVAL(87)
+  int  material3StartStg {
+    value = 999;    IOstatus = "input";    units = "none";
+    description = "If diskDensity3 not zero, then this gives the stage number where disk material changes to material 3";
+  } 
+ 
+  string diskType { 
+    description = "Shows the disk type for the current stage (\"RING\",\"WEB\",\"HYPERBOLIC\",\"OPTIMIZED RING\",\"OPTIMIZED WEB\",\"OPTIMIZED HYPERBOLIC\")";
+    IOstatus = "output"; 
+  } 
+  diskType.hide(1); 
+   
+  string shaftRef {
+      description = "name of WATEshaft connected to this component";
+    //  ptrType = "Shaft";
+  }
+   
+  real boreRadius {
+     units = "in";
+  }
+  real liveRimRadius;
+
+  // disk material of first group of stages
+  WATEmaterial material;
+  // disk material of second group of stages (optional)
+  WATEmaterial material2;
+  // disk material of third group of stages (optional)
+  WATEmaterial material3;
+  
+  WATEmaterial currentMaterial;
+  currentMaterial.hide(1);
+
+  
+  // per stage attributes
+  real weight_stg[];
+  real boreRadius_stg[];
+  real liveRimRadius_stg[];
+  real density_stg[];
+  string material_stg[];
+  
+     
+   
+   /**
+    *
+    *************************************************************************/   
+   int verify() {
+      int good = 1;
+      
+      if(shaftRef ==  "") {
+         error("shaftRef is not set");
+         good = 0;
+      }
+      
+      return good;
+   }
+   
+   
+   /**
+    *
+    ************************************************************************/   
+   void setStage(int stage)
+   {
+      real tmp = Tstress;
+      
+      // if this is the first stage, resize our internal arrays
+      if(stage == 0) {
+         resize(numStages);
+      }
+      
+      if(stage < material2StartStg-1) {
+         if(material.type == "") {
+            material.type = bladeMaterial.type;
+         }
+         currentMaterial.type = material.type;
+      } 
+      else if(stage < material3StartStg-1) {
+         if(material2.type == "") {
+            material2.type = bladeMaterial2.type;
+         }
+         currentMaterial.type = material2.type;
+      }
+      else {
+         if(material3.type == "") {
+            if(tmp < 790) { material3.type = "Ti_17"; }
+            else { material3.type = "Inconel_718"; }
+         }
+         currentMaterial.type = material3.type;
+      }
+   }
+
+   
+   /**
+    *  resize our internal arrays (if we have any)
+    ************************************************************************/   
+   void resize(int sz)
+   {
+      if(weight_stg.entries() != sz) {
+         weight_stg.resize(sz);
+         boreRadius_stg.resize(sz);
+         liveRimRadius_stg.resize(sz);
+         density_stg.resize(sz);
+         material_stg.resize(sz);
+      }
+   }
+
+   
+   /**
+    * Set values for the current stage in the stage arrays
+    *
+    *************************************************************************/   
+   void updateStageArrays(int stg) {      
+         weight_stg[stg] = weight;
+         boreRadius_stg[stg] = boreRadius;
+         liveRimRadius_stg[stg] = liveRimRadius;
+         density_stg[stg] = currentMaterial.rho(Tstress);
+         material_stg[stg] = currentMaterial.type;
+   }
+   
+   
+   /**
+    *
+    ************************************************************************/   
+   void dum() {
+    real junk=shaftRef->outerDiameter; // force a string reference so converter will create a 
+                                       // VCStringRef for shaftRef.
+      real junk2=junk;  // silence compiler warning about junk not being used
+      junk = junk2;
+   }
+   dum.hide(2);
+
+   
+   /**
+    *
+    ************************************************************************/  
+   void calcGeometry() {
+      real tmp;
+      int nstg = numStages;
+      int i;
+      
+      real stgPosition = inPort.axialPosition;
+      
+      if(exists("S_FrontFrame") && !S_FrontFrame.isEmpty()) {
+         stgPosition += S_FrontFrame.length;
+      }
+      if(parent.parent.parent.hasInterface("WATEaxialCompressor")) {
+         stgPosition += igvLength;
+      }
+      
+      for(i=0; i<nstg; ++i) {
+         drawStage(stgPosition, i);
+         stgPosition = stgPosition + length_stg[i];
+      }       
+   }  
+   
+}
+
+#endif

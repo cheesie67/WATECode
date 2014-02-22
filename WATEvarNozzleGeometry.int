@@ -1,0 +1,30 @@
+#ifndef _WATEVARNOZZLEGEOMETRY_
+#define _WATEVARNOZZLEGEOMETRY_
+
+extern int calcComponentThickness;
+
+class WATEvarNozzleGeometry extends WATEsubelement
+{
+   real caWt;
+   
+   real caMultiplier {
+      value = 0.1;
+      description = "nozzle weight multiplier for controls and actuators";
+   }
+   
+   real miscWt;
+   
+   real miscMultiplier {
+      value = 1.0;
+      description = "C&A weight multiplier for misc. variable geometry stuff";
+   }
+   
+   void calculate() {
+      real nozWt = parent.parent.parent.weight;
+      caWt = caMultiplier * nozWt;
+      miscWt = miscMultiplier * caWt;
+      weight = caWt + miscWt;
+   }
+}
+
+#endif

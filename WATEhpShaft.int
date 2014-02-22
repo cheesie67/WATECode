@@ -1,0 +1,12 @@
+#ifndef _WATEHPSHAFT_
+#define _WATEHPSHAFT_
+
+
+class WATEhpShaft extends WATEshaftBase 
+{
+  material.type = "Inconel_718";
+} 
+
+#endif
+
+

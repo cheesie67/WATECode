@@ -1,0 +1,1175 @@
+
+#ifndef WATEAXIALTURBINE_H
+#define WATEAXIALTURBINE_H
+
+//    G_ACCEL
+//    S_Disk.currentMaterial.rho
+//    S_Disk.weight
+//    S_RearFrame.gap
+//    S_RearFrame.hubRadius
+//    S_RearFrame.length
+//    S_RearFrame.tipRadius
+//    S_RearFrame.weight
+
+
+extern int S_RearFrame.child.hasInterface(string);
+extern int S_Disk.child.hasInterface(string);
+extern real S_RearFrame.gap;
+
+class WATEaxialTurbine extends WATEturbineBase
+{
+     Option geometryType {
+       trigger = 0;
+       allowedValues = { "ConstMeanRadius", "ConstTipRadius","ConstHubRadius"  };
+       IOstatus = "input";    units = "none";
+       description = "Determines which part of each blade row is held to the same radius";
+     }
+     
+     real diskStressParam;
+     real rotorStatorClearancePct;
+     
+     real rotorShroudThickness=0.15;
+     real rotorShroudWt;
+     real totRotorShroudWt;
+     
+     real rotorDrumThickness=0.15;
+     real rotorDrumWt;
+     real totRotorDrumWt;
+     
+     real statorShroudThickness=0.15;
+     real statorShroudWt;
+     real totStatorShroudWt;
+     
+     real rubStripThickness=0.15;
+     real rubStripDensity=0.12;
+     real rubStripWt;
+     real totRubStripWt;
+     
+     real statorFlangeThickness=0.15;
+     real statorFlangeWt;
+     real totStatorFlangeWt;
+     
+     real caseThickness=0.15 * 1.5;
+     real caseWt;
+     real totCaseWt;
+     
+     real diskSpacerBarThickness=0.15;
+     real diskSpacerBarWt;
+     real totDiskSpacerWt;
+     
+     real weightPerBlade;
+     
+     real totDiskWt;     
+     
+     real inducerDiskWt;
+     real totInducerDiskWt;
+     
+     real bladeWt; 
+     real totBladeWt;
+     real bladeHt;
+     real bladeLength;
+     real bladeHubRadius;
+     real bladeTipRadius;
+     real bladeDensity;   
+     real stg1BladeStress;
+     real bladeStress;
+     real bladeTipSpd;
+     
+     real statorWt;
+     real totStatorWt;
+     real statorLength;
+     real statorAR;
+     real statorDensity;
+     
+     real nutsBoltsWt;
+     real totNutsBoltsWt;
+         
+     real totInterStgSealDiskWt;
+     real interStgSealDiskWt;          
+     
+     real activeCaseCoolingWt;
+     real totActiveCaseCoolingWt;
+     
+     int totNumBlades;
+     int totNumStatorBlades;
+     int numStatorBlades;
+     
+     real stgAR;
+     real stgArea;
+     real stgMNin;
+     real stg1TipRadius;
+     real stgTtIn;
+     real stgLength;
+     
+     defaultHideLevel = 2;
+     
+     real stgWt;
+     real rimomd;
+     real rimomp;
+     real diskw;
+     real srat;
+     real tmaxo;
+     
+     defaultHideLevel = 0;
+     
+     real caseDensity;
+     real Tstress;
+     real rearFrameLength;
+     real hubTipRatio;
+     real totInertia;
+     real deltaStgEnthalpy;
+     real delrtb;
+     real delrhb;
+     real rm;
+     real torq;
+     real maxRPM;
+     real cgcomp;
+     
+#ifdef WATE_LEGACY
+     //??? for matching only. DELETE LATER         
+     real bladeTipRadiusSave; bladeTipRadiusSave.hide(1);
+     real bladeHubRadiusSave; bladeHubRadiusSave.hide(1);
+     //???        
+#endif
+                
+     int stage;
+     
+     real stgExitPt;
+     real stgExitTt;
+     real stgExitEnthalpy;
+     
+     MaxSaver max_TtOut {
+        var = "Fl_O.Tt";
+     }
+     
+     MaxSaver max_TtIn {
+        var = "Fl_I.Tt";
+     }
+     
+     MaxSaver max_PtIn {
+        var = "Fl_I.Pt";
+     }
+     
+     MaxSaver max_WcOut {
+        var = "Fl_O.Wc";
+     }
+     
+     FlowStation stgFlowStation;
+     
+     
+//
+//   description:	calculate mechanical design paramters of turbines.
+//
+  void tmech () {
+ 
+      real cc1=778.;
+      
+      real diskwi;
+      real diskwt;
+      real wtb1;
+      real matid2;
+      real icomp;
+      real stf;
+      real diskv;
+      real omega;
+      real maxAllowedTipSpd;
+      real deltaHstg;
+      real tup;
+      real g1;
+      real g2;
+      real g3;
+      real stgDeltaMN;
+      real stgDeltaAR;
+      real delsr=0.;
+      real ef;
+      real checka;
+      //real stg1HubRadius;
+      real gao;
+      real cgmom;
+      real cgmomt;
+      real his;
+      real stgPtIn;
+      real gai;
+      real gammaAvg;
+      real tos2;
+      real stgHubTipRatio;
+      real rearFrameWt;
+      real sy;
+      real su;
+      real dlimit;
+      real f1;
+      real f2;
+      real f3;
+      real f4;
+      real utp1;
+      tmaxo=max_TtOut.val;
+      real cgfram;
+      real tcgmom;
+      
+      int recalc;
+      string msg;
+
+      real wi = des_Fl_I.W; 
+      real PtIn = des_Fl_I.Pt*144.;
+      real TtIn = des_Fl_I.Tt; 
+      //real FARin = des_Fl_I.FAR; 
+      real gamIn = des_Fl_I.gamt;
+ 
+//     check for bad inputs and case type.  set flag for stage-by-stage
+//     turbine design
+ 
+      if (spoolRPM == 0.) { 
+         error("spoolRPM is zero, can't run tmech"); 
+         return; 
+      } 
+ 
+//     initialize turbine design values
+      if (lastStgBladeAR == 0.) { lastStgBladeAR=stg1BladeAR; } 
+
+      int itercount=0;
+      
+      if (maxSpdRatio_in == 0.) { 
+         maxSpdRatio = max_Nmech.val/des_Nmech; 
+      } 
+      else {
+         maxSpdRatio = maxSpdRatio_in; 
+      }
+      
+      maxRPM = spoolRPM*maxSpdRatio;
+      
+      omega = spoolRPM*PI*2.0/60.;
+      maxAllowedTipSpd = controlRadius*omega;
+      
+      while(1) {
+         recalc = 0;
+         
+         if(++itercount > 25) {
+            throwError("too many internal iterations");
+         }
+   //
+   //     for design case  initialize stage design values
+   //
+
+   //     begin iteration for number of stages (numStages) based on blade
+   //     tip speed (bladeTipSpd)
+         
+         numStages = 0.;
+         if(numStages_in == 0) {
+            do { 
+               ++numStages;
+               if (numStages > 40.) {
+                  msg = "work or radius too high.  controlRadius = ";
+                  msg += toStr(controlRadius);
+                  throwError(msg);
+               } 
+
+               deltaHstg = deltaH/numStages;
+               bladeTipSpd = sqrt(loadingParam*deltaHstg*G_ACCEL*2.*cc1);
+
+            } while(bladeTipSpd > maxAllowedTipSpd); 
+         }
+         else {
+            numStages = numStages_in;
+            deltaHstg = deltaH/numStages;
+            bladeTipSpd = sqrt(loadingParam*deltaHstg*G_ACCEL*2.*cc1);
+         }
+         
+         
+         // make sure all per-stage arrays are the correct size
+         if(PR_stg.entries() != numStages) {
+            hubRadius_stg.resize(numStages);
+            tipRadius_stg.resize(numStages);
+            spacerLen_stg.resize(numStages);
+            inertia_stg.resize(numStages);
+            PR_stg.resize(numStages);
+            weight_stg.resize(numStages);
+            length_stg.resize(numStages);
+            AR_stg.resize(numStages);
+            MNin_stg.resize(numStages);
+            area_stg.resize(numStages);
+            
+            interStgSealDiskWt_stg.resize(numStages);
+            inducerDiskWt_stg.resize(numStages);
+            nutsBoltsWt_stg.resize(numStages);
+            caseWt_stg.resize(numStages);
+            caseDensity_stg.resize(numStages);
+            numStatorBlades_stg.resize(numStages);
+            statorLen_stg.resize(numStages);
+            statorDensity_stg.resize(numStages);
+            statorWt_stg.resize(numStages);
+            statorAR_stg.resize(numStages);
+            statorFlangeWt_stg.resize(numStages);
+            statorShroudWt_stg.resize(numStages);
+            statorMaterial_stg.resize(numStages);
+            rubStripWt_stg.resize(numStages);
+            rotorDrumWt_stg.resize(numStages);
+            rotorShroudWt_stg.resize(numStages);
+            diskWt_stg.resize(numStages);
+            diskDensity_stg.resize(numStages);
+            diskSpacerBarWt_stg.resize(numStages);
+            diskMaterial_stg.resize(numStages);
+            diskType_stg.resize(numStages);
+            activeCaseCoolingWt_stg.resize(numStages);
+            deltaStgEnthalpy_stg.resize(numStages);
+            numBlades_stg.resize(numStages);
+            bladeWt_stg.resize(numStages);
+            bladeLen_stg.resize(numStages);
+            bladeDensity_stg.resize(numStages);
+            bladeTipSpd_stg.resize(numStages);
+            bladeStress_stg.resize(numStages);
+            bladeMaterial_stg.resize(numStages);
+         }
+
+         bladeTipRadius = bladeTipSpd/omega;
+
+   //     for design case  calculate hub radius (bladeHubRadius), blade tip radius (bladeTipRadius)
+   //     and check for convergence on number of stages
+
+         areaIn = calcDuctArea(TtIn,PtIn,wi,gamIn,MNin);
+         
+         real c1 = bladeTipRadius*bladeTipRadius-areaIn/PI;
+         if (c1 <= 0.) { 
+            bladeHubRadius=0.; 
+         } 
+         else {
+            bladeHubRadius = sqrt(c1);
+         }
+         
+         inPort.innerRadius = bladeHubRadius*12.;
+         inPort.outerRadius = bladeTipRadius*12.;
+
+#ifdef WATE_LEGACY
+         //??? for matching only. DELETE LATER         
+         bladeTipRadiusSave = bladeTipRadius;
+         bladeHubRadiusSave = bladeHubRadius;
+         //???
+#endif
+         
+   //     calculate hub-to-tip ratio (hubTipRatio)
+   //     tip speed (bladeTipSpd) and number of stages (numStages)
+
+         hubTipRatio = bladeHubRadius/bladeTipRadius;
+         bladeTipSpd = bladeTipRadius*PI*2./60.*spoolRPM;
+         
+         tup = bladeTipSpd*maxSpdRatio;
+
+   //      calculate shaft torque (torq) and 1st blade stress (stg1BladeStress)
+         torq = des_HP/maxRPM*63025.;
+
+         if(bladeMaterial.type == "") {
+            if(techLevel=="MetalBlades") { bladeMaterial.type="_410_Steel"; }
+            else { bladeMaterial.type="_6_96_MI_with_Sylramic_Fibers_18_epi"; } // CeramicBlades            
+         }
+         bladeDensity = bladeMaterial.rho(TtIn);
+         
+   //       input for stator density. 
+         if(statorMaterial.type=="") { 
+            statorDensity=bladeDensity; 
+         }
+         else { 
+            statorDensity = statorMaterial.rho(TtIn);
+         }
+
+   //       input for case density. 
+         if(caseMaterial.type=="") { 
+            caseDensity=statorDensity; 
+            if(caseDensity==0.0) { caseDensity = bladeDensity; }
+         }
+         else { 
+            caseDensity = caseMaterial.rho(TtIn);
+         }
+         
+
+         stg1BladeStress = stress(bladeTipRadius,tup,hubTipRatio,spoolRPM,
+                                  bladeTaperRatio,bladeDensity);
+         
+   //
+   //  calculate ge turbine loading.
+   //
+         GEloadingParam = 1./((1.+hubTipRatio)**2*loadingParam);
+         
+   //
+   //  iterate for desired ge loading specified by the user
+         if (GEloadingParam_in > 0.) {
+            g1 = GEloadingParam / GEloadingParam_in;
+            g2 = abs(GEloadingParam-GEloadingParam_in)/GEloadingParam_in;
+            if (g2 > .002 || g1 > 1.002) {
+              loadingParam *= sqrt(g1);
+              continue;
+            }
+         }
+
+         if (maxAllowGEloadingParam > 0. && numStages_in == 0) {
+           g3 = (GEloadingParam_in-maxAllowGEloadingParam)/maxAllowGEloadingParam;
+           if (g3 > .05) {
+              ++numStages;
+              continue;
+           }
+         }
+
+   //     this is the stage-by-stage turbine design section encountered only
+   //     for a design case or a copy of a design case
+
+         if(lastStgStatorRotorLR == 0.) { lastStgStatorRotorLR=stg1StatorRotorLR; }          
+
+   //     calculate delta mach number (stgDeltaMN), aspect ratio (stgDeltaAR) 
+   //     and enthalpy (deltaStgEnthalpy) per stage and initialize values for stage-by-stage
+   //     constant hub turbine design
+
+         stgDeltaMN = (MNin-MNout);
+         if (stgDeltaMN != 0.) { stgDeltaMN=stgDeltaMN/numStages; } 
+         if (MNout == 0.) { stgDeltaMN=0.05; } 
+         stgDeltaAR = stg1BladeAR-lastStgBladeAR;
+         
+         delsr = lastStgStatorRotorLR-stg1StatorRotorLR;
+         if (numStages > 1.) { 
+            stgDeltaAR=stgDeltaAR/(numStages-1.);
+            delsr=delsr/(numStages-1.); 
+         } 
+         
+         srat = stg1StatorRotorLR-delsr;
+         deltaStgEnthalpy = deltaH/numStages;
+         
+         weight = 0.;
+         length = 0.;
+         
+         stgExitPt = PtIn;
+         ef = polyEff;
+         stgExitTt = TtIn;
+         stgExitEnthalpy = enthalpyIn;
+         stgMNin = MNin+stgDeltaMN;
+         stgAR = stg1BladeAR+stgDeltaAR;
+         if (MNout == 0.) { MNout=MNin-(stgDeltaMN*numStages); } 
+
+   //     calculate constant hub radius (bladeHubRadius) and 1st stage 
+   //     inlet gamma (gao)
+
+         rm = bladeTipRadius*bladeTipRadius-areaIn/(2.*PI);
+         if (rm < 0.) { 
+            throwError("meanBladeRadius is negative. calculation is invalid"); 
+         } 
+         rm = sqrt(rm);
+         checka = bladeTipRadius*bladeTipRadius-areaIn/PI;
+         if (checka <= 0.) { 
+            throwError("checka is negative or zero. calculation is invalid"); 
+         } 
+         bladeHubRadius = sqrt(checka);
+         
+         // save hub and tip radii at entrance
+         //stg1HubRadius = bladeHubRadius;
+         stg1TipRadius = bladeTipRadius;
+         
+         gao = des_Fl_I.gamt; 
+
+         delrtb = bladeTipRadius*(1.-outletInletRR)/
+                               ((numStages+1.)-radiusChangeStg);
+         delrhb = bladeHubRadius*(1.-outletInletRR)/
+                               ((numStages+1.)-radiusChangeStg);
+
+   //     begin stage-by-stage turbine design
+         cgmom = 0.;
+         cgmomt = 0.;
+         totInertia = 0.;
+         totDiskWt = 0.;
+         totInterStgSealDiskWt = 0.;
+         totInducerDiskWt = 0.;
+         totBladeWt = 0.;
+         totStatorWt = 0.;
+         totNutsBoltsWt = 0.;
+         totCaseWt = 0.;
+         totStatorFlangeWt = 0.;
+         totRubStripWt = 0.;
+         totStatorShroudWt = 0.;
+         totRotorDrumWt = 0.;
+         totRotorShroudWt = 0.;
+         totDiskSpacerWt = 0.;
+         totActiveCaseCoolingWt = 0.;
+         totNumBlades = 0.;
+         totNumStatorBlades = 0.;
+         
+         // copy flow at design point at turbine entrance
+         stgFlowStation.copyFlowStatic("des_Fl_I");
+         
+         string currentBladeMaterial;
+         string currentStatorMaterial;
+         string currentCaseMaterial;
+         
+         for(stage=0; stage<numStages; ++stage) {
+   //
+   //       initialize stage inlet values
+   //
+           stgMNin -= stgDeltaMN;
+           if (stgMNin <= 0.) { 
+             throwError("stgMNin is negative or zero. calculation is invalid"); 
+           } 
+           his = stgExitEnthalpy;
+           stgTtIn = stgExitTt;
+           Tstress = stgTtIn;
+           if(Tstress > TmaxMetal) {
+              Tstress = TmaxMetal; 
+           }
+           stgPtIn = stgExitPt;
+           stgAR -= stgDeltaAR;
+           srat = srat+delsr;
+
+   //       calculate stage exit enthalpy (stgExitEnthalpy), 
+   //       total temperature (stgExitTt),
+   //       inl gamma (gai), exit gamma (gao), average gamma (gammaAvg) and
+   //       total press ratio (PR_stg) across the stage
+
+           stgExitEnthalpy = his-deltaStgEnthalpy;
+           gai = gao;
+           stgFlowStation.setTotal_hP(stgExitEnthalpy,stgPtIn);
+           stgExitTt = stgFlowStation.Tt;
+           gao = stgFlowStation.gamt;
+           
+           gammaAvg = (gai+gao)*0.5;
+           tos2 = exp(log(stgTtIn/stgExitTt)/ef);
+           PR_stg[stage] = tos2**(gammaAvg/(gammaAvg-1.));
+
+   //       calculate stage exit total pressure (stgExitPt), inlet corrected flow
+   //       (c and inlet area (stgArea)
+
+           stgExitPt=stgPtIn/PR_stg[stage];
+           stgArea = calcDuctArea(stgTtIn,stgPtIn,wi,gai,stgMNin);
+
+           calcRadii(stgArea);
+           
+        //??? BAN - added this here so it would change per stage
+           bladeTipSpd = bladeTipRadius*PI*2./60.*spoolRPM;
+         
+   //       calculate blade height (bladeHt) & hub-to-tip ratio (stgHubTipRatio)
+
+           bladeHt = bladeTipRadius-bladeHubRadius;
+           stgHubTipRatio = bladeHubRadius/bladeTipRadius;
+
+   //         calculate stator aspect ratio for vane or vaneless.
+           statorAR = stgAR / srat;
+           if (stage == 0 && hasVanedFirstStg == 0) { statorAR=0.; } 
+
+   //        calculate number of rotor blades (numBlades) & stator blades (numStatorBlades)
+           if(numBlades_in > 0.) { // use user specified number of blades
+              numBlades = numBlades_in;
+           }
+           else { // calculate number of blades
+              numBlades = 2.*PI*bladeSolidity *stgAR *bladeTipRadius/bladeHt;
+           }
+           
+           if(numStatorBlades_in > 0.) { // use user specified number of stator blades
+              numStatorBlades = numStatorBlades_in;
+           }
+           else { // calculate number of stator blades
+              numStatorBlades = 2.*PI*statorSolidity*statorAR*bladeTipRadius/bladeHt;
+           }
+
+           totNumBlades += numBlades;
+           totNumStatorBlades += numStatorBlades;
+
+           if (stage == numStages-1) {
+              recalc = 0;
+              if (numBlades_in > 0.) {
+                 f1 = numBlades_in/totNumBlades;
+                 f2 = (totNumBlades-numBlades_in)/numBlades_in;
+                 if(f2<0) { f2 = -f2; }
+                 if (f2 > .01) { 
+                    bladeSolidity *= f1; 
+                    recalc=1;
+                 } 
+              }
+              if (numStatorBlades_in > 0.) {
+                 f3 = numStatorBlades_in/totNumStatorBlades;
+                 f4 = abs(totNumStatorBlades-numStatorBlades_in)/numStatorBlades_in;
+                 if (f4 > .01) { 
+                    statorSolidity *= f3; 
+                    recalc=1;
+                 } 
+              }
+              if(recalc==1) { break; }
+           }
+
+   //
+   //       calculate tip speed (utp1) and stress level (bladeStress)
+   //
+   //
+   //       save hub and tip radius of each stage for plotting.
+           hubRadius_stg[stage] = bladeHubRadius*12.;
+           tipRadius_stg[stage] = bladeTipRadius*12.;
+
+           utp1 = spoolRPM*2.*PI/60.*bladeTipRadius;
+           
+           utp1 = utp1*maxSpdRatio;
+           
+           if (stage+1 >= bladeMaterial2StartStg) {
+             currentBladeMaterial = bladeMaterial2.type;
+             bladeDensity = bladeMaterial2.rho(tmaxo);
+             if (bladeDensity == 0.) {
+                warning("bladeMaterial2 has zero density"); 
+                bladeDensity = bladeMaterial.rho(tmaxo); 
+             } 
+           }
+           else {
+             currentBladeMaterial = bladeMaterial.type;
+           }
+
+           if (stage+1 >= statorMaterial2StartStg) {
+               currentStatorMaterial = statorMaterial2.type;
+               statorDensity = statorMaterial2.rho(tmaxo);
+               if (statorDensity == 0.) { 
+                  warning("statorMaterial2 has zero density"); 
+                  statorDensity = statorMaterial.rho(tmaxo); 
+               } 
+           }
+           else {
+             currentStatorMaterial = statorMaterial.type;
+           }
+
+           if(statorDensity == 0.) { statorDensity=bladeDensity; } 
+
+           bladeStress = stress (bladeTipRadius,utp1,stgHubTipRatio,spoolRPM,bladeTaperRatio,bladeDensity);
+
+     //       calculate stage weight (stgWt) and length (stgLength) and total
+     //       component weight (weight) and length (length)
+     //
+           bladeHt *= 12.;
+
+           calcStgWt();
+
+   //       save component length of each stage for plotting.
+           length_stg[stage] = stgLength;
+
+           weight += stgWt;
+           length += stgLength;
+           cgmom = stgWt*length;
+           cgmomt += cgmom;
+           totInertia += inertia_stg[stage];
+           
+   //       turbine design limit write statements
+           sy = bladeMaterial.sy(tmaxo);
+           su = bladeMaterial.su(tmaxo);
+           sy *= 0.9;
+           su *= 0.47;
+           
+           if(sy<su) { dlimit = sy; }
+           else { dlimit = su; }
+           
+           checkDesignLimits(dlimit, stgHubTipRatio);
+    
+           
+           // sum up total values for various turbine variables
+           totDiskWt += diskw;
+           totInterStgSealDiskWt += interStgSealDiskWt;
+           totInducerDiskWt += inducerDiskWt;
+           totBladeWt += bladeWt;
+           totStatorWt += statorWt;
+           totNutsBoltsWt += nutsBoltsWt;
+           totCaseWt += caseWt;
+           totStatorFlangeWt += statorFlangeWt;
+           totRubStripWt += rubStripWt;
+           totStatorShroudWt += statorShroudWt;
+           totRotorDrumWt += rotorDrumWt;
+           totRotorShroudWt += rotorShroudWt;
+           totDiskSpacerWt += diskSpacerBarWt;
+           totActiveCaseCoolingWt += activeCaseCoolingWt;
+   //jjc
+   //jjc  store variables needed for the nasa shaft and bearing code
+   //jjc
+           diskWt_stg[stage] = diskw;
+           bladeWt_stg[stage] = bladeWt;
+           weight_stg[stage] = stgWt;
+           
+           interStgSealDiskWt_stg[stage] = interStgSealDiskWt;
+           inducerDiskWt_stg[stage] = inducerDiskWt;
+           statorWt_stg[stage] = statorWt;
+           nutsBoltsWt_stg[stage] = nutsBoltsWt;
+           caseWt_stg[stage] = caseWt;
+           AR_stg[stage] = stgAR;
+           statorAR_stg[stage] = statorAR;
+           bladeLen_stg[stage] = bladeLength;
+           statorLen_stg[stage] = statorLength;
+           bladeDensity_stg[stage] = bladeDensity;
+           diskDensity_stg[stage] = S_Disk.currentMaterial.rho(tmaxo);
+           statorDensity_stg[stage] = statorDensity;
+           caseDensity_stg[stage] = caseDensity;
+           numStatorBlades_stg[stage] = numStatorBlades;
+           statorFlangeWt_stg[stage] = statorFlangeWt;
+           rubStripWt_stg[stage] = rubStripWt;
+           statorShroudWt_stg[stage] = statorShroudWt;
+           rotorDrumWt_stg[stage] = rotorDrumWt;
+           rotorShroudWt_stg[stage] = rotorShroudWt;
+           diskSpacerBarWt_stg[stage] = diskSpacerBarWt;
+           activeCaseCoolingWt_stg[stage] = activeCaseCoolingWt;
+           deltaStgEnthalpy_stg[stage] = deltaStgEnthalpy;
+           MNin_stg[stage] = stgMNin;
+           area_stg[stage] = stgArea;
+           numBlades_stg[stage] = numBlades;
+           bladeTipSpd_stg[stage] = bladeTipSpd;
+           bladeStress_stg[stage] = bladeStress;
+           length_stg[stage] = stgLength;
+           bladeMaterial_stg[stage] = currentBladeMaterial;
+           statorMaterial_stg[stage] = currentStatorMaterial;
+           diskMaterial_stg[stage] = S_Disk.currentMaterial.type;
+           diskType_stg[stage] = S_Disk.diskType;
+
+           if(recalc==1) { break; }
+         } // end for loop
+         if(recalc==1) { recalc=0; continue; }
+
+         // the following two lines have been added here to match the downstream
+         // inner radius from the FORTRAN version.
+         real area = calcDuctArea(stgExitTt,stgExitPt,wi,gammaAvg,
+                                  stgMNin-stgDeltaMN);
+         calcRadii(area);
+
+         rearFrameWt=0.;
+         
+         if(!S_RearFrame.isEmpty()) {
+            S_RearFrame.tipRadius = bladeTipRadius*12.;
+            S_RearFrame.hubRadius = bladeHubRadius*12.;
+            S_RearFrame.execute();
+            rearFrameWt = S_RearFrame.weight;
+            rearFrameLength = S_RearFrame.length;
+      
+      //     calculate turbine length.
+            if (isFrameInFlow == 1) {
+              if(S_RearFrame.child.hasInterface("WATEframeCustom")) {
+                 rearFrameLength += S_RearFrame.gap;
+              }
+              length += rearFrameLength;
+            }
+         }
+
+
+         weight += rearFrameWt;
+         cgfram = rearFrameWt*length;
+         tcgmom = cgmomt+cgfram;
+         cgcomp = tcgmom/weight;
+
+         cg = cgcomp+inPort.axialPosition;
+
+         outPort.innerRadius = bladeHubRadius*12.;
+         outPort.outerRadius = bladeTipRadius*12.;
+         outPort.axialPosition = inPort.axialPosition + length;
+
+   //     iterate for desired component length
+   //       specified by the user, by adjusting blade aspect ratios
+  
+         if (avgLenPerStg > 0.) { length_in = avgLenPerStg*numStages; } 
+         if (length_in > 0.) {
+            f1 = length / length_in;
+            f2 = abs(length-length_in)/length_in;
+            if (f2 > .003) {
+               stg1BladeAR = stg1BladeAR * f1;
+               lastStgBladeAR = lastStgBladeAR * f1;
+               recalc = 1;
+            }
+            else {
+               break;
+            }
+         }
+         if(recalc==0) { break; }
+      } // end while(1)
+   } // end tmech
+
+   
+  /**
+   * this routine calculates the centrifugal root stress for the first blade of
+   * each component
+   ********************************************************************/
+   real stress(real tipRadius,real tipSpd, real htRatio, real spd,
+               real taperRatio, real rho) 
+   {
+      if (tipSpd == 0.) { tipSpd=2.*PI/60.*spd*tipRadius; }
+      return rho/386.*(tipSpd*12.)**2*
+             ((1.-htRatio**2)/2.+(taperRatio-1.)/12.*(1.-htRatio)*
+             (4.+2.*htRatio));
+   } 
+
+
+  /**
+   * 
+   ********************************************************************/    
+   real calcDuctArea (real inTemp, real Pinput, real Win, real gamma, real machNum) 
+   {
+       real R = 53.34;
+
+       if (machNum <= 0.) { 
+          throwError("negative or 0 mach number in calcDuctArea()");
+       }
+       
+       return Win/machNum*sqrt(R/gamma*G_ACCEL*inTemp)/Pinput*
+                (1.+(gamma-1.)/2.*machNum*machNum)**((gamma+1.)/(gamma-1.)/2.)/G_ACCEL;
+   }
+   
+
+  /**
+   * 
+   *********************************************************/    
+  void calcRadii(real area) {
+      if(geometryType=="ConstTipRadius") { 
+
+         if (stage >= radiusChangeStg) {
+           bladeTipRadius -= delrtb;
+         }
+         bladeHubRadius = bladeTipRadius*bladeTipRadius-area/PI;
+         if (bladeHubRadius <= 0.) { 
+           throwError("bladeHubRadius is negative or zero. calculation is invalid"); 
+         } 
+         bladeHubRadius = sqrt(bladeHubRadius);
+      }
+      else if(geometryType=="ConstMeanRadius") {
+
+         bladeHubRadius = rm*rm-area/(2.*PI);
+         if (bladeHubRadius <= 0.) { 
+           throwError("bladeHubRadius is negative or zero. calculation is invalid"); 
+         } 
+         bladeHubRadius = sqrt(bladeHubRadius);
+         bladeTipRadius = sqrt(area/PI+bladeHubRadius*bladeHubRadius);
+      }
+      else { // geometryType=="ConstHubRadius" 
+
+         if (stage >= radiusChangeStg)  {  
+            bladeHubRadius -= delrhb;
+         }
+         bladeTipRadius = sqrt(bladeHubRadius*bladeHubRadius+area/PI);
+      } 
+ }  
+   
+   
+   //***************************************************************
+  void calcStgWt() {
+                   
+      real a;
+      
+//       calculate blade weight.
+ 
+      if (bladeThicknessRatio != 0.) {
+         a = PI*(1.+bladeTaperRatio+sqrt(bladeTaperRatio))*bladeThicknessRatio/3.*bleedFrac/(bladeTaperRatio+1.)**2;
+         bladeWt = a*bladeHt**3/stgAR**2*numBlades*bladeDensity*bleedFrac;
+      }
+      else {
+         bladeWt = bladeHt**3/stgAR**2*bladeDensity*numBlades*bleedFrac*
+                  bladeVolumeFactor;
+      }
+      
+      weightPerBlade = bladeWt/numBlades;
+ 
+//       calculate blade length.
+ 
+      bladeLength = bladeHt/stgAR;
+ 
+      S_Disk.execute();
+      diskw = S_Disk.weight;
+
+//     calculate the weight of interstage seal disk.
+      if (hasInterStgSealDisk == 0) {
+        interStgSealDiskWt = 0.;
+      }
+      else {
+        interStgSealDiskWt = 0.35 * diskw;
+      }
+ 
+//     calculate the weight of inducer disk.
+      if (numInducerDisks == 0) {
+        inducerDiskWt = 0.;
+      }
+      else {
+        inducerDiskWt = 0.175 * diskw * numInducerDisks;
+      }
+ 
+      rimomd = bladeWt*((bladeHt*bladeHt/3.)+bladeHubRadius*bladeHubRadius*144.);
+      rimomp = (diskw*bladeHubRadius*bladeHubRadius*144.)*.5;
+      
+      inertia_stg[stage] = rimomp+rimomd;
+//     calculate nozzle weight and length
+ 
+//**********************************************************************
+//   this change has been made to correct stator weight eqn. as it
+//   appears in user's manual.
+//**********************************************************************
+ 
+      if (stage == 0 && hasVanedFirstStg == 0) {
+         statorWt = 0.;
+         statorLength = 0.;
+         stgLength = bladeLength *(1.+ statorRotorSpacingPct);
+         spacerLen_stg[stage] = 0.0;      
+      }
+      else {
+         if (bladeThicknessRatio != 0.) {
+           a = PI*(1+bladeTaperRatio+sqrt(bladeTaperRatio))*
+               bladeThicknessRatio/3*bleedFrac/(bladeTaperRatio+1)**2;
+           statorWt = a*bladeHt**3/(statorAR*.83)**2*numStatorBlades*
+                    statorDensity*bleedFrac;
+         }
+         else {
+            statorWt = bladeHt**3/(statorAR*.83)**2*statorDensity*
+                     numStatorBlades *statorVolumeFactor*bleedFrac;
+         }
+         statorLength = bladeHt/stgAR*srat;
+         spacerLen_stg[stage] = statorRotorSpacingPct*(bladeLength+statorLength);      
+         stgLength = bladeLength + statorLength + 2.0 * spacerLen_stg[stage];         
+      }
+ 
+//     calculate the weight of the disk spacer bar.
+      real br = S_Disk.boreRadius; 
+      
+      if (hasSpacerBar == 1 && stage > 0) {
+        diskSpacerBarWt = 2.0*PI*(br+0.5*(bladeHubRadius*12.-br))*stgLength*
+                          diskSpacerBarThickness*S_Disk.currentMaterial.rho(tmaxo);
+      }
+      else {
+        diskSpacerBarWt = 0.;
+      }
+      
+//       calculate nuts and bolts weight
+      nutsBoltsWt = bladeHubRadius*.75*24.*PI*.075*stgLength*.286;
+ 
+//       calculate turbine case weight.
+      caseWt = (bladeHubRadius*12.+bladeHt)*2.*PI*caseThickness*caseDensity*
+                stgLength;
+ 
+//       calculate turbine active case cooling case weight.
+      activeCaseCoolingWt = 0.0;
+      if(hasActiveCaseCooling) {
+        activeCaseCoolingWt = activeCoolingConst*(bladeHubRadius*12.+bladeHt)*
+                              2.*PI*caseThickness*caseDensity*stgLength;
+      }
+ 
+//       calculate stator flange weight
+      statorFlangeWt = (bladeHubRadius*12.+bladeHt)*2.*PI*statorFlangeThickness*
+                        statorDensity*statorLength;
+ 
+//       calculate rub strip weight
+      rubStripWt = (bladeHubRadius*12.+bladeHt)*2.*PI*rubStripThickness*rubStripDensity*
+                    bladeLength;
+ 
+//       calculate stator shroud weight
+      statorShroudWt = bladeHubRadius*24.*PI*statorShroudThickness*statorDensity*
+                       statorLength;
+ 
+//       calculate rotor drum weight
+      rotorDrumWt = bladeHubRadius*24.*PI*rotorDrumThickness*caseDensity*stgLength;
+ 
+//       calculate rotor shroud weight
+      rotorShroudWt = 0.0;
+      if(hasRotorShroud == 1) {
+        rotorShroudWt = (bladeHubRadius*12.+bladeHt)*2.*PI*rotorShroudThickness*bladeDensity*
+                         bladeLength;
+      }
+      
+//       calculate total stage weight
+      stgWt = diskw + bladeWt + statorWt + nutsBoltsWt + caseWt + 
+                interStgSealDiskWt + inducerDiskWt + statorFlangeWt + 
+                rubStripWt + statorShroudWt + rotorDrumWt + 
+                rotorShroudWt + diskSpacerBarWt + activeCaseCoolingWt;
+
+      //
+      //  remove gap if last stage and no rear frame present or not in
+      //  the flowpath remove gap if last stage and generic rear frame present
+      //
+      // ??? this should probably go right after the stgLength calc, but in
+      // the original WATE it doesn't, and the unmodified stgLength is used
+      // in a number of weight calculations above - BAN
+
+      if(stage==numStages-1) { // if this is the last stage
+        int adjustForRearFrame = 0.0;
+        if(!S_RearFrame.isEmpty()) {
+           adjustForRearFrame = S_RearFrame.child.hasInterface("WATEframeCustom");
+        }
+        if(adjustForRearFrame || isFrameInFlow==0){ 
+           stgLength -= spacerLen_stg[stage]; 
+        }
+      }
+   } // end calcStgWt
+   
+   //***************************************************************
+
+  
+  /**
+   * 
+   *********************************************************/    
+   void checkDesignLimits(real dlimit, real htratio)
+   {
+      string msg;
+      if (htratio < .4)  { 
+         msg = "Stage "+toStr(stage+1)+" design limit exceeded. ";
+         msg += " H/T ratio =  "; msg += toStr(htratio);
+         msg += "   design limit =  .4.  hub tip ratio is too low. ";
+         msg += "Increase controlRadius ";
+         provisionalWarning(msg);
+      } 
+      
+      if (loadingParam < .2)  { 
+         msg = "Stage "+toStr(stage+1)+" design limit exceeded. "; 
+         msg += " loading =  "; msg += toStr(loadingParam);
+         msg += "   design limit = .2.  Loading is too high. ";
+         provisionalWarning(msg);
+      } 
+   }      
+   
+   
+ /**
+  * 
+  *********************************************************/    
+  void calcGeometry() {
+ 
+      int ipt,istage,ii;
+      real x[],y[],y3[];
+      real xaray[4],yaray[4];
+      real x1,y1,x2,y2;
+      real hite;
+ 
+      real tmpx;
+ 
+      real rfLen=0.;
+      
+      if(!S_RearFrame.isEmpty()) {
+         S_RearFrame.child.calcGeometry();
+         rfLen = S_RearFrame.length;
+         if(S_RearFrame.child.hasInterface("WATEframeCustom")) {
+            rfLen += S_RearFrame.gap;
+         }
+      }
+      
+//     draw a smooth outline of the turbine.
+      x1 = inPort.axialPosition;
+      y1 = inPort.innerRadius; //ri(1,iup1);
+      x2 = inPort.axialPosition;
+      y2 = inPort.outerRadius; //ro(1,iup1);
+      addLine(x1, y1, x2, y2, drawDepth,1);  
+      
+      x = { };
+      y = { };
+      y3 = { };
+      x.append(inPort.axialPosition);
+      x.append(x[0]);
+      tmpx = x[1];
+      x.append(tmpx); 
+      
+      y.append(inPort.outerRadius); //ro(1,iup1);
+      y.append(tipRadius_stg[0]); //rostage(1,i);
+      y.append(y[1]);
+      
+      y3.append(inPort.innerRadius); //ri(1,iup1);
+      y3.append(hubRadius_stg[0]);  //ristage(1,i);
+      y3.append(y3[1]);
+      
+      for(istage=0; istage<numStages-1; ++istage) { 
+         tmpx = tmpx + length_stg[istage];
+         x.append(tmpx);
+         y.append(tipRadius_stg[istage+1]); //rostage(istage+1,i);
+         y3.append(hubRadius_stg[istage+1]); //ristage(istage+1,i);
+      }
+      
+      tmpx += length_stg[numStages-1];
+      x.append(tmpx);
+      y.append(outPort.outerRadius); // ro(2,idn1);
+      y3.append(outPort.innerRadius); //ri(2,idn1);
+      tmpx += rfLen;
+      x.append(tmpx);
+      y.append(outPort.outerRadius); // ro(2,idn1);
+      y3.append(outPort.innerRadius); //ri(2,idn1);
+      addPolyLine(x,y,drawDepth,1); 
+      addPolyLine(x,y3,drawDepth,1);
+ 
+      x1 = tmpx;
+      y1 = outPort.innerRadius; //ri(2,idn1);
+      x2 = x1;
+      y2 = outPort.outerRadius; //ro(2,idn1);
+      addLine(x1,y1,x2,y2,drawDepth,1);  
+      
+      S_Disk.child.calcGeometry();
+       
+      drawBlades();     
+     
+   }
+   
+  
+   /**
+    *
+    ************************************************************************/  
+   void drawBlades() {
+      real x,y;
+      int i;
+      
+      real stgPosition = inPort.axialPosition;
+      
+      for(i=0; i<numStages; ++i) {
+         drawStage(stgPosition, i);
+         stgPosition = stgPosition + length_stg[i];
+      }       
+   }  
+       
+   
+        
+  /**
+   *  
+   ***************************************************************************/
+   void drawStage(real stgPosition, int stg)
+   {
+      real sx[4],sy[4];
+      real xaray[4],yaray[4];
+      
+      sx[0] = stgPosition;
+      if(stg == 0) {
+        sy[0] = inPort.outerRadius; //ro(1,iup1);
+      }
+      else {
+        sy[0] = tipRadius_stg[stg];
+      }
+
+      sx[1] = sx[0] + length_stg[stg];
+      sx[2] = sx[1];
+      sx[3] = sx[0];
+      if(stg==numStages-1) {
+        sy[1] = outPort.outerRadius; //rostage(stg+1,i);
+        sy[2] = outPort.innerRadius; //ristage(stg+1,i);
+      }
+      else {
+        sy[1] = tipRadius_stg[stg+1]; //rostage(stg+1,i);
+        sy[2] = hubRadius_stg[stg+1]; //ristage(stg+1,i);
+      }
+      sy[3] = hubRadius_stg[stg]; //ristage(stg,i);
+
+      xaray[0] = sx[0];
+      xaray[1] = sx[0];
+      yaray[0] = sy[0];
+      yaray[1] = sy[3];
+
+//       determine size of spacer of each stage.
+      real xspacer = spacerLen_stg[stg]; //xcld(stg,i);
+
+//       determine slope & y-intercept of hub & tip radius.
+      real xm1 = (sy[0]-sy[1])/(sx[0]-sx[1]);
+      real b1 = sy[0]-xm1*sx[0];
+      real xm2 = (sy[2]-sy[3])/(sx[2]-sx[3]);
+      real b2 = sy[2]-xm2*sx[2];
+
+//   draw the stator
+      xaray[2] = sx[0] + statorLen_stg[stg];
+      xaray[3] = xaray[2];
+      yaray[2] = xm2*xaray[2]+b2;
+      yaray[3] = xm1*xaray[3]+b1;
+          
+      setStyle("fill: white;");
+      
+      addPolygon(xaray,yaray,drawDepth,1);
+      
+//    draw the rotor. 
+      xaray[0] = xaray[2] + xspacer;
+      xaray[1] = xaray[0];
+      yaray[0] = xm1*xaray[0]+b1;
+      yaray[1] = xm2*xaray[1]+b2;
+        
+      xaray[3] = xaray[0] + bladeLen_stg[stg];
+      xaray[2] = xaray[3];
+      yaray[3] = xm1*xaray[3]+b1;
+      yaray[2] = xm2*xaray[2]+b2;
+      
+      setStyle("fill: black;");
+      addPolygon(xaray,yaray,drawDepth,1);
+      setStyle("");
+   }          
+}   
+      
+#endif
+      

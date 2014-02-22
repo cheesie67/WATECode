@@ -1,0 +1,53 @@
+#ifndef WATEPRIMARYBURNER
+#define WATEPRIMARYBURNER
+
+//
+// LAST INSPECTION DATE: *not inspected*
+//
+//  EXTERNAL DEPENDENCIES
+//
+//   WATEaxialCompressor* compressorRef
+
+
+class WATEprimaryBurner extends WATEburnerBase
+{
+   Vflow = 100.;
+   
+   string compressorRef {
+      ptrType = "WATEaxialHPC";
+      IOstatus = "input";
+      description = "ref to upstream compressor. used to determine case length";
+   }
+   
+ 
+   defaultHideLevel = 2;
+   string pnames[];
+   pnames.ptrType = "WATEPort";
+   string inpname;
+   inpname.ptrType = "WATEPort";
+   defaultHideLevel = 0;
+     
+//
+// calculate hpc outer structural case weight
+// ??? this whole thing should be removed and the weight for the outer
+//     case should be added to the HPC.
+   
+   void calcCaseWt() {
+      
+      if(compressorRef == "") {
+         compressorRef = findUpStreamComponent("WATEaxialHPC");
+         if(compressorRef != "" && compressorRef->burnerRef=="") {
+            compressorRef->burnerRef = getPathName(); 
+         }
+      }
+      
+      if(compressorRef != "") {
+         weight += compressorRef->calcOuterCaseWt(inPort.axialPosition,outerDiam);
+      }      
+   } // end calcCaseWt
+
+}
+
+#endif
+
+

@@ -1,0 +1,275 @@
+#ifndef __WATEDUCTNEW__
+#define __WATEDUCTNEW__
+
+// ****************************************************************************
+// * NASA Glenn Research Center
+// * 21000 Brookpark Rd
+// * Cleveland, OH 44135
+// ****************************************************************************
+
+extern real S_Frame.weight;
+
+class WATEductNew extends WATEelement 
+{
+  description = "calculates the weight and dimensions of a duct.";
+  usageNotes = "It is assumed that the major structural load in a duct is a result of the internal pressure.  Also, it is assumed that the inner wall of the duct is the same gage as the outer wall.  If the material type is not explicitly set before the first execution, titanium is assumed for total temperatures below 700F and steel is assumed for total temperatures above 700F.  The stress calculations are for thin-walled pressure vessels withstanding a positive (bursting) pressure gradient and do not apply should there be a negative (collapsing) pressure gradient on the duct.";
+
+  //----------------------------------------------------------------------------
+  //                     ******* SETUP VARIABLES *******
+  //----------------------------------------------------------------------------
+
+  // Required variables the user must input:
+  // MN, lengthHeightRatio, radiusInnerWall,
+  //
+
+  real radiusInnerWall {
+     value = 10; IOstatus = "output";  units = "in";
+     description = "radius of the duct inner wall";
+  }
+  real radiusOuterWall {
+     IOstatus = "output";  units = "in";
+     description = "radius of the duct outer wall";
+  }
+  real thicknessInnerWall {
+     value = 0.125;  IOstatus = "input";  units = "in";
+     description = "thickness of the duct inner wall";
+  }
+  real thicknessOuterWall {
+     IOstatus = "output";  units = "in";
+     description = "thickness of the duct outer wall";
+  }
+  real thicknessMinimum {
+     value = 0.05;  IOstatus = "input";  units = "in";
+     description = "minimum thickness of the duct walls";
+  }
+  real hoopStress {
+     IOstatus = "output";  units = "lbf/in2";
+     description = "hoop stress resulting from internal bursting pressure";
+  }
+  real lengthHeightRatio {
+     IOstatus = "input";  units = "none";
+     description = "length-to-height ratio of the duct";
+  }
+  real s_weight {
+     value = 1.0;  IOstatus = "input";  units = "none";
+     description = "duct weight scale factor";
+  }
+  
+  real length_in {
+     IOstatus = "input";  units = "in";
+     description = "user override for duct length";
+  }
+  
+  real MNin {
+     value = 0.30;  IOstatus = "input";  units = "none";
+     description = "duct entrance Mach number";
+  }
+  
+  real Pexternal = 14.4;
+  
+  real innerWallWt;
+  real outerWallWt;
+  
+  real safetyFactor=1.5;
+  
+  real Win, PtIn, TtIn, gamtIn, areaIn;
+
+  int executed=0;
+  executed.hide(2);
+ 
+  string PexternalRef {
+     description = "a reference to the ambient pressure";
+  }
+
+
+  //-----------------------------------------------------------------------------
+  //        ******* SETUP PORTS, FLOW STATIONS, SOCKETS, TABLES *******
+  //-----------------------------------------------------------------------------
+  WATEInputPort inPort;
+  WATEOutputPort outPort;
+  
+  FlowStation des_FS {
+     description = "design flow station for duct calculations";
+  }
+
+  Socket S_Frame {
+     description = "socket that passes frame weight to this element";
+     socketType = "WATEframeBase";
+  }
+
+
+  MaxSaver max_TtIn {
+     var = "Fl_I.Tt";
+  }
+  
+  MaxSaver max_deltaP {
+     componentRef = getName();
+     var = "getDeltaP()";
+  }
+  
+  WATEmaterial material;
+  
+  
+  Independent ind_radiusInner {
+    varName = "radiusInnerWall";
+    autoSetup = TRUE;
+    perturbation = 0.5;
+  }
+
+  Dependent dep_radiusInner {
+    eq_lhs = "inPort.innerRadius+inPort.outerRadius";
+    eq_rhs = "inPort.innerRadiusUp+inPort.outerRadiusUp";
+    tolerance = 0.0005;
+    autoSetup = TRUE;
+  } 
+  
+  
+ /*
+   * calculate the difference between internal and ambient pressure
+   **************************************************************************/
+  real getDeltaP()
+  {
+     // if we reference an external pressure value from an aero component, use that
+     if(PexternalRef != "") {
+        Pexternal = PexternalRef->value;
+     }
+     return componentRef->Fl_I.Pt - Pexternal;
+  }
+  
+  
+  /**
+   * 
+   ********************************************************************/    
+   real calcDuctArea (real inTemp, real Pinput, real W, real gamma, 
+                      real machNum) 
+   {
+       real R = 53.34;
+
+       if (machNum <= 0.) { 
+          throwError("negative or 0 mach number in calcDuctArea()");
+       }
+       
+       return W/machNum*sqrt(R/gamma*C_GRAVITY*inTemp)/Pinput*
+              (1.+(gamma-1.)/2.*machNum*machNum)**((gamma+1.)/(gamma-1.)/2.)/C_GRAVITY;
+   }
+   
+   
+  /*
+   *
+   *****************************************************************/
+   void saveMechDesignData() 
+   {
+     des_FS.copyFlowStatic(componentRef+".Fl_I");
+   }
+
+  
+  /*
+   *
+   **************************************************************************/
+  void calculate() 
+  {
+     real yieldStress, rho;
+     
+     // If we have a connecting component, get W, Pt, Tt, etc. from the flow
+     // station; otherwise, these variables would be direct inputs from the user.
+     // Do *NOT* get MN and Area - these may not exist in the NPSS model and it 
+     // will be up to the user to enforce their equality
+     Win = des_FS.W;
+     PtIn = des_FS.Pt;
+     TtIn = des_FS.Tt;
+     gamtIn = des_FS.gamt;     
+     
+     if(!executed) {
+        executed = 1;
+        // If user has not explicitly set it, select material based on design 
+        // flow temperature (possible optimization - 
+        // different materials have different densities and will also produce 
+        // different thicknesses)
+
+        if(material.type == "") {
+           if(TtIn < 700.) { // deg. F
+              // assume Ti
+              material.type = "Ti_17";
+           }
+           else {
+              // assume steel
+              material.type = "_4340_Steel";
+           }
+        }
+     }
+     
+     rho = material.rho(TtIn);
+     yieldStress = material.sy(TtIn);
+
+     // Based on user input MN, calculate the flow area (use des_FS).
+     areaIn = calcDuctArea (TtIn, PtIn, Win, gamtIn ,MNin); 
+
+     // Based on flow area and the wall inner radius, calculate the outer wall
+     // radius  A = pi*RO^2 - pi*RI^2 
+     radiusOuterWall = sqrt(areaIn/PI + radiusInnerWall*radiusInnerWall);
+     
+     // Calculate the hoop stress: stress = P*r/t, where
+     // P is the *maximum* difference between the flow pressure and the duct 
+     //   external pressure, Pflow - Pexternal, 
+     // r is the outer wall radius, radiusOuterWall, and
+     // t is the outer wall thickness, thicknessOuterWall
+
+     // Compare the actual hoop stress to the material allowable stress. Iterate
+     // until the duct outer wall thickness is sufficient to make the actual
+     // stress below the allowable stress, but don't let thickness go below the
+     // input minimum.
+     real deltaThick = 0.005;
+     int iter=0,maxIter=50;
+     thicknessOuterWall = thicknessMinimum;
+     
+     do {
+        hoopStress = safetyFactor*max_deltaP.val*radiusOuterWall/thicknessOuterWall;
+        if(hoopStress > yieldStress) {
+           thicknessOuterWall += deltaThick;
+        }
+        else {
+           break;
+        }
+     } while( ++iter<maxIter );
+     
+     if(iter == maxIter) {
+        error("iteration of thicknessOuterWall failed");
+     }
+
+     // duct length
+     if(length_in != 0.) {
+        length = length_in;
+     }
+     else {
+        length = lengthHeightRatio * (radiusOuterWall - radiusInnerWall);
+     }     
+
+     // Calculate duct wall weights
+     innerWallWt = 2.0*PI*length*rho*thicknessInnerWall*radiusInnerWall;
+     outerWallWt = 2.0*PI*length*rho*thicknessOuterWall*radiusOuterWall;
+     
+     weight = innerWallWt + outerWallWt;
+
+     // If there's a frame, get its weight.
+     if(!S_Frame.isEmpty()) {
+        S_Frame.tipRadius = radiusOuterWall;
+        S_Frame.hubRadius = radiusInnerWall;
+        S_Frame.execute();
+        weight += S_Frame.weight;
+     }
+
+     // Scale the weight if necessary.
+     weight *= s_weight;
+     
+     inPort.innerRadius = radiusInnerWall;
+     inPort.outerRadius = radiusOuterWall;
+     
+     outPort.innerRadius = radiusInnerWall;
+     outPort.outerRadius = radiusOuterWall;
+     outPort.axialPosition = inPort.axialPosition + length;
+  }  // end calculate
+  
+}  // end Element WATEDuct
+
+#endif
+

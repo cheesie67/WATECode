@@ -1,0 +1,423 @@
+#ifndef _WATESHAFTBASE_
+#define _WATESHAFTBASE_
+
+//***********************************************************************
+// This element calculates shaft weight, length, and diameter
+//************************************************************************
+
+
+class WATEshaftBase extends WATEelement 
+{
+  string inertiaComps[];
+  inertiaComps {
+     description = "Names of components contributing to the inertia of this shaft, in order from front to back. This list must contain a compressor and a turbine";
+     IOstatus = "input";
+     ptrType = "WATEelement";
+     trigger = 1;
+  }
+  
+  defaultHideLevel = 1;  // *********** hide this block
+  
+  string burnerRef {
+     ptrType = "WATEburnerBase";
+     IOstatus = "input"; 
+     description = "Name of WATE burner for this shaft.";
+  }
+
+  
+  defaultHideLevel = 2;  // *********** REALLY hide this block
+  
+  string turbineRef {
+     ptrType = "WATEturbineBase";
+  } 
+  string aeroTurbRef;
+
+  string compressorRef {
+     ptrType = "WATEcompressorBase";
+  }
+  
+  string ptr,ptr2;
+  ptr.ptrType = "real[]";
+  ptr2.ptrType = "real[]";   
+
+  real routsh,tlen1,tlen2;
+  
+  defaultHideLevel = 0;  // ************* end hidden blocks
+  
+  string bearings[];
+  bearings {
+     ptrType = "WATEbearingBase";
+     hide(1);
+  }
+
+  string innerShaftRef {
+     ptrType = "WATEshaftBase";
+     IOstatus = "input"; 
+     description = "name of shaft inside of this shaft";
+  }
+
+  int isOuterShaft {
+     IOstatus = "input"; 
+     description = "This is the outermost shaft if isOuterShaft != 0";
+  }
+
+  real limitStress {
+    value = 80000; IOstatus = "input";    units = "psia" ;
+    description = "Allowable stress in the shaft" ;
+  }    
+
+  real diamRatio {
+     value = 0.866;
+     IOstatus = "input";    units = "none" ;
+     description = "Diameter ratio (Dinner/Douter). Used only for inner shaft. Default is a solid shaft (Dinner = 0)" ;
+  }       
+
+  real s_Wt {
+     value = 1.0;
+     IOstatus = "input";    units = "none" ;
+     description = "Scalar on calculated weight.";
+  }  
+  
+  
+  real maxTemp {
+     value = 400; IOstatus = "input";
+     description = "temperature used to determine material properties";
+  }
+   
+  real innerDiameter {
+    IOstatus = "output";  units = "in";
+    description = "Shaft Inner Diameter" ;
+  }
+
+  real outerDiameter {
+    IOstatus = "output";  units = "in";
+    description = "Shaft Outer Diameter" ;
+  }
+  
+  real inertia;
+  real bearWt;
+  real speed; 
+
+  real des_Nmech;
+  real des_pwr;
+
+  real maxTorque {
+     IOstatus = "input";
+  }
+  
+  WATEmaterial material;
+  
+  MaxSaver max_pwr { var = "pwr"; }
+  
+
+
+ /**
+  *
+  ***********************************************************************/
+  void calculate() {
+      int i;
+      real rho;
+      
+      int isRadial = turbineRef->hasInterface("WATEradialTurbine");
+      int centrif = (compressorRef=="") ? 0 : compressorRef->hasInterface("WATEcentrifCompressor");
+//
+//     determine shaft length and min. speed
+//
+      real rfLen;
+      real turbLen;
+      if(isOuterShaft) { 
+        tlen1=turbineRef->outPort.axialPosition-burnerRef->inPort.axialPosition;
+        tlen2=burnerRef->inPort.axialPosition;
+        if(compressorRef != "") { 
+           tlen2 = tlen2 - compressorRef->outPort.axialPosition; 
+           routsh = compressorRef->outPort.innerRadius;
+	   if(centrif) {
+	      routsh *= 0.5;
+	   }
+        }
+        else { routsh = 0.; }
+      }
+      else {
+        rfLen = turbineRef->rearFrameLength;
+        turbLen = turbineRef->length;
+        tlen2=0.5*(turbLen - rfLen);
+        tlen1=turbineRef->inPort.axialPosition + tlen2;
+        if(compressorRef != "") {
+           tlen1 = tlen1 - compressorRef->outPort.axialPosition;
+        }
+        if(isRadial) {
+	  // routsh = turbineRef->outerRadius_stg[0]*0.5;
+	}
+        else {
+           routsh = turbineRef->outPort.innerRadius;
+        }
+      }
+      
+      calcDiameter();
+      
+//
+//     input design data
+//
+      rho=material.rho(maxTemp);
+ 
+      weight =.7853981*rho*tlen1*(outerDiameter*outerDiameter-innerDiameter*innerDiameter);
+      weight += PI*(outerDiameter*0.5+routsh)*sqrt((outerDiameter*0.5-routsh)**2
+               +tlen2*tlen2)*rho*0.5*(outerDiameter-innerDiameter);
+     
+      length = tlen1+tlen2;
+ 
+      real tmp;
+      bearWt = 0.0;
+      for(i=0; i<bearings.entries(); ++i) {
+         bearings[i]->execute();
+         tmp = bearings[i]->weight;
+         bearWt += tmp;
+      }      
+      weight += bearWt;
+      
+      inertia = 0.;
+      for(i=0; i<inertiaComps.entries(); ++i) {
+         inertia = inertia + inertiaComps[i]->totInertia;
+      }      
+
+      //??? this first part is here to agree with an apparent error in WATE due 
+      // to confusion over the meaning of JCONF for shafts. WATE calc is:
+      //   CG = TLENG(IDN1)-length/2, where IDN1 is the index of the 3rd 
+      // component connected to the shaft. If the shaft has just one compressor
+      // and one turbine, TLENG(IDN1) evaluates to 0
+      if(inertiaComps.entries()<3) {
+         cg = -length/2.0;
+      }
+      else {
+         cg = inertiaComps[inertiaComps.entries()-1]->inPort.axialPosition - length/2.0;
+      }
+  } // end calculate
+  
+  
+  //
+  // some other components need a guess of our diameter, so do the
+  // diameter calc in the prePass
+  //
+  void prePass() {
+     if(executionState == "CALCULATE") {
+       calcDiameter();
+       WATEelement::prePass();
+    }
+  }
+
+
+ /**
+  *
+  ***********************************************************************/
+  void variableChanged(string name, any oldval) {
+     int i;
+     if(name == "inertiaComps") {
+        turbineRef = "";
+        compressorRef = "";
+        aeroTurbRef = "";
+        for(i=0; i<inertiaComps.entries(); ++i) { 
+           if(turbineRef == "" && inertiaComps[i]->hasInterface("WATEturbineBase")) {
+              turbineRef = inertiaComps[i];
+              aeroTurbRef = turbineRef->componentRef;
+              max_pwr.var = aeroTurbRef + ".pwr";
+              max_pwr.associatedVars = { "Nmech" };
+           }
+           else if(compressorRef == "" && 
+              inertiaComps[i]->hasInterface("WATEcompressorBase")) {
+              compressorRef = inertiaComps[i];
+           }
+        }        
+     }
+  }
+  
+  
+  
+ /**
+  * add to the bearing list whenever a new bearing object is created
+  * in this shaft
+  ***********************************************************************/
+  void postcreate(string name) {
+     if(name->hasInterface("WATEbearingBase")) {
+        bearings.append(name);
+        needVerify();
+     }
+  }
+
+
+   /**
+    *
+    ***********************************************************************/
+   void calcDiameter() {
+   //
+   //     determine total shaft power (torque?)
+   //
+      real mxpwr = max_pwr.val;
+      real mxNmech = max_pwr.associatedVals[0];
+      maxTorque = mxpwr/mxNmech;
+      speed = turbineRef->spoolRPM; 
+      
+//
+//     determine shaft location  1 is inner shaft
+//ccj changes the constant in the diameter equation to be
+//jjc (550*60*16*12)/(2*pi*pi)  this gets the units right
+//
+      real a,a1,a2,b,dold,dnew,do3;
+      if (innerShaftRef=="") { 
+         do3=320985.51*(maxTorque*des_Nmech/speed)/(limitStress*(1.-diamRatio**4));
+         outerDiameter=do3**(1./3.);
+         innerDiameter=outerDiameter*diamRatio;
+      } 
+      else { // outer shaft
+   // 
+   //     newton-raphson iteration for shaft outer diameter
+   // 
+         innerDiameter=innerShaftRef->outerDiameter+.4;
+         dnew=innerDiameter;
+         b=-(innerDiameter**4);
+         a=-320985.51*(maxTorque*des_Nmech/speed)/limitStress;
+         int iter=0;
+         while(1) { 
+            a1=dnew**4+a*dnew+b;
+            a2=4.*dnew**3+a;
+            dold=dnew;
+            dnew=dold-a1/a2;
+            if (abs(dnew-dold) <= .01) { break; } 
+            dnew=max(innerDiameter,min(100.,dnew));
+            if(iter>50) {
+               error("WATEshaftBase diameter iteration failed");
+               dnew=5.;
+               break;
+            }
+            ++iter;
+         }
+         outerDiameter=dnew;
+      }
+  //     to ensure that the minimum-thickness requirement
+  //   (i.e. innerDiameter/outerDiameter ratio), as specified in the input, is met
+      real ratio = innerDiameter/outerDiameter;
+      if (ratio > diamRatio && innerShaftRef=="") { 
+         outerDiameter = innerDiameter/diamRatio; 
+      }
+      
+      setBearingLocations();
+   }
+   
+
+   /**
+    * set bearing locations and radii only
+    ***********************************************************************/
+   void setBearingLocations() {
+      int i;
+      for(i=0; i<bearings.entries(); ++i) { // do i = 1,6
+         bearings[i]->calcLocation(outerDiameter,i,isOuterShaft);
+      }
+   }
+      
+   /**
+    *
+    ***********************************************************************/
+   int verify() {
+      int ret = 1;
+      string burners[]={};
+      
+      if(componentRef=="") { error("componentRef not set"); ret = 0; }
+      if(inertiaComps.entries() == 0) { error("inertiaComps not set"); ret = 0; }
+      if(turbineRef=="") { error("no turbine found in inertiaComps"); ret = 0; }
+      
+      if(burnerRef=="") { 
+         burners = parent.parent.list("WATEburnerBase",0);
+         if(burners.entries() == 1) {
+            burnerRef = burners[0];
+         }
+         else {
+            error("burnerRef string not set"); ret = 0; 
+         }
+      }
+      return ret;
+   }
+   
+
+   /**
+    *
+    ***********************************************************************/
+   void saveMechDesignData() {
+      des_pwr = aeroTurbRef->pwr;
+      des_Nmech = componentRef->Nmech;
+   }
+   
+ 
+   /**
+    *
+    ***********************************************************************/
+   void calcGeometry() {
+      real x[3],y[3];
+      real xfrm=0.;
+      real spacerLen=0.;
+      real rotorLen=0.;  
+      int isVar=0; 
+      int numStgs=0;
+      int j; 
+      
+      // if I understand this, they are checking if the first upstream
+      // compressor (iwmec[7,i]) has a 
+      // variable front frame (iwmec[7,compIdx]). If so, the first x location
+      // for the shaft is the axial position of the compressor exit, minus
+      // the length of the first stage of the compressor (clstage[1,compIdx])
+      if(compressorRef!="" && compressorRef->exists("S_FrontFrame.child.isVariable")) {
+         isVar = compressorRef->getVal("S_FrontFrame.child.isVariable");
+         if(isVar) {
+            ptr = compressorRef+".length_stg";
+            xfrm = ptr->getMember(0);
+//            xfrm=compressorRef->length_stg[0];
+         }
+      }
+      
+      if(isOuterShaft) {
+         if(compressorRef != "") {
+            x[0] = compressorRef->outPort.axialPosition - xfrm;
+         }
+         else {
+            x[0] = -xfrm;
+         }
+         y[0] = routsh;
+         x[1] = x[0] + tlen2;
+         y[1] = outerDiameter/2.0;
+         x[2] = x[1] + tlen1;
+         y[2] = y[1];
+      }
+      else { // not outer shaft
+          // j indicates iwmec of most dwnstrm turbine
+         if(compressorRef != "") {
+            x[0] = compressorRef->outPort.axialPosition - 0.5*xfrm;
+         }
+         else {
+            x[0] = -0.5*xfrm;
+         }
+         y[0] = outerDiameter/2.0;
+         x[1] = x[0] + tlen1+ 0.5*xfrm;
+         y[1] = y[0];
+
+         ptr2 = turbineRef+".bladeLen_stg";
+         numStgs = turbineRef->numStages;
+         numStgs -= 1;
+         rotorLen = ptr2->getMember(numStgs);
+
+         ptr = turbineRef+".spacerLen_stg";
+         spacerLen = ptr->getMember(numStgs);
+         
+         x[2] = x[1]+0.5*(turbineRef->length-turbineRef->rearFrameLength)- 
+                       spacerLen-0.5*rotorLen;
+         y[2] = routsh;
+      } 
+
+//      setStyle("stroke-width: .4;");
+      setStyle("stroke-width: .7px;");
+      addPolyLine(x,y,drawDepth,1);
+      setStyle("");
+   }
+   
+} // end WATEshaftBase
+
+#endif
+
+

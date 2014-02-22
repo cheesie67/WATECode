@@ -1,0 +1,41 @@
+#ifndef WATEAXIALLPT_H
+#define WATEAXIALLPT_H
+
+
+/**
+ * 
+ *********************************************************/    
+class WATEaxialLPT extends WATEaxialTurbine
+{
+   MNin = .45;
+   MNout = .55;
+   
+   stg1BladeAR = 2.0;
+   lastStgBladeAR = 4.0;
+   
+   bladeSolidity = 1.22;
+   statorSolidity = 1.11;
+   bladeVolumeFactor = 0.2;
+   
+   statorVolumeFactor = 0.057;
+   
+   
+  /**
+   * 
+   *********************************************************/    
+   void checkDesignLimits(real dlimit, real htratio)
+   {
+      WATEaxialTurbine::checkDesignLimits(dlimit, htratio);
+      
+      if (bladeStress > dlimit) { 
+         string msg = "stage design limit exceeded. ";
+         msg += "bladeStress = "; msg += toStr(bladeStress);
+         msg += "  design limit = "; msg += toStr(dlimit);
+         msg += ".  stress is too high reduce shaft speed or increase exit mach number";
+         provisionalWarning(msg);
+      } 
+   }   
+}
+
+#endif
+

@@ -1,0 +1,48 @@
+
+#ifndef _WATEPRIMARYTHRUSTREVERSER_
+#define _WATEPRIMARYTHRUSTREVERSER_
+
+extern string parent.parent.componentRef;
+
+/**
+ * 
+ *****************************************************/
+class WATEprimaryThrustReverser extends WATEthrustReverserBase
+{
+   string aeroCompRef {
+      ptrType = "ElementBase";
+      hide(2);
+   }
+   
+   real des_Wc;
+   
+/**
+ * 
+ *****************************************************/
+   void calculate() {
+      real pimax = max_PtIn.val; 
+      
+      real a1 = 1.0036*pimax/14.696 - .5054;
+      if (a1 <= 1.) { a1=1.; }
+#ifdef WATE_LEGACY
+      real wc = aeroCompRef->Fl_I.Wc;
+      weight = (.52631*wc + 423.)*a1*0.852;
+#else
+      weight = (.52631*des_Wc + 423.)*a1*0.852;
+#endif
+   }
+   
+   
+/**
+ * 
+ *****************************************************/
+   void saveMechDesignData() {
+      aeroCompRef = parent.parent.parent.componentRef;
+      des_Wc = aeroCompRef->Fl_I.Wc; 
+   }
+
+   
+}
+
+#endif
+

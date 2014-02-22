@@ -1,0 +1,567 @@
+#ifndef WATETURBINEBASE_H
+#define WATETURBINEBASE_H
+
+//
+// LAST INSPECTION DATE: *not inspected*
+//
+//  EXTERNAL DEPENDENCIES
+//
+//    VCInterface* maxRadiusSettingComponent
+//    VCInterface* radiusSettingComp
+//    WATEaxialCompressor* NmechSettingComp
+
+class WATEturbineBase extends WATEelement
+{
+  Option techLevel {
+    trigger = 0;
+    allowedValues = { "MetalBlades", "CeramicBlades"}
+    value = "MetalBlades" ;    IOstatus = "input";    units = "none" ;
+    description = "Determines blade material default density." ;
+  }
+  
+  //DATAINP(2)
+  real bleedFrac {
+    value = 1.0;  IOstatus = "input";  units = "none";
+    description = "Ratio of total bleed into turbine to total bleed available";
+  }   
+
+  //DATAINP(9)
+  real unchargeableFrac {
+    value = 0.0;  IOstatus = "input";  units = "none";
+    description = "The fraction of the total bleed into this turbine injected at front and thus available to do work in the turbine";
+  }
+	
+  //IWMEC(5)
+  int numStages_in {
+    IOstatus = "input"; 
+    description = "Number of turbine stages set by the user";
+  }
+  
+  int numStages {
+    IOstatus = "input"; 
+    description = "Number of turbine calculated by the program";
+  }
+
+  //IWMEC(6)
+  int isFrameInFlow {
+    value = TRUE;  IOstatus = "input";  units = "none";
+    description = "TRUE if the frame is in the flow path, FALSE if it is not";
+  }
+
+  //IWMEC(8)
+  int hasRotorShroud {
+    value = FALSE;  IOstatus = "input";  units = "none";
+    description = "TRUE if the rotor has a shroud, FALSE if it does not";
+  }
+
+  //IWMEC(9a)
+  string radiusSettingComp {
+    IOstatus = "input";  units = "none";
+    description = "Full path name of the element setting the outer radius. If blank, then outlet of feeding component is used";
+  }
+
+  //IWMEC(9b)
+  Option  radiusSettingLoc {
+     trigger = 0;
+     allowedValues = { "Inlet", "Outlet" }
+     value = "Outlet";  IOstatus = "input";  units = "none";
+     description = "Indicates whether the inlet or outlet radius of the radius setting component is used";
+  } 
+
+  //IWMEC(10)
+  string NmechSettingComp {
+    IOstatus = "input";  units = "none";
+    description = "Full path name of first compressor on the shaft. Required.";
+    ptrType = "WATEaxialCompressor";
+  }   
+
+  //IWMEC(11)
+  int hasVanedFirstStg {
+    value = TRUE;  IOstatus = "input";  units = "none";
+    description = "TRUE if the first stage has a vane, FALSE if it does not and turbines are counter rotating";
+  }     
+
+  //IWMEC(12)
+  int hasSpacerBar {
+    value = FALSE;  IOstatus = "input";  units = "none";
+    description = "TRUE if a spacer bar is present, FALSE if one is not";
+  }       
+
+  //IWMEC(13)
+  int hasActiveCaseCooling {
+    value = FALSE;  IOstatus = "input";  units = "none";
+    description = "TRUE if the case has active cooling, FALSE if it does not";
+  } 
+
+  //IWMEC(14)
+  int numInducerDisks {
+    value = 0;  IOstatus = "input";  units = "none";
+    description = "The number of turbine inducer disks";
+  }
+
+  //IWMEC(15)
+  int hasInterStgSealDisk {
+    value = FALSE;  IOstatus = "input";  units = "none";
+    description = "TRUE if there is an interstage disk, FALSE if there is not";
+  } 
+
+  //IWMEC(16)
+
+  string maxRadiusSettingComponent {
+    value = "";  IOstatus = "input";  units = "none";
+    description = "Component number used to set the maximum outer radius of the turbine";
+  }
+
+  //DEVAL(1)
+  real MNin {
+    value = 0.0;  IOstatus = "input";  units = "none";
+    description = "Entrance MN";
+  }  
+
+  //DEVAL(2)
+  real MNout {
+    value = 0.0;  IOstatus = "input";  units = "none";
+    description = "Exit MN";
+  }  
+
+  //DEVAL(3)
+  real loadingParam {
+    value = .28;  IOstatus = "input";  units = "none";
+    description = "Turbine Loading parameter (Ut**2/[2gJ(deltah)/numStages])";
+  }   
+
+  //DEVAL(4)
+  real GEloadingParam_in {
+    value = 0.0;  IOstatus = "input";  units = "none";
+    description = "If input will adjust GEloadingParam until the value of this parameter is achieved";
+  }
+  
+  real GEloadingParam { IOstatus = "output"; }
+
+  //DESVAL(6)
+  int radiusChangeStg {
+    value = 999;  IOstatus = "input";  units = "none";
+    description = "The stage number where the radius begins to vary. Used in conjunction with outletInletRR";
+  }          
+
+  //DESVAL(7)
+  real outletInletRR {
+    value = 1.0;  IOstatus = "input";  units = "none";
+    description = "Ratio of the exit to entrance radius";
+  }    
+
+  //DESVAL(8)
+  real outerRadiusLimit {
+    value = 0.0;  IOstatus = "input";  units = "in";
+    description = "Outer radius limit in inches. If 0, radius is limited by component named in radiusSettingComp";
+  }    
+
+  //DESVAL(11)
+  int numBlades_in {
+    value = 0.0;  IOstatus = "input";
+    description = "user specified number of blades";
+  }
+  
+  int numBlades {
+    value = 0.0;  IOstatus = "output";
+    description = "calculated number of blades based on blade solidity";
+  }
+
+  //DESVAL(12)
+  int numStatorBlades_in {
+    value = 0.0;  IOstatus = "input";  units = "in";
+    description = "Default = program will calculate no. of stator blades based on statorSolidity";
+  }
+
+  //DESVAL(15)
+  real s_Wstruct {
+    value = 1.0;  IOstatus = "input";  units = "none";
+    description = "Scalar on the calculated structural weight.";
+  }   
+
+  //DEVAL(18)
+  real bladeSolidity {
+    value = 1.5;  IOstatus = "input";  units = "none";
+    description = "Blade solidity.";
+  } 
+
+  //DESVAL(19)
+  real bladeVolumeFactor {
+    value = 0.0;  IOstatus = "input";  units = "none";
+    description = "Blade volume factor.";
+  }
+
+  //DESVAL(20)
+  real bladeThicknessRatio {
+    value = 0.0;  IOstatus = "input";  units = "none";  
+    description = "Blade thickness factor";
+  }  
+
+  //DEVAL(21)
+  real stg1BladeAR {
+    value = 1.0;  IOstatus = "input";      units = "none";
+    description = "Fist stage blade aspect ratio. Default = 1.0";
+  }  
+
+  //DEVAL(22)
+  real lastStgBladeAR {
+    IOstatus = "input";  units = "none";
+    description = "Last stage blade aspect ratio. Defaults to stg1BladeAR";
+  }    
+
+  //DESVAL(23)
+  real bladeTaperRatio {
+    value = 1.0;  IOstatus = "input";  units = "none";
+    description = "Blade taper ratio";
+  }
+
+  //DESVAL(38)
+  real statorSolidity {
+    value = 0.92;  IOstatus = "input";  units = "none";
+    description = "Stator solidity factor.";
+  }  
+
+  //DESVAL(39)
+  real statorVolumeFactor {
+    value = 0.0;  IOstatus = "input";  units = "none";
+    description = "Blade volume factor.";
+  }            
+
+  //DESVAL(40)
+  real statorRotorSpacingPct {
+    value = 0.17;  IOstatus = "input";  units = "none";
+  }                    
+
+  //DESVAL(41)
+  real stg1StatorRotorLR {
+    value = 1.0;  IOstatus = "input";  units = "none";
+    description = "Ratio of the first stage stator length to the rotor length";
+  }                     
+
+  //DESVAL(42)
+  real lastStgStatorRotorLR {
+    value = 0.0;  IOstatus = "input";  units = "none";
+    description = "Ratio of the last stage stator length to the rotor length. Defaults to stg1StatorRotorLR";
+  }  
+
+  //DEVAL(81)
+  real maxSpdRatio_in {
+    IOstatus = "input";  units = "none";
+    description = "Ratio of Nmax to Ndesign.";
+  }        
+  real maxSpdRatio {
+    value = 1.0; IOstatus = "output";  units = "none";
+    description = "Ratio of Nmax to Ndesign. Calculated or assigned based on the value of maxSpdRatio_in";
+  }        
+
+  //DESVAL(93)
+  real  TmaxMetal {
+    value = 1660.0;  IOstatus = "input";  units = "R";
+    description = "Maximum disk metal temperature. Default 1660 R";
+  }            
+
+  //DESVAL(96)
+  int  bladeMaterial2StartStg {
+    value = 999;  IOstatus = "input";  units = "none";
+    description = "If bladeMaterial2.type is not blank, then this gives the stage number where blade material changes to material 2";
+  }        
+
+  //DESVAL(98)
+  int  statorMaterial2StartStg {
+    value = 999;  IOstatus = "input";  units = "none";
+    description = "If statorMaterial2.type is not blank, then this gives the stage number where stator material changes to material 2";
+  }            
+
+  //DESVAL(100)
+  real  length_in {
+    value = 0.0;  IOstatus = "input";  units = "in";
+    description = "Sets the turbine length. If given, blade aspect ratios stg1BladeAR and lastStgBladeAR adjusted to yield given length";
+  }    
+
+  //DESVAL(101)
+  real  avgLenPerStg {
+    value = 0.0;  IOstatus = "input";  units = "in";
+    description = "Sets the turbine length. Default = program will calculate compressor length based on stg1BladeAR and lastStgBladeAR or length";
+  }
+
+  //DESVAL(102)
+  real maxAllowGEloadingParam {
+    value = 0.0;  IOstatus = "input";  units = "none";
+    description = "If input, this parameter will not be exceeded by increasing the no. of stage counts.  However, the calculated loading can be below this value.  Use GEloadingParam_in if exact loading is desired
+";
+  }
+
+  //DESVAL(103)
+  real radiusMultiplier {
+    value = 0.0;  IOstatus = "input";  units = "none";
+    description = "If input, maximum outer radius is equal to maxRadiusSettingComponent->outPort.outerRadius x radiusMultiplier, will override outerRadiusLimit";
+  }
+
+  real activeCoolingConst = 1.05;  activeCoolingConst.hide(1);
+  real spoolRPM;
+     
+  real PR_stg[];
+  PR_stg {
+     description = "total pressure ratio between stages";
+  } 
+  
+  componentRef.ptrType = "Element";
+  
+  real controlRadius; 
+  real polyEff;
+  real enthalpyIn;
+  real deltaH;
+  real areaIn;
+  
+// values at design point
+  real des_Nmech;
+  real des_HP;
+  real des_HbldSum;
+  real des_WbldSum;
+  real des_eff;
+  
+  // stage properties
+  real hubRadius_stg[];
+  real tipRadius_stg[];
+  real spacerLen_stg[];
+  real length_stg[];
+  real diskWt_stg[];
+  real bladeWt_stg[];
+  real weight_stg[];
+  real inertia_stg[];
+
+  real interStgSealDiskWt_stg[];
+  real inducerDiskWt_stg[];
+  real statorWt_stg[];
+  real nutsBoltsWt_stg[];
+  real caseWt_stg[];
+  real AR_stg[];
+  real statorAR_stg[];
+  real bladeLen_stg[];
+  real statorLen_stg[];
+  real bladeDensity_stg[];
+  real diskDensity_stg[];
+  real statorDensity_stg[];
+  real caseDensity_stg[];
+  int numStatorBlades_stg[];
+  real statorFlangeWt_stg[];
+  real rubStripWt_stg[];
+  real statorShroudWt_stg[];
+  real rotorDrumWt_stg[];
+  real rotorShroudWt_stg[];
+  real diskSpacerBarWt_stg[];
+  real activeCaseCoolingWt_stg[];
+  real deltaStgEnthalpy_stg[];
+  real MNin_stg[];
+  real area_stg[];
+  int numBlades_stg[];
+  real bladeTipSpd_stg[];
+  real bladeStress_stg[];
+  string bladeMaterial_stg[];
+  string statorMaterial_stg[];
+  string diskMaterial_stg[];
+  string diskType_stg[];
+  
+  FlowStation des_Fl_I;  // input flowstation at design point
+  FlowStation des_Fl_O;  // output flowstation at design point
+  
+  // keep track of max rpm's
+  MaxSaver max_Nmech {
+     var = "Sh_O.Nmech";
+  }
+     
+  Socket S_RearFrame {
+     description = "Socket for custom frame subelement";
+     socketType = "WATEframeBase";
+  }  
+
+
+#ifdef WATE_LEGACY
+  WATEmaterial caseMaterial;
+  WATEmaterial bladeMaterial;
+  WATEmaterial bladeMaterial2;
+  WATEmaterial statorMaterial;
+  WATEmaterial statorMaterial2;
+#else
+  WATEmaterial caseMaterial { type = "Inconel_718"; }
+  WATEmaterial bladeMaterial { type = "Inconel_718"; }
+  WATEmaterial bladeMaterial2 { type = bladeMaterial.type; }
+  WATEmaterial statorMaterial { type = bladeMaterial.type; }
+  WATEmaterial statorMaterial2 { type = statorMaterial.type; }
+#endif
+  
+  Socket S_Disk {
+     required = 1;
+  }
+  
+  WATEInputPort inPort;
+  WATEOutputPort outPort;
+    
+//
+//   description:	calculates turbine performance values for mechanical
+//			design.
+//
+   void calculate() {
+
+      if(NmechSettingComp != "") {
+         spoolRPM = NmechSettingComp->spoolRPM;
+      }
+      else {
+         spoolRPM = des_Nmech;
+      }
+      
+      inPort.innerRadius = inPort.innerRadiusUp;
+      inPort.outerRadius = inPort.outerRadiusUp;
+      
+      if (radiusMultiplier > 0. && maxRadiusSettingComponent != "") {
+         outerRadiusLimit = maxRadiusSettingComponent->outPort.outerRadius*
+                            radiusMultiplier;
+      }
+      
+      real wi = des_Fl_I.W; 
+      real PtIn = des_Fl_I.Pt*144.;
+      real PtOut = des_Fl_O.Pt*144.;
+      //real TtIn = des_Fl_I.Tt; 
+      real FARin = des_Fl_I.FAR; 
+      real gamIn = des_Fl_I.gamt;
+      
+      if(MNin == 0.) { MNin = des_Fl_I.MN; }
+      
+      real cft = 0.;
+      real hc = 0.;
+      
+      cft = des_WbldSum; 
+      hc = des_HbldSum;
+      
+      real coolingFlowFront = cft*bleedFrac*unchargeableFrac;
+//      real coolingFlowRear = cft*bleedFrac*(1.-unchargeableFrac);
+      
+      if(MNin > 0.0) {
+         areaIn = MNin;
+         if(GEloadingParam_in != 0.) { 
+            loadingParam = 1./(GEloadingParam_in*3.); 
+         } 
+      }
+
+      if (radiusSettingComp == "") { 
+         controlRadius = inPort.outerRadius/12.;
+      }
+      else {
+         controlRadius = radiusSettingComp->outPort.outerRadius/12.;
+      } 
+      if (outerRadiusLimit != 0.) { controlRadius = outerRadiusLimit/12.; } 
+ 
+      enthalpyIn = des_Fl_I.ht;
+      enthalpyIn=(enthalpyIn*wi+hc*coolingFlowFront)/(wi+coolingFlowFront);
+      FARin = FARin*wi/(wi+coolingFlowFront);
+      wi += coolingFlowFront;
+      
+//     initialize efficiency (ef) and calculate actual work (turbineHP), enthalpy
+//     change across turbine (deltaH), exit enthalpy (h3) and exit pressure
+//     ratio (Prel1)
+
+//       real ef = abs(des_eff);
+       deltaH = des_HP*.7068/wi; 
+       if (deltaH <= .0001) { deltaH=.0001; } 
+//       real h3 = enthalpyIn-deltaH;
+      
+// ??? should be able to take polyEff straight from Turbine element, but it comes
+// back as 0 for some reason, so for now, just use effd routine
+      polyEff = effd(-PtIn/PtOut, des_eff, gamIn);
+      
+      if(MNin==0.) { MNin = des_Fl_I.MN; }    
+         
+      tmech();
+   } // end calculate
+   
+   
+   void tmech() { } // overridden in derived classes
+   
+   
+  /**
+   * this routine converts adiabatic to polytropic efficiency. 
+   ********************************************************************/    
+  real effd(real pr, real ef, real ga)
+  {
+     real pefd = ef;
+     if(pr!=1.) {
+       if(pr<=0.) {
+         pr=-1./pr;
+         if(pefd>=0.) {
+           pefd=log(1.-pefd*(1.-pr**((ga-1.)/ga)))/log(pr**((ga-1.)/ga));
+         }
+         if(pefd<0.) { pefd=-pefd;}
+         ef=(1.-pr**(pefd/ga*(ga-1.)))/(1.-pr**((ga-1.)/ga));
+       }
+       else {
+         if(pefd>=0.) {
+           pefd=log(pr**((ga-1.)/ga))/log(1.+(pr**((ga-1.)/ga)-1.)/pefd);
+         }
+         if(pefd<0.) { pefd=-pefd; }
+         ef=(pr**((ga-1.)/ga)-1.)/(pr**((ga-1.)/ga/pefd)-1.);
+       }
+     }
+
+    return pefd;
+  }
+  
+
+  /**
+   *  
+   ********************************************************************/    
+  void prePass() {
+     if(executionState == "CALCULATE") {
+        if(NmechSettingComp != "") {
+           spoolRPM = NmechSettingComp->spoolRPM;
+        }
+        else {
+           spoolRPM = des_Nmech;
+        }
+
+        WATEelement::prePass();
+     }      
+  }
+  
+  
+  /**
+   *  
+   ********************************************************************/    
+   void saveMechDesignData() {
+      
+     if(componentRef == "") {
+        error("componentRef must be set");
+     }
+     else {
+        des_Nmech = componentRef->Sh_O.Nmech;
+        des_Fl_I.copyFlowStatic(componentRef+".Fl_I");
+        des_Fl_O.copyFlowStatic(componentRef+".Fl_O");
+        des_HP = componentRef->pwr;
+        des_eff = componentRef->eff;
+        des_WbldSum = componentRef->WbldSum;
+        des_HbldSum = componentRef->HbldSum;
+     }
+  }
+  
+  /**
+   *
+   ***************************************************************/
+  real[] getMaxRadiusInfo() {
+    real ret[2];
+
+    if(inPort.outerRadius > outPort.outerRadius) {
+       ret[0] = inPort.outerRadius;
+       ret[1] = inPort.axialPosition;
+    }
+    else {
+       ret[0] = outPort.outerRadius;
+       ret[1] = outPort.axialPosition;
+    }
+    return ret;
+  }
+ 
+  
+}   
+      
+#endif
+      
+      

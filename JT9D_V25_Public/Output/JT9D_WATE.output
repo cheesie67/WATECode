@@ -1,0 +1,638 @@
+******************************************************************************************************************
+                    Rough JT9D Turbofan Performance Model AEROMECHANICAL DESIGN DATA                              
+                                run by: tlavelle                                                                  
+******************************************************************************************************************
+
+                                                                                                                  
+====================================================                                                              
+WATEhiBypassFan     WATEa.WATE_Fan                                                                                
+====================================================                                                              
+                                                                                                                  
+COMPRESSOR PERFORMANCE PARAMETERS                                                                                 
+__________________________________________________________________________________________________________________
+ # of   pressure    adiab           maximum  corrected  corrected   PR/Utip           hub/tip   maximum     total 
+stages    ratio      eff      RPM      RPM      RPM     tip speed    scalar  loading   ratio   diameter    inertia
+  1       1.600    0.904     3809.    3809.    3713.       1556.3     1.095    0.755   0.400       96.1    159227.
+                                                                                                                  
+        pressure    delta                              blade    blade tip    stage    stg work                    
+stage     ratio       ht    Mach    Tt in   Tt max    stress      speed     inertia     factor                    
+  1       1.600    20.82   0.515    545.7    552.5    51741.     1596.3     159227.      0.205                    
+                                                                                                                  
+                                                                                                                  
+COMPRESSOR MATERIALS                                                                                              
+__________________________________________________________________________________________________________________
+          blade        blade      stator       stator        disk         disk       disk        case         case
+stage   density     material     density     material     density     material      shape     density     material
+  1      0.168         Ti_17      0.098      aluminum      0.168         Ti_17       RING      0.283   _4340_Steel
+                                                                                                                  
+                                                                                                                  
+COMPRESSOR GEOMETRY AND AIRFOIL COUNTS                                                                            
+_____________________________________________________________________________________________                     
+          # of      AR      # of      AR     bypass    stage  blade hub   blade tip      flow                     
+stage    blades   blade   stators   stator   length   length     radius      radius      area                     
+  1          46    4.60       108     4.00     15.8     14.6      19.21       48.03   6087.27                     
+                                                                                                                  
+                                                                                                                  
+COMPRESSOR WEIGHT BREAKDOWN                                                                                       
+_____________________________________________________________________________________________                     
+                                             rotor  stator supp.  nuts&   containment   stage                     
+stage    blade   stator     disk     case     drum    flange      bolts      ring       total                     
+  1     209.75  1574.90   128.71   302.80    32.43     31.80       0.00               2280.39                     
+        ------   ------   ------   ------   ------    ------     ------    ------                                 
+        209.75  1574.90   128.71   302.80    32.43     31.80       0.00    415.46                                 
+                                                                                                                  
+                                                                                                                  
+FRAME INFORMATION FOR THIS COMPONENT                                                                              
+__________________________________________________________________________________________________________________
+  # of frame    aspect                          airfoil   airfoil       support   support     support  tower shaft
+strut/airfoil    ratio    length      gap      material   density      material   density   thickness  outer diam.
+      9          2.500      8.20     0.00     Ti_6Al_4v     0.160     Ti_6Al_4v     0.160       0.100        1.000
+                                                                                                                  
+           strut/                        upper     lower      tower             frame                             
+          airfoil      case       hub   support   support     shaft             total                             
+weights:    99.29     37.40     20.50      0.00      0.00     34.61            191.80 lbs.                        
+                                                                                                                  
+                                                                                                                  
+compressor   2280.39                                                                                              
+front frame     0.00                                                                                              
+rear  frame   191.80                                                                                              
+containment   415.46                                                                                              
+gearbox         0.00                                                                                              
+            --------                                                                                              
+     total = 2887.66 lbs.                                                                                         
+                                                                                                                  
+                                                                                                                  
+                                                                                                                  
+====================================================                                                              
+WATEductBase     WATEa.WATE_Duct1                                                                                 
+====================================================                                                              
+                                                                                                                  
+maximum     design      duct                  flow                              hub      tip                      
+  temp.     press.   thickness   Mach #       area     material    density    radius   radius       L/D    length 
+  638.1      36.23     0.050      0.450      779.1  _4340_Steel      0.283     24.70    29.29     0.500      2.30 
+                                                                                                                  
+allowable  duct hoop        outer case  inner case       frame          total                                     
+   stress     stress            weight      weight      weight         weight                                     
+  50000.0    21224.3              5.98        5.04        0.00          11.02 lbs.                                
+                                                                                                                  
+                                                                                                                  
+                                                                                                                  
+====================================================                                                              
+WATEaxialLPC     WATEa.WATE_LPC                                                                                   
+====================================================                                                              
+                                                                                                                  
+COMPRESSOR PERFORMANCE PARAMETERS                                                                                 
+__________________________________________________________________________________________________________________
+ # of   pressure    adiab           maximum  corrected  corrected   PR/Utip           hub/tip   maximum     total 
+stages    ratio      eff      RPM      RPM      RPM     tip speed    scalar  loading   ratio   diameter    inertia
+  3       2.250    0.866     3809.    3809.    3449.        869.2     1.000    0.838   0.850       57.8     59726.
+                                                                                                                  
+        pressure    delta                              blade    blade tip    stage    stg work                    
+stage     ratio       ht    Mach    Tt in   Tt max    stress      speed     inertia     factor                    
+  1       1.342    15.22   0.450    632.3    638.1     7323.      959.7      27161.      0.414                    
+  2       1.309    15.22   0.433    695.5    701.5     5895.      879.7      19059.      0.493                    
+  3       1.281    15.22   0.417    758.3    764.9     4856.      799.8      13505.      0.596                    
+                                                                                                                  
+                                                                                                                  
+COMPRESSOR MATERIALS                                                                                              
+__________________________________________________________________________________________________________________
+          blade        blade      stator       stator        disk         disk       disk        case         case
+stage   density     material     density     material     density     material      shape     density     material
+ IGV - FIXED                      0.168         Ti_17                                                             
+  1      0.168         Ti_17      0.168         Ti_17      0.168         Ti_17       RING      0.168         Ti_17
+  2      0.168         Ti_17      0.168         Ti_17      0.168         Ti_17       RING      0.168         Ti_17
+  3      0.168         Ti_17      0.168         Ti_17      0.168         Ti_17       RING      0.168         Ti_17
+                                                                                                                  
+                                                                                                                  
+COMPRESSOR GEOMETRY AND AIRFOIL COUNTS                                                                            
+_____________________________________________________________________________________________                     
+          # of      AR      # of      AR     bypass    stage  blade hub   blade tip      flow                     
+stage    blades   blade   stators   stator   length   length     radius      radius      area                     
+ IGV                           94     1.50                                                                        
+  1         127    2.25       127     2.25      4.5      4.5      24.54       28.88    726.93                     
+  2         118    2.00       118     2.00      4.4      4.4      22.68       26.47    585.12                     
+  3         104    1.75       104     1.75      4.6      4.3      20.63       24.06    481.98                     
+                                                                                                                  
+                                                                                                                  
+COMPRESSOR WEIGHT BREAKDOWN                                                                                       
+_____________________________________________________________________________________________                     
+                                             rotor  stator supp.  nuts&   containment   stage                     
+stage    blade   stator     disk     case     drum    flange      bolts      ring       total                     
+ IGV              52.47                                                                 52.47                     
+  1      16.10    31.51    57.64    30.89     6.68      8.80      11.18                162.80                     
+  2      12.68    24.81    48.52    27.87     6.08      7.94      11.00                138.90                     
+  3      10.85    21.23    41.57    26.23     5.72      7.47      11.39                124.46                     
+        ------   ------   ------   ------   ------    ------     ------    ------                                 
+         39.62   130.02   147.73    85.00    18.49     24.22      33.56      0.00                                 
+                                                                                                                  
+compressor    478.63                                                                                              
+front frame     0.00                                                                                              
+rear  frame     0.00                                                                                              
+containment     0.00                                                                                              
+gearbox         0.00                                                                                              
+            --------                                                                                              
+     total =  478.63 lbs.                                                                                         
+                                                                                                                  
+                                                                                                                  
+                                                                                                                  
+====================================================                                                              
+WATEductBase     WATEa.WATE_Duct2                                                                                 
+====================================================                                                              
+                                                                                                                  
+maximum     design      duct                  flow                              hub      tip                      
+  temp.     press.   thickness   Mach #       area     material    density    radius   radius       L/D    length 
+  828.2      81.25     0.050      0.300      511.4        Ti_17      0.168     18.44    21.66     2.000      6.43 
+                                                                                                                  
+allowable  duct hoop        outer case  inner case       frame          total                                     
+   stress     stress            weight      weight      weight         weight                                     
+  50000.0    35191.5              7.35        6.26      176.91         190.52 lbs.                                
+                                                                                                                  
+FRAME INFORMATION FOR THIS COMPONENT                                                                              
+__________________________________________________________________________________________________________________
+  # of frame    aspect                          airfoil   airfoil       support   support     support  tower shaft
+strut/airfoil    ratio    length      gap      material   density      material   density   thickness  outer diam.
+     20          0.800      4.02     1.41     Ti_6Al_4v     0.160     Ti_6Al_4v     0.160       0.100        1.000
+                                                                                                                  
+           strut/                        upper     lower      tower             frame                             
+          airfoil      case       hub   support   support     shaft             total                             
+weights:     8.31      8.75      7.45    118.23     34.17      0.00            176.91 lbs.                        
+                                                                                                                  
+                                                                                                                  
+                                                                                                                  
+====================================================                                                              
+WATEaxialHPC     WATEa.WATE_HPC                                                                                   
+====================================================                                                              
+                                                                                                                  
+COMPRESSOR PERFORMANCE PARAMETERS                                                                                 
+__________________________________________________________________________________________________________________
+ # of   pressure    adiab           maximum  corrected  corrected   PR/Utip           hub/tip   maximum     total 
+stages    ratio      eff      RPM      RPM      RPM     tip speed    scalar  loading   ratio   diameter    inertia
+ 11       5.691    0.862     7924.    7924.    6299.        921.6     0.992    0.566   0.735       33.5     66065.
+                                                                                                                  
+        pressure    delta                              blade    blade tip    stage    stg work                    
+stage     ratio       ht    Mach    Tt in   Tt max    stress      speed     inertia     factor                    
+  1       1.225    13.24   0.400    820.9    828.2    17668.     1159.4      11920.      0.247                    
+  2       1.210    13.24   0.382    875.1    880.7    15490.     1120.1       9365.      0.264                    
+  3       1.197    13.24   0.364    929.0    933.2    13756.     1086.7       7538.      0.281                    
+  4       1.186    13.24   0.345    982.5    985.7    12361.     1057.9       6174.      0.296                    
+  5       1.176    13.24   0.327   1035.7   1038.2    11230.     1032.8       5182.      0.311                    
+  6       1.167    13.24   0.309   1088.6   1090.7    10310.     1010.9       4309.      0.325                    
+  7       1.159    13.24   0.291   1141.1   1143.1     9562.      991.5       3758.      0.337                    
+  8       1.152    13.24   0.273   1193.3   1195.6     8958.      974.4       3336.      0.349                    
+  9       1.145    13.24   0.255   1245.2   1248.1     8476.      959.4       3009.      0.360                    
+ 10       1.139    13.24   0.236   1296.7   1300.6    14323.      946.1       5953.      0.371                    
+ 11       1.134    13.24   0.218   1347.9   1353.1    13838.      934.6       5523.      0.380                    
+                                                                                                                  
+                                                                                                                  
+COMPRESSOR MATERIALS                                                                                              
+__________________________________________________________________________________________________________________
+          blade        blade      stator       stator        disk         disk       disk        case         case
+stage   density     material     density     material     density     material      shape     density     material
+ IGV - VARIABLE                   0.168         Ti_17                                                             
+  1      0.168         Ti_17      0.283   _4340_Steel      0.168         Ti_17       RING      0.290    Udimet_500
+  2      0.168         Ti_17      0.283   _4340_Steel      0.168         Ti_17       RING      0.290    Udimet_500
+  3      0.168         Ti_17      0.283   _4340_Steel      0.168         Ti_17       RING      0.290    Udimet_500
+  4      0.168         Ti_17      0.283   _4340_Steel      0.168         Ti_17       RING      0.290    Udimet_500
+  5      0.168         Ti_17      0.283   _4340_Steel      0.168         Ti_17       RING      0.290    Udimet_500
+  6      0.168         Ti_17      0.283   _4340_Steel      0.168         Ti_17       RING      0.290    Udimet_500
+  7      0.168         Ti_17      0.297   Inconel_718      0.168         Ti_17       RING      0.290    Udimet_500
+  8      0.168         Ti_17      0.297   Inconel_718      0.168         Ti_17       RING      0.290    Udimet_500
+  9      0.168         Ti_17      0.297   Inconel_718      0.168         Ti_17       RING      0.290    Udimet_500
+ 10      0.297   Inconel_718      0.297   Inconel_718      0.297   Inconel_718       RING      0.290    Udimet_500
+ 11      0.297   Inconel_718      0.297   Inconel_718      0.297   Inconel_718       RING      0.290    Udimet_500
+                                                                                                                  
+                                                                                                                  
+COMPRESSOR GEOMETRY AND AIRFOIL COUNTS                                                                            
+_____________________________________________________________________________________________                     
+          # of      AR      # of      AR     bypass    stage  blade hub   blade tip      flow                     
+stage    blades   blade   stators   stator   length   length     radius      radius      area                     
+ IGV                          151     4.00                                                                        
+  1          75    2.00       151     4.00      3.9      3.9      12.32       16.77    406.05                     
+  2          80    1.98       146     3.59      3.7      3.7      12.21       16.20    355.87                     
+  3          85    1.95       142     3.25      3.5      3.5      12.10       15.71    315.93                     
+  4          89    1.93       137     2.96      3.3      3.3      11.99       15.30    283.80                     
+  5          93    1.90       133     2.71      3.2      3.2      11.88       14.94    257.78                     
+  6          96    1.88       128     2.50      3.1      3.1      11.76       14.62    236.63                     
+  7          99    1.85       124     2.31      3.1      3.1      11.65       14.34    219.43                     
+  8         101    1.83       119     2.15      3.0      3.0      11.54       14.09    205.54                     
+  9         102    1.80       114     2.00      3.0      3.0      11.43       13.87    194.46                     
+ 10         103    1.78       108     1.87      3.0      3.0      11.32       13.68    185.88                     
+ 11         102    1.75       102     1.75      3.1      2.9      11.20       13.52    179.57                     
+                                                                                                                  
+                                                                                                                  
+COMPRESSOR WEIGHT BREAKDOWN                                                                                       
+_____________________________________________________________________________________________                     
+                                             rotor  stator supp.  nuts&   containment   stage                     
+stage    blade   stator     disk     case     drum    flange      bolts      ring       total                     
+ IGV              27.36                                                                 27.36                     
+  1      45.04    43.72    63.00    26.80     3.77      4.97       4.86                192.14                     
+  2      35.60    38.44    51.87    24.31     3.65      4.80       4.56                163.24                     
+  3      28.93    34.50    43.39    22.36     3.56      4.66       4.32                141.74                     
+  4      23.87    26.31    36.98    20.82     3.50      4.56       4.14                120.18                     
+  5      20.22    24.02    32.14    19.62     3.45      4.49       3.99                107.93                     
+  6      17.40    22.12    26.80    18.69     3.42      4.45       3.88                 96.76                     
+  7      15.38    21.92    24.07    17.98     3.41      4.66       3.81                 91.23                     
+  8      13.81    20.91    22.04    17.49     3.42      4.69       3.77                 86.13                     
+  9      12.62    20.33    20.45    17.19     3.46      4.75       3.76                 82.57                     
+ 10      20.99    19.98    50.40    17.07     3.52      4.85       3.79                120.60                     
+ 11      19.94    20.06    47.56    17.13     3.61      5.00       3.85                117.16                     
+        ------   ------   ------   ------   ------    ------     ------    ------                                 
+        253.80   319.67   418.71   219.46    38.78     51.89      44.74      0.00                                 
+                                                                                                                  
+compressor   1347.05                                                                                              
+front frame     0.00                                                                                              
+rear  frame     0.00                                                                                              
+containment     0.00                                                                                              
+gearbox         0.00                                                                                              
+            --------                                                                                              
+     total = 1347.05 lbs.                                                                                         
+                                                                                                                  
+                                                                                                                  
+                                                                                                                  
+====================================================                                                              
+WATEductBase     WATEa.WATE_Bld3                                                                                  
+====================================================                                                              
+                                                                                                                  
+maximum     design      duct                  flow                              hub      tip                      
+  temp.     press.   thickness   Mach #       area     material    density    radius   radius       L/D    length 
+ 1405.6     456.39     0.085      0.270      132.3   Udimet_700      0.286     11.37    13.09     2.500      4.30 
+                                                                                                                  
+allowable  duct hoop        outer case  inner case       frame          total                                     
+   stress     stress            weight      weight      weight         weight                                     
+  70000.0    70000.0              8.64        7.51        0.00          16.15 lbs.                                
+                                                                                                                  
+                                                                                                                  
+                                                                                                                  
+====================================================                                                              
+   WATEprimaryBurner        WATEa.WATE_Burner                                                                     
+====================================================                                                              
+                                                                                                                  
+   dome         case           liner     inner     outer                      W per              resdnce    flow  
+   type       material       material   radius    radius    length    mach     area  thickness     time      vel. 
+ SINGLE   TD_Nickel_b>   TD_Nickel_b>     6.12     16.18     19.20   0.044    3.727      0.089    0.020      80.0 
+                                                                                                                  
+          outer case  inner case      liner    nozzle     frame           total                                   
+weights:        55.9        21.2       63.1      48.6     237.7           426.5 lbs.                              
+                                                                                                                  
+                                                                                                                  
+                                                                                                                  
+====================================================                                                              
+WATEaxialHPT     WATEa.WATE_HPT                                                                                   
+====================================================                                                              
+                                                                                                                  
+TURBINE OPERATING CONDITIONS                                                                                      
+   entrance:  flow = 229.55     Pt = 280.87     Tt = 2730.0     Ht = 733.06     Mach# = 0.100     area =   486.1  
+   exit    :  flow = 229.55     Pt = 103.91     Tt = 2136.8     Ht = 555.81     Mach# = 0.300     area =   442.2  
+design PR =  2.792     design TR =  1.239     design delta H =  156.6     design power =  50866.1                 
+   misc: blade tip radius =  19.30   blade hub radius =  14.96   blade taper ratio =  1.000                       
+                                                                                                                  
+TURBINE PERFORMANCE PARAMETERS                                                                                    
+_______________________________________________________________________________________________________           
+ # of   pressure    adiab           maximum               blade       NASA      GE    hub/tip    total            
+stages    ratio      eff      RPM      RPM    torque    tip speed   loading  loading   ratio    inertia           
+  2       2.792    0.914     7924.    7940.  403774.       1340.0     0.458    0.699   0.767    115547.           
+                                                                                                                  
+        pressure    delta             blade    blade tip    stage      stage                                      
+stage     ratio       ht    Mach     stress      speed     inertia    loading                                     
+  1       1.626    78.31   0.100     42679.     1340.0      64773.                                                
+  2       1.717    78.31   0.185     36087.     1318.5      50773.                                                
+                                                                                                                  
+                                                                                                                  
+TURBINE MATERIALS                                                                                                 
+__________________________________________________________________________________________________________________
+          blade        blade       vane        vane          disk         disk       disk        case         case
+stage   density     material     density     material     density     material      shape     density     material
+  1      0.308      Rene_108      0.308      Rene_108      0.299   Supersolvus HYPERBOLIC      0.287          V_57
+  2      0.308      Rene_108      0.308      Rene_108      0.299   Supersolvus HYPERBOLIC      0.287          V_57
+                                                                                                                  
+                                                                                                                  
+TURBINE GEOMETRY AND AIRFOIL COUNTS                                                                               
+_______________________________________________________________________________________________________           
+          # of      AR      # of      AR      blade     vane  blade hub   blade tip     stage      flow           
+stage    blades   blade     vanes     vane   length   length     radius      radius    length      area           
+  1         101    2.50       101     2.50      1.8      1.8      14.86       19.38      4.85    486.15           
+  2         117    2.50       117     2.50      1.5      1.5      15.26       19.07      3.57    411.06           
+                                                                                                                  
+                                                                                                                  
+TURBINE WEIGHT BREAKDOWN                                                                                          
+___________________________________________________________________________________________                       
+                                                     rotor      vane      inducer     nuts&                       
+stage    blade       vane       disk       case       drum     flange       disk      bolts                       
+  1     183.83     266.85     207.77      38.10      19.47      10.17       0.00       7.28                       
+  2     127.77     185.47     175.48      31.62      16.86       8.44       0.00       6.30                       
+        ------     ------     ------     ------     ------     ------     ------     ------                       
+        311.60     452.32     383.25      69.71      36.34      18.61       0.00      13.58                       
+                                                                                                                  
+___________________________________________________________________________________________                       
+           rub      rotor      vane       spacer  act. case    interstg               stage                       
+stage    strip     shroud     shroud        bar    cooling       seal                 total                       
+  1       3.96       0.00       7.80       0.00      41.52      72.72                859.48                       
+  2       3.29       0.00       6.75       0.00      34.46      61.42                657.86                       
+        ------     ------     ------     ------     ------     ------                                             
+          7.25       0.00      14.55       0.00      75.99     134.14                                             
+                                                                                                                  
+TURBINE EXIT FRAME WEIGHT =  296.17                                                                               
+                                                                                                                  
+                                                                                                                  
+turbine     1517.34                                                                                               
+rear frame   296.17                                                                                               
+           --------                                                                                               
+    total = 1813.50 lbs.                                                                                          
+                                                                                                                  
+                                                                                                                  
+                                                                                                                  
+====================================================                                                              
+WATEductBase     WATEa.WATE_Duct3                                                                                 
+====================================================                                                              
+                                                                                                                  
+maximum     design      duct                  flow                              hub      tip                      
+  temp.     press.   thickness   Mach #       area     material    density    radius   radius       L/D    length 
+ 2138.6     159.58     0.050      0.270      478.9   Udimet_700      0.286     14.91    19.35     0.500      2.22 
+                                                                                                                  
+allowable  duct hoop        outer case  inner case       frame          total                                     
+   stress     stress            weight      weight      weight         weight                                     
+  70000.0    61774.3              3.87        2.98        0.00           6.85 lbs.                                
+                                                                                                                  
+                                                                                                                  
+                                                                                                                  
+====================================================                                                              
+WATEaxialLPT     WATEa.WATE_LPT                                                                                   
+====================================================                                                              
+                                                                                                                  
+TURBINE OPERATING CONDITIONS                                                                                      
+   entrance:  flow = 251.76     Pt = 103.39     Tt = 2136.8     Ht = 555.81     Mach# = 0.300     area =   444.4  
+   exit    :  flow = 251.76     Pt =  22.84     Tt = 1526.6     Ht = 383.70     Mach# = 0.350     area =  1470.7  
+design PR =  4.521     design TR =  1.400     design delta H =  172.1     design power =  61304.5                 
+   misc: blade tip radius =  27.30   blade hub radius =  15.88   blade taper ratio =  1.000                       
+                                                                                                                  
+TURBINE PERFORMANCE PARAMETERS                                                                                    
+_______________________________________________________________________________________________________           
+ # of   pressure    adiab           maximum               blade       NASA      GE    hub/tip    total            
+stages    ratio      eff      RPM      RPM    torque    tip speed   loading  loading   ratio    inertia           
+  4       4.521    0.929     3809.    3863. 1000120.        671.3     0.209    1.498   0.786    123372.           
+                                                                                                                  
+        pressure    delta             blade    blade tip    stage      stage                                      
+stage     ratio       ht    Mach     stress      speed     inertia    loading                                     
+  1       1.395    43.03   0.270      9837.      671.3      18217.                                                
+  2       1.432    43.03   0.285     12571.      706.0      23137.                                                
+  3       1.477    43.03   0.300     16480.      752.9      32350.                                                
+  4       1.533    43.03   0.315     22252.      817.1      49669.                                                
+                                                                                                                  
+                                                                                                                  
+TURBINE MATERIALS                                                                                                 
+__________________________________________________________________________________________________________________
+          blade        blade       vane        vane          disk         disk       disk        case         case
+stage   density     material     density     material     density     material      shape     density     material
+  1      0.298       Rene_95      0.298       Rene_95      0.299   Supersolvus        WEB      0.287          V_57
+  2      0.298       Rene_95      0.298       Rene_95      0.299   Supersolvus        WEB      0.287          V_57
+  3      0.298       Rene_95      0.298       Rene_95      0.299   Supersolvus        WEB      0.287          V_57
+  4      0.298       Rene_95      0.298       Rene_95      0.299   Supersolvus        WEB      0.287          V_57
+                                                                                                                  
+                                                                                                                  
+TURBINE GEOMETRY AND AIRFOIL COUNTS                                                                               
+_______________________________________________________________________________________________________           
+          # of      AR      # of      AR      blade     vane  blade hub   blade tip     stage      flow           
+stage    blades   blade     vanes     vane   length   length     radius      radius    length      area           
+  1         117    4.00       117     2.67      1.1      1.6      15.88       20.20      3.61    489.15           
+  2         107    4.33       121     3.25      1.2      1.6      15.88       21.24      3.87    625.11           
+  3          98    4.67       126     4.00      1.5      1.7      15.88       22.65      4.21    819.51           
+  4          88    5.00       133     5.00      1.7      1.7      15.88       24.59      4.07   1106.50           
+                                                                                                                  
+                                                                                                                  
+TURBINE WEIGHT BREAKDOWN                                                                                          
+___________________________________________________________________________________________                       
+                                                     rotor      vane      inducer     nuts&                       
+stage    blade       vane       disk       case       drum     flange       disk      bolts                       
+  1      35.02      32.60      72.65      29.62      15.53       9.18       0.00       5.80                       
+  2      52.29      43.49      74.89      33.33      16.61       9.84       0.00       6.21                       
+  3      83.19      60.23      80.01      38.71      18.09      10.77       0.00       6.76                       
+  4     138.30      86.47      89.50      46.53      20.04      12.02       0.00       7.49                       
+        ------     ------     ------     ------     ------     ------     ------     ------                       
+        308.80     222.79     317.05     148.19      70.28      41.81       0.00      26.26                       
+                                                                                                                  
+___________________________________________________________________________________________                       
+           rub      rotor      vane       spacer  act. case    interstg               stage                       
+stage    strip     shroud     shroud        bar    cooling       seal                 total                       
+  1       2.46       6.12       7.22       0.00       0.00       0.00                216.21                       
+  2       2.97       7.38       7.36      11.43       0.00       0.00                265.79                       
+  3       3.72       9.23       7.55      12.37       0.00       0.00                330.63                       
+  4       4.84      12.02       7.76      13.59       0.00       0.00                438.57                       
+        ------     ------     ------     ------     ------     ------                                             
+         13.99      34.75      29.89      37.39       0.00       0.00                                             
+                                                                                                                  
+                                                                                                                  
+FRAME INFORMATION FOR THIS COMPONENT                                                                              
+__________________________________________________________________________________________________________________
+  # of frame    aspect                          airfoil   airfoil       support   support     support  tower shaft
+strut/airfoil    ratio    length      gap      material   density      material   density   thickness  outer diam.
+     20          1.450      7.87     1.57   Inconel_718     0.297   Inconel_718     0.297       0.100        1.000
+                                                                                                                  
+           strut/                        upper     lower      tower             frame                             
+          airfoil      case       hub   support   support     shaft             total                             
+weights:   210.31     40.12     23.34      0.00     40.36      0.00            314.14 lbs.                        
+                                                                                                                  
+                                                                                                                  
+turbine     1251.19                                                                                               
+rear frame   314.14                                                                                               
+           --------                                                                                               
+    total = 1565.33 lbs.                                                                                          
+                                                                                                                  
+                                                                                                                  
+                                                                                                                  
+====================================================                                                              
+WATEductBase     WATEa.WATE_Duct4                                                                                 
+====================================================                                                              
+                                                                                                                  
+maximum     design      duct                  flow                              hub      tip                      
+  temp.     press.   thickness   Mach #       area     material    density    radius   radius       L/D    length 
+ 1524.8      34.86     0.050      0.250     2046.8   Udimet_700      0.286     15.88    27.30     0.250      2.85 
+                                                                                                                  
+allowable  duct hoop        outer case  inner case       frame          total                                     
+   stress     stress            weight      weight      weight         weight                                     
+  70000.0    19033.1              7.00        4.07        0.00          11.08 lbs.                                
+                                                                                                                  
+                                                                                                                  
+                                                                                                                  
+====================================================                                                              
+WATEaxisymConvNozzle     WATEa.WATE_Core_Nozz                                                                     
+====================================================                                                              
+                                                                                                                  
+NOZZLE GEOMETRY AND MATERIALS                                                                                     
+__________________________________________________________________________________________________________________
+  throat     exit   trans. duct  mix-ej     nozzle    total    nozzle     plug      case     mix-ej     acoustic  
+   area      area     length     length       L/D    length   density   density   density   density    liner dens.
+  855.2     855.2       0.00       0.00     0.750     40.95     0.283     0.283     0.283     0.000          0.000
+                                                                                                                  
+      nozzle           plug           case        mixer-ej       acoustic                                         
+     material       material       material       material       material                                         
+  _4340_Steel    _4340_Steel    _4340_Steel                                                                       
+                                                                                                                  
+                                                                                                                  
+NOZZLE WEIGHT BREAKDOWN                                                                                           
+__________________________________________________________________________________________________________________
+  outer      inner    2-D cnvrgt    2-D dvrgnt       2-D          2-D         variable      variable        nozzle
+   wall       wall    inner wall    inner wall     sidewall   trans. duct     area C&A     area misc.       weight
+ 164.93       0.00          0.00          0.00         0.00          0.00         0.00          0.00        164.93
+                                                                                                                  
+nozzle                    164.93                                                                                  
+nozzle acoustic liner       0.00                                                                                  
+plug                       24.79                                                                                  
+plug acoustic liner                                                                                               
+thrust reverser             0.00                                                                                  
+mixer-ejector               0.00                                                                                  
+acoustic splitter plate     0.00                                                                                  
+                        --------                                                                                  
+                total =   189.72 lbs.                                                                             
+                                                                                                                  
+                                                                                                                  
+                                                                                                                  
+====================================================                                                              
+WATEductBase     WATEa.WATE_Duct5                                                                                 
+====================================================                                                              
+                                                                                                                  
+maximum     design      duct                  flow                              hub      tip                      
+  temp.     press.   thickness   Mach #       area     material    density    radius   radius       L/D    length 
+  638.1      36.23     0.050      0.480     3712.2     aluminum      0.098     29.13    45.36     2.500     40.57 
+                                                                                                                  
+allowable  duct hoop        outer case  inner case       frame          total                                     
+   stress     stress            weight      weight      weight         weight                                     
+  50000.0    32867.4             56.37       36.21        0.00          92.58 lbs.                                
+                                                                                                                  
+                                                                                                                  
+                                                                                                                  
+====================================================                                                              
+WATEfanAxiConvNozzle      WATEa.WATE_Byp_Nozz                                                                     
+====================================================                                                              
+                                                                                                                  
+NOZZLE GEOMETRY AND MATERIALS                                                                                     
+__________________________________________________________________________________________________________________
+  throat     exit   trans. duct  mix-ej     nozzle    total    nozzle     plug      case     mix-ej     acoustic  
+   area      area     length     length       L/D    length   density   density   density   density    liner dens.
+ 2710.0    2710.0       0.00       0.00     0.500     45.36     0.098     0.000     0.098     0.000          0.000
+                                                                                                                  
+      nozzle           plug           case        mixer-ej       acoustic                                         
+     material       material       material       material       material                                         
+       custom                      aluminum                                                                       
+                                                                                                                  
+                                                                                                                  
+NOZZLE WEIGHT BREAKDOWN                                                                                           
+__________________________________________________________________________________________________________________
+  outer      inner    2-D cnvrgt    2-D dvrgnt       2-D          2-D         variable      variable        nozzle
+   wall       wall    inner wall    inner wall     sidewall   trans. duct     area C&A     area misc.       weight
+ 129.17     258.08          0.00          0.00         0.00          0.00       126.70        126.70        387.26
+                                                                                                                  
+nozzle                    387.26                                                                                  
+nozzle acoustic liner       0.00                                                                                  
+plug                        0.00                                                                                  
+plug acoustic liner                                                                                               
+thrust reverser           879.74                                                                                  
+mixer-ejector               0.00                                                                                  
+acoustic splitter plate     0.00                                                                                  
+                        --------                                                                                  
+                total =  1520.40 lbs.                                                                             
+                                                                                                                  
+                                                                                                                  
+                                                                                                                  
+====================================================                                                              
+WATElpShaft     WATEa.WATE_LP_Shaft                                                                               
+====================================================                                                              
+                                                                                                                  
+SHAFT INFORMATION                                                                                                 
+_____________________________________________________________________________________________________________     
+    material   max torque   outer diam.   inner diam.    length        DN      bearing weight   spool inertia     
+ _4340_Steel        16.78          5.89          4.91    112.13      0.57              370.98         342325.     
+                                                                                                                  
+BEARING INFORMATION                                                                                               
+    name       type       material   location   diameter    weight                                                
+  bearing1   roller     Alloy_713C      22.81       0.50     15.07                                                
+  bearing2     ball     Alloy_713C      41.52       0.50     11.69                                                
+  bearing5   roller     Alloy_713C     149.39       0.50     15.07                                                
+                                                                                                                  
+    total weight =  412.81 lbs.                                                                                   
+                                                                                                                  
+                                                                                                                  
+                                                                                                                  
+====================================================                                                              
+WATEhpShaft     WATEa.WATE_HP_Shaft                                                                               
+====================================================                                                              
+                                                                                                                  
+SHAFT INFORMATION                                                                                                 
+_____________________________________________________________________________________________________________     
+    material   max torque   outer diam.   inner diam.    length        DN      bearing weight   spool inertia     
+        V_57         6.50          6.55          6.29     31.92      1.32               35.84         181612.     
+                                                                                                                  
+BEARING INFORMATION                                                                                               
+    name       type       material   location   diameter    weight                                                
+  bearing3     ball     Alloy_713C      47.95       0.50     12.73                                                
+  bearing4   roller     Alloy_713C     125.95       0.50     16.44                                                
+                                                                                                                  
+    total weight =   65.02 lbs.                                                                                   
+                                                                                                                  
+                                                                                                                  
+                                                                                                                  
+====================================================                                                              
+ WATEinletMDAlowDrag         WATEa.WATE_Inlet                                                                     
+====================================================                                                              
+                                                                                                                  
+INLET GEOMETRY AND MATERIALS                                                                                      
+__________________________________________________________________________________________________________________
+   fan      inlet   inlet tip    fan   fan exhaust core cowl  cowl avg           nacelle     firewall     acoustic
+diameter   length  to fan face length     length    length    diameter          material     material     material
+   96.06    57.25     56.54      6.26     102.49     79.45       53.83            custom fireWallDef> acousticCom>
+                                                                      densities:   0.060        1.000        0.090
+                                                                                                                  
+INLET AND NACELLE WEIGHT BREAKDOWN                                                                                
+__________________________________________________________________________________________________________________
+              bypass                              throat                    duct  split duct           inlet      
+   inlet        door                    duct        door    firewall      length      length           total      
+    0.00        0.00                    0.00        0.00      299.26        0.00        0.00          299.26      
+                                                                                                                  
+   inlet        fan    fan exhaust      core       anti-    acoustic                                 nacelle      
+    cowl        cowl        cowl        cowl       icing       liner    bulkhead                       total      
+  232.64       13.23      200.69       83.34       11.56      123.47       41.84                      706.78      
+                                                                                                                  
+    total weight = 1006.04 lbs.                                                                                   
+                                                                                                                  
+                                                                                                                  
+                                                                                                                  
+                                                                                                                  
+
+ENGINE COMPONENT WEIGHT LISTING            
+___________________________________________
+                          weight    length 
+WATEa.WATE_Fan            2887.7     22.81 
+WATEa.WATE_Splitter          0.0      0.00 
+WATEa.WATE_Duct1            11.0      2.30 
+WATEa.WATE_LPC             478.6     16.41 
+WATEa.WATE_Duct2           190.5      6.43 
+WATEa.WATE_HPC            1347.1     37.08 
+WATEa.WATE_Bld3             16.1      4.30 
+WATEa.WATE_Burner          426.5     19.20 
+WATEa.WATE_HPT            1813.5      8.41 
+WATEa.WATE_Duct3             6.8      2.22 
+WATEa.WATE_LPT            1565.3     25.22 
+WATEa.WATE_Duct4            11.1      2.85 
+WATEa.WATE_Core_Nozz       189.7     40.95 
+WATEa.WATE_Duct5            92.6     40.57 
+WATEa.WATE_Byp_Nozz       1520.4     45.36 
+WATEa.WATE_LP_Shaft        412.8    112.13 
+WATEa.WATE_HP_Shaft         65.0     31.92 
+WATEa.WATE_Inlet          1006.0     57.25 
+
+===================================================================
+                 PROPULSION SYSTEM WEIGHT SUMMARY                  
+===================================================================
+bare engine weight   11034.8 lbs      engine length       188.2 in.
+accessories weight    1103.5 lbs      inlet length         57.3 in.
+engine mount weight    218.4 lbs      engine pod length   245.5 in.
+total engine weight  12356.7 lbs      engine pod C.G.      63.0 in.
+                                                                   
+inlet & nacelle weight  1006.0 lbs   engine max diameter   96.1 in.
+engine pod weight      13362.7 lbs   nacelle max diameter 112.1 in.
+                                                                   
+                                                                   
+
+
+
+
+

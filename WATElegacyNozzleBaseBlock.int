@@ -1,0 +1,110 @@
+
+#ifndef _WATELEGACYNOZZLEBASEBLOCK_INT
+#define _WATELEGACYNOZZLEBASEBLOCK_INT
+
+
+
+/**
+ *
+ ****************************************************************/
+class WATElegacyNozzleBaseBlock extends UserTextBlock
+{     
+  /**
+   *
+   ****************************************************************/
+   void update() {
+      filledBlock = { };
+
+      real acLinerWt = 0.0;
+      real MElen = 0.0;
+      real MErho = 0.0;
+      real MEwt = 0.0;
+      real miscWt=0.0;
+      real plugALwt = 0.0;
+      real plugWt = 0.0;
+      real rhoPlug = 0.0;
+      real rhoac=0.0;
+      real trWt = 0.0;
+      real wtacsp=0.0;
+      real wtca=0.0;
+      real wtsw=0.0;
+      real wtconv=0.0;
+      real wtdiv=0.0;
+
+      if(!scopingObj->S_ThrustReverser.isEmpty()) { 
+         trWt = scopingObj->S_ThrustReverser.weight; 
+      }
+      if(!scopingObj->S_MixerEjector.isEmpty()) { 
+         MElen = scopingObj->S_MixerEjector.length;
+         MEwt = scopingObj->S_MixerEjector.weight; 
+         MErho = scopingObj->S_MixerEjector.material.rho(scopingObj->timax);
+      }
+      if(!scopingObj->S_Plug.isEmpty()) { 
+         plugWt = scopingObj->S_Plug.weight;
+         rhoPlug = scopingObj->S_Plug.material.rho(scopingObj->timax);
+         if(!scopingObj->S_Plug.S_AcousticLiner.isEmpty()) {
+            plugALwt = scopingObj->S_Plug.S_AcousticLiner.weight; 
+         }          
+      }
+      if(!scopingObj->S_AcousticLiner.isEmpty()) {
+         acLinerWt = scopingObj->S_AcousticLiner.weight;
+         rhoac = scopingObj->S_AcousticLiner.material.rho(scopingObj->timax); 
+      }
+      if(!scopingObj->S_VariableGeometry.isEmpty()) {
+         wtca = scopingObj->S_VariableGeometry.caWt;
+         miscWt = scopingObj->S_VariableGeometry.miscWt;
+      }
+      
+      if(scopingObj->hasInterface("WATE2DcdNozzle")) {
+         wtsw = scopingObj->sidewallWt;
+         wtconv = scopingObj->wtconv;
+         wtdiv = scopingObj->wtdiv;
+      }
+
+      filledBlock.append("");
+      filledBlock.append("******** "+scopingObj->isA() + 
+                         " ("+scopingObj->getPathName()+ ")*********");
+      filledBlock.append("");
+      filledBlock.append("TOTAL NOZZLE COMPONENT WEIGHT = " + toStr(scopingObj->weight));
+      filledBlock.append("");
+      filledBlock.append("NOZZ WEIGHT= " + toStr( scopingObj->nozzleWt,"f8.2")
+           + " TOT LENGTH= " + toStr( scopingObj->length,"f8.3")
+           + " TR WT= " + toStr(trWt));
+      filledBlock.append("THROAT AREA= " + toStr( scopingObj->throatArea,"f8.2") 
+           + " EXIT AREA=  " + toStr(scopingObj->exitArea));
+      filledBlock.append("MIXER EJECTOR LENGTH =  " + toStr( MElen,"f8.2")
+           + " TRANS DUCT LENGTH = " + toStr(scopingObj->transDuctLength));
+
+      filledBlock.append("NOZZLE WEIGHT BREAKDOWN");
+      filledBlock.append("OUTER WALL =       " + toStr( scopingObj->caseWt,"f8.2") 
+           + " PLUG =         " + toStr( plugWt,"f8.2") 
+           + "  NOZZ DENS = " + toStr(scopingObj->material.rho(scopingObj->timax)));
+      filledBlock.append("INNER WALL =       " + toStr( scopingObj->innerCaseWt,"f8.2") 
+           + " MIXER-EJECTOR= " + toStr( MEwt,"f8.2") 
+           + "  PLUG DENS = " + toStr(rhoPlug));
+      filledBlock.append("CONV INNER WALLS = " + toStr( wtconv,"f8.2") 
+           + " NOZ AC LIN =   " + toStr( acLinerWt,"f8.2") 
+           + "  CASE DENS = " + toStr(scopingObj->caseMaterial.rho(scopingObj->timax)));
+      filledBlock.append("DIV INNER WALLS =  " + toStr( wtdiv,"f8.2") 
+           + " PLG AC LIN =   " + toStr( plugALwt,"f8.2") 
+           + "  M/E  DENS = " + toStr(MErho));
+      filledBlock.append("2-D SIDEWALLS =    " + toStr( wtsw,"f8.2") 
+           + " AC SPLT PLATE =" + toStr( wtacsp,"f8.2") 
+           + "  ACOU DENS = " + toStr(rhoac));
+      filledBlock.append("VAR AREA C & A =   " + toStr( wtca,"f8.2"));
+      filledBlock.append("VAR AREA MISC =    " + toStr( miscWt,"f8.2"));
+      filledBlock.append("2-D TRANS DUCT=    " + toStr( scopingObj->transDuctWt,"f8.2"));
+      filledBlock.append("");
+      if(scopingObj->hasInterface("WATE2DcdNozzle")) {
+         filledBlock.append("2-D EXIT DIMENSIONS");
+         filledBlock.append("WIDTH =     " + toStr(scopingObj->width,"f8.2"));
+         filledBlock.append("HEIGHT =    " + toStr(scopingObj->height,"f8.2"));
+         filledBlock.append("");
+      }
+   }
+}
+
+
+#endif
+
+
