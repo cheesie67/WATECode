@@ -1,0 +1,2651 @@
+
+// ####### WATE MATERIALS DATABASE ###############
+//
+// - temp is in units of deg. F
+//
+//################################################
+
+
+// **************  CAST ALLOYS *******************
+
+//
+// Properties for Alloy-713C (ref. Inco Nickel Base Alloys Handbook)
+//
+VariableContainer Alloy_713C {
+  description = "Properties for Alloy-713C (ref. Inco Nickel Base Alloys Handbook)";
+  Table E(real temp) {
+    temp = { 70.,200.,400.,600.,800.,1000.,1200.,1400.,1600.,1800.,2000. }
+    e = { 29.,29.5,28.7,28., 27.2, 26.2, 25.1, 24.2,22.6,21.4,20.2}
+    printExtrap=0;
+    extrap="none";
+    s_rtn = 1.e6;
+  }
+
+  Table k(real temp) {
+    temp = { 70.,200.,400.,600.,800.,1000.,1200.,1400.,1600.,1800.,2000. }
+    k = { 76.,76. ,85. ,96.,107. ,118. ,129. ,142.,155.,169.,183.}
+    printExtrap=0;
+    extrap="none";
+    s_rtn = 1./144.;
+  }
+
+  Table alpha(real temp) {
+    temp = { 70.,200.,400.,600.,800.,1000.,1200.,1400.,1600.,1800.,2000. }
+    a = { 5.9,5.9, 6.6, 7., 7.3, 7.5, 7.8, 8.2, 8.6, 9.1,9.5}
+    printExtrap=0;
+    extrap="none";
+    s_rtn = 1.e-6;
+  }
+
+  Table sy(real temp) {
+    temp = { 70.,200.,400.,600.,800.,1000.,1200.,1400.,1600.,1800.,2000. }
+    sy = { 107.0,106.3,105.2,104.2,103.1,102.0,104.0,108.0,77.0,44.0,19.8}
+    printExtrap=0;
+    extrap="none";
+    s_rtn = 1000.;
+  }
+
+  Table su(real temp) {
+    temp = { 70.,200.,400.,600.,800.,1000.,1200.,1400.,1600.,1800.,2000. }
+    su = { 123.0,123.3,123.7,124.1,124.6,125.0,126.0,136.0,105.0,68.0, 30.6}
+    printExtrap=0;
+    extrap="none";
+    s_rtn = 1000.;
+  }
+
+  real rho(real temp) { return .286; }
+  real duc(real temp) { return .22; }
+  real poissonRatio(real temp) { return .3; }
+  
+  //real Tmin = 70;
+  //real Tmax = 2000;
+}
+
+
+//
+// Properties for Alloy-713LC (ref. Inco Nickel Base Alloys Handbook)
+//
+VariableContainer Alloy_713LC {
+  description = "Properties for Alloy-713LC (ref. Inco Nickel Base Alloys Handbook)";
+  Table E(real temp) {
+    temp = { 70.,200.,400.,600.,800.,1000.,1200.,1400.,1600.,1800.,2000. }
+    e = { 28.6, 28.1, 27.3, 26.6, 25.8, 25.0, 24.0, 23.1,21.6, 19.7, 17.7}
+    printExtrap=0;
+    extrap="none";
+    s_rtn = 1.e6;
+  }
+
+  Table k(real temp) {
+    temp = { 70.,200.,400.,600.,800.,1000.,1200.,1400.,1600.,1800.,2000. }
+    k = { 74.0, 74.0, 84.0, 95.0,106.0,116.0,127.0,139.0,151.0,164.0,176.0}
+    printExtrap=0;
+    extrap="none";
+    s_rtn = 1./144.;
+  }
+
+  Table alpha(real temp) {
+    temp = { 70.,200.,400.,600.,800.,1000.,1200.,1400.,1600.,1800.,2000. }
+    a = { 5.6,  5.6,  7.0,  7.6,  8.3,  8.8,  8.9,  9.0, 9.3,  9.8, 10.5}
+    printExtrap=0;
+    extrap="none";
+    s_rtn = 1.e-6;
+  }
+
+  Table sy(real temp) {
+    temp = { 70.,200.,400.,600.,800.,1000.,1200.,1400.,1600.,1800.,2000. }
+    sy = { 109.0,109.2,109.4,109.6,109.8,110.0,114.0,110.0,84.0, 41.0, 18.5}
+    printExtrap=0;
+    extrap="none";
+    s_rtn = 1000.;
+  }
+
+  Table su(real temp) {
+    temp = { 70.,200.,400.,600.,800.,1000.,1200.,1400.,1600.,1800.,2000. }
+    su = { 130.0,130.0,130.0,130.0,130.0,130.0,157.0,138.0,109.0, 68.0, 30.6}
+    printExtrap=0;
+    extrap="none";
+    s_rtn = 1000.;
+  }
+
+  real rho(real temp) { return .289; }
+  real duc(real temp) { return .22; }
+  real poissonRatio(real temp) { return .3; }
+  
+  //real Tmin = 70;
+  //real Tmax = 2000;
+}
+
+
+//
+// Properties for B-1900 (ref. Inco Nickel Base Alloys Handbook)
+//
+VariableContainer B_1900 {
+  description = "Properties for B-1900 (ref. Inco Nickel Base Alloys Handbook";
+
+  Table E(real temp) {
+    temp = { 70.,200.,400.,600.,800.,1000.,1200.,1400.,1600.,1800.,2000. }
+    e = {  31.0, 30.5, 29.7, 28.9, 28.0, 27.0, 26.0, 24.9,23.7, 22.4, 21.1}
+    printExtrap=0;
+    extrap="none";
+    s_rtn = 1.e6;
+  }
+
+  Table k(real temp) {
+    temp = { 70.,200.,400.,600.,800.,1000.,1200.,1400.,1600.,1800.,2000. }
+    k = { 71.0, 71.0, 81.0, 91.0,102.0,113.0,126.0,139.0,152.0,160.0,172.0}
+    printExtrap=0;
+    extrap="none";
+    s_rtn = 1./144.;
+  }
+
+  Table alpha(real temp) {
+    temp = { 70.,200.,400.,600.,800.,1000.,1200.,1400.,1600.,1800.,2000. }
+    a = { 6.5,  6.5,  6.8,  7.0,  7.2,  7.4,  7.6,  7.9, 8.3,  8.8,  9.0}
+    printExtrap=0;
+    extrap="none";
+    s_rtn = 1.e-6;
+  }
+
+  Table sy(real temp) {
+    temp = { 70.,200.,400.,600.,800.,1000.,1200.,1400.,1600.,1800.,2000. }
+    sy = { 120.0,120.8,122.1,123.4,124.7,126.0,134.0,117.0,101.0,60.0, 28.0}
+    printExtrap=0;
+    extrap="none";
+    s_rtn = 1000.;
+  }
+
+  Table su(real temp) {
+    temp = { 70.,200.,400.,600.,800.,1000.,1200.,1400.,1600.,1800.,2000. }
+    su = { 141.0,142.0,143.0,144.0,145.0,146.0,147.0,138.0,115.0,80.0, 38.0}
+    printExtrap=0;
+    extrap="none";
+    s_rtn = 1000.;
+  }
+
+  real rho(real temp) { return .297; }
+  real duc(real temp) { return .22; }
+  real poissonRatio(real temp) { return .3; }
+  
+  //real Tmin = 70;
+  //real Tmax = 2000;
+}
+
+
+//
+// Properties for MAR-M247 (ref. Inco Nickel Base Alloys Handbook)
+//
+VariableContainer MAR_M247 {
+  description = "Properties for MAR-M247 (ref. Inco Nickel Base Alloys Handbook)";
+
+  Table E(real temp) {
+    temp = { 70.,200.,400.,600.,800.,1000.,1200.,1400.,1600.,1800.,2000. }
+    e = { 32.0, 31.2, 30.3, 29.4, 28.5, 27.5, 26.4, 25.3,23.8, 22.3, 20.8}
+    printExtrap=0;
+    extrap="none";
+    s_rtn = 1.e6;
+  }
+
+  Table k(real temp) {
+    temp = { 70.,200.,400.,600.,800.,1000.,1200.,1400.,1600.,1800.,2000. }
+    k = { 117.0,117.0,117.0,117.0,117.0,131.0,146.0,160.0,175.0,189.0,208.}
+    printExtrap=0;
+    extrap="none";
+    s_rtn = 1./144.;
+  }
+
+  Table alpha(real temp) {
+    temp = { 70.,200.,400.,600.,800.,1000.,1200.,1400.,1600.,1800.,2000. }
+    a = {  6.2,  6.4,  6.7,  7.0,  7.2,  7.3,  7.4,  7.6,7.9,  8.4,  9.1}
+    printExtrap=0;
+    extrap="none";
+    s_rtn = 1.e-6;
+  }
+
+  Table sy(real temp) {
+    temp = { 70.,200.,400.,600.,800.,1000.,1200.,1400.,1600.,1800.,2000. }
+    sy = { 116.0,116.0,116.0,116.0,116.0,116.0,116.0,116.0,100.0, 55.0, 25.0}
+    printExtrap=0;
+    extrap="none";
+    s_rtn = 1000.;
+  }
+
+  Table su(real temp) {
+    temp = { 70.,200.,400.,600.,800.,1000.,1200.,1400.,1600.,1800.,2000. }
+    su = { 137.0,138.0,139.0,139.0,140.0,141.0,142.0,143.0,120.0, 80.0, 36.0}
+    printExtrap=0;
+    extrap="none";
+    s_rtn = 1000.;
+  }
+
+  real rho(real temp) { return .308; }
+  real duc(real temp) { return .22; }
+  real poissonRatio(real temp) { return .3; }
+  
+  //real Tmin = 70;
+  //real Tmax = 2000;
+}
+
+
+//
+// Properties for IN-100 (ref. Inco Nickel Base Alloys Handbook)
+//
+VariableContainer IN_100 {
+  description = "Properties for IN-100 (ref. Inco Nickel Base Alloys Handbook)";
+
+  Table E(real temp) {
+    temp = { 70.,200.,400.,600.,800.,1000.,1200.,1400.,1600.,1800.,2000. }
+    e = { 31.2, 30.7, 29.9, 28.9, 28.1, 27.1, 26.1, 25.1,23.5, 21.9, 20.3}
+    printExtrap=0;
+    extrap="none";
+    s_rtn = 1.e6;
+  }
+
+  Table k(real temp) {
+    temp = { 70.,200.,400.,600.,800.,1000.,1200.,1400.,1600.,1800.,2000. }
+    k = { 65.0, 76.0, 87.0, 98.0,109.0,120.0,131.0,151.0,175.0,200.0,225.0}
+    printExtrap=0;
+    extrap="none";
+    s_rtn = 1./144.;
+  }
+
+  Table alpha(real temp) {
+    temp = { 70.,200.,400.,600.,800.,1000.,1200.,1400.,1600.,1800.,2000. }
+    a = { 7.2,  7.2,  7.2,  7.3,  7.5,  7.7,  8.0,  8.3,8.8,  9.3, 10.1}
+    printExtrap=0;
+    extrap="none";
+    s_rtn = 1.e-6;
+  }
+
+  Table sy(real temp) {
+    temp = { 70.,200.,400.,600.,800.,1000.,1200.,1400.,1600.,1800.,2000. }
+    sy = { 123.0,123.7,124.8,125.8,126.9,128.0,129.0,125.0,101.0, 54.0, 35.0}
+    printExtrap=0;
+    extrap="none";
+    s_rtn = 1000.;
+  }
+
+  Table su(real temp) {
+    temp = { 70.,200.,400.,600.,800.,1000.,1200.,1400.,1600.,1800.,2000. }
+    su = { 147.0,148.5,150.9,153.3,155.6,158.0,161.0,155.0,128.0, 82.0, 55.0}
+    printExtrap=0;
+    extrap="none";
+    s_rtn = 1000.;
+  }
+
+  real rho(real temp) { return .28; }
+  real duc(real temp) { return .22; }
+  real poissonRatio(real temp) { return .3; }
+  
+  //real Tmin = 70;
+  //real Tmax = 2000;
+}
+
+
+//
+// Properties for MAR-M302 (ref. Inco Nickel Base Alloys Handbook)
+// Assumed modulus
+//
+VariableContainer MAR_M302 {
+  description = "Properties for MAR-M302 (ref. Inco Nickel Base Alloys Handbook)";
+
+  Table E(real temp) {
+    temp = { 70.,200.,400.,600.,800.,1000.,1200.,1400.,1600.,1800.,2000. }
+    e = { 32.7, 31.8, 30.9, 29.7, 28.4, 27.1, 25.8, 23.9,22.5, 19.8, 17.1}
+    printExtrap=0;
+    extrap="none";
+    s_rtn = 1.e6;
+  }
+
+  Table k(real temp) {
+    temp = { 70.,200.,400.,600.,800.,1000.,1200.,1400.,1600.,1800.,2000. }
+    k = { 130.0,133.0,140.0,146.0,151.0,154.0,155.0,157.0,161.0,168.0,161.}
+    printExtrap=0;
+    extrap="none";
+    s_rtn = 1./144.;
+ }
+
+  Table alpha(real temp) {
+    temp = { 70.,200.,400.,600.,800.,1000.,1200.,1400.,1600.,1800.,2000. }
+    a = { 6.9,  6.9,  6.9,  7.2,  7.4,  7.6,  7.8,  8.0,8.3,  8.7,  9.2}
+    printExtrap=0;
+    extrap="none";
+    s_rtn = 1.e-6;
+  }
+
+  Table sy(real temp) {
+    temp = { 70.,200.,400.,600.,800.,1000.,1200.,1400.,1600.,1800.,2000. }
+    sy = { 100.0, 96.2, 90.4, 84.6, 78.8, 73.0, 65.0, 56.0,45.0, 31.0, 17.0}
+    printExtrap=0;
+    extrap="none";
+    s_rtn = 1000.;
+  }
+
+  Table su(real temp) {
+    temp = { 70.,200.,400.,600.,800.,1000.,1200.,1400.,1600.,1800.,2000. }
+    su = { 135.0,132.2,127.9,123.6,119.3,115.0,114.0,102.0,65.0, 40.0, 22.0}
+    printExtrap=0;
+    extrap="none";
+    s_rtn = 1000.;
+  }
+
+  real rho(real temp) { return .333; }
+  real duc(real temp) { return .22; }
+  real poissonRatio(real temp) { return .3; }
+  
+  //real Tmin = 70;
+  //real Tmax = 2000;
+}
+
+
+//
+// Properties for MAR-M509 (ref. Inco Nickel Base Alloys Handbook)
+//
+VariableContainer MAR_M509 {
+  description = "Properties for MAR-M509 (ref. Inco Nickel Base Alloys Handbook)";
+
+  Table E(real temp) {
+    temp = { 70.,200.,400.,600.,800.,1000.,1200.,1400.,1600.,1800.,2000. }
+    e = { 32.7, 31.8, 30.9, 29.7, 28.4, 27.1, 25.8, 23.9,22.5, 19.8, 17.1}
+    printExtrap=0;
+    extrap="none";
+    s_rtn = 1.e6;
+  }
+
+  Table k(real temp) {
+    temp = { 70.,200.,400.,600.,800.,1000.,1200.,1400.,1600.,1800.,2000. }
+    k = { 130.0,133.0,140.0,146.0,175.0,194.0,216.0,238.0,261.0,286.0,310.}
+    printExtrap=0;
+    extrap="none";
+    s_rtn = 1./144.;
+  }
+
+  Table alpha(real temp) {
+    temp = { 70.,200.,400.,600.,800.,1000.,1200.,1400.,1600.,1800.,2000. }
+    a = { 8.1,  8.1,  8.1,  8.1,  8.5,  8.9,  9.0,  9.3,9.6,  9.8, 10.1}
+    printExtrap=0;
+    extrap="none";
+    s_rtn = 1.e-6;
+  }
+
+  Table sy(real temp) {
+    temp = { 70.,200.,400.,600.,800.,1000.,1200.,1400.,1600.,1800.,2000. }
+    sy = {  83.0, 79.5, 74.1, 68.8, 63.4, 58.0, 54.0, 53.0,42.0, 26.0, 18.5}
+    printExtrap=0;
+    extrap="none";
+    s_rtn = 1000.;
+  }
+
+  Table su(real temp) {
+    temp = { 70.,200.,400.,600.,800.,1000.,1200.,1400.,1600.,1800.,2000. }
+    su = { 114.0,109.7,103.0, 96.3, 89.7, 83.0, 81.0, 83.0,51.0, 31.0, 17.1}
+    printExtrap=0;
+    extrap="none";
+    s_rtn = 1000.;
+  }
+
+  real rho(real temp) { return .32; }
+  real duc(real temp) { return .22; }
+  real poissonRatio(real temp) { return .3; }
+  
+  //real Tmin = 70;
+  //real Tmax = 2000;
+}
+
+
+//
+// Properties for WI-52 (ref. Inco Nickel Base Alloys Handbook)
+// Assumed modulus
+//
+VariableContainer WI_52 {
+  description = "Properties for WI-52 (ref. Inco Nickel Base Alloys Handbook)";
+
+  Table E(real temp) {
+    temp = { 70.,200.,400.,600.,800.,1000.,1200.,1400.,1600.,1800.,2000. }
+    e = { 32.7, 31.8, 30.9, 29.7, 28.4, 27.1, 25.8, 23.9,22.5, 19.8, 17.1}
+    printExtrap=0;
+    extrap="none";
+    s_rtn = 1.e6;
+  }
+
+  Table k(real temp) {
+    temp = { 70.,200.,400.,600.,800.,1000.,1200.,1400.,1600.,1800.,2000. }
+    k = { 172.0,174.0,175.0,179.0,183.0,190.0,195.0,205.0,219.0,237.0,280.}
+    printExtrap=0;
+    extrap="none";
+    s_rtn = 1./144.;
+  }
+
+  Table alpha(real temp) {
+    temp = { 70.,200.,400.,600.,800.,1000.,1200.,1400.,1600.,1800.,2000. }
+    a = {  7.5,  7.5,  7.5,  7.6,  7.8,  8.0,  8.3,  8.6,9.0,  9.2,  9.7}
+    printExtrap=0;
+    extrap="none";
+    s_rtn = 1.e-6;
+  }
+
+  Table sy(real temp) {
+    temp = { 70.,200.,400.,600.,800.,1000.,1200.,1400.,1600.,1800.,2000. }
+    sy = { 83.0, 79.5, 74.1, 68.8, 63.4, 58.0, 54.0, 53.0,42.0, 26.0, 18.5}
+    printExtrap=0;
+    extrap="none";
+    s_rtn = 1000.;
+  }
+
+  Table su(real temp) {
+    temp = { 70.,200.,400.,600.,800.,1000.,1200.,1400.,1600.,1800.,2000. }
+    su = { 85.0, 82.1, 77.5, 73.0, 68.5, 64.0, 58.0, 50.0,40.0, 28.0, 15.0}
+    printExtrap=0;
+    extrap="none";
+    s_rtn = 1000.;
+  }
+
+  real rho(real temp) { return .321; }
+  real duc(real temp) { return .22; }
+  real poissonRatio(real temp) { return .3; }
+  
+  //real Tmin = 70;
+  //real Tmax = 2000;
+}
+
+
+// **************  WROUGHT ALLOYS *******************
+
+
+//
+// Properties for Hastelloy-X (ref. Inco Nickel Base Alloys Handbook)
+//
+VariableContainer Hastelloy_X {
+  description = "Properties for Hastelloy-X (ref. Inco Nickel Base Alloys Handbook)";
+
+  Table E(real temp) {
+    temp = { 70.,200.,400.,600.,800.,1000.,1200.,1400.,1600.,1800.,2000. }
+    e = { 28.6, 28.1, 26.9, 25.8, 24.6, 23.4, 22.3, 21.1,19.9, 18.5, 17.1}
+    printExtrap=0;
+    extrap="none";
+    s_rtn = 1.e6;
+  }
+
+  Table k(real temp) {
+    temp = { 70.,200.,400.,600.,800.,1000.,1200.,1400.,1600.,1800.,2000. }
+    k = { 63.0, 76.0, 88.0,100.0,119.0,136.0,151.0,166.0,180.0,195.0,195.0}
+    printExtrap=0;
+    extrap="none";
+    s_rtn = 1./144.;
+  }
+
+  Table alpha(real temp) {
+    temp = { 70.,200.,400.,600.,800.,1000.,1200.,1400.,1600.,1800.,2000. }
+    a = { 7.7,  7.7,  7.8,  7.9,  8.2,  8.4,  8.6,  8.8,9.0,  9.2,  9.2}
+    printExtrap=0;
+    extrap="none";
+    s_rtn = 1.e-6;
+  }
+
+  Table sy(real temp) {
+    temp = { 70.,200.,400.,600.,800.,1000.,1200.,1400.,1600.,1800.,2000. }
+    sy = { 52.0, 50.6, 48.5, 46.3, 44.2, 42.0, 40.0, 38.0,26.0,  16.0,  8.0}
+    printExtrap=0;
+    extrap="none";
+    s_rtn = 1000.;
+  }
+
+  Table su(real temp) {
+    temp = { 70.,200.,400.,600.,800.,1000.,1200.,1400.,1600.,1800.,2000. }
+    su = { 114.0,111.2,106.9,102.6, 98.3, 94.0, 83.0, 63.0,37.0, 22.0, 13.0}
+    printExtrap=0;
+    extrap="none";
+    s_rtn = 1000.;
+  }
+
+  real rho(real temp) { return .297; }
+  real duc(real temp) { return .22; }
+  real poissonRatio(real temp) { return .3; }
+  
+  //real Tmin = 70;
+  //real Tmax = 2000;
+}
+
+
+//
+// Properties for Hastelloy-S (ref. Inco Nickel Base Alloys Handbook)
+//
+VariableContainer Hastelloy_S {
+  description = "Properties for Hastelloy-S (ref. Inco Nickel Base Alloys Handbook)";
+
+  Table E(real temp) {
+    temp = { 70.,200.,400.,600.,800.,1000.,1200.,1400.,1600.,1800.,2000. }
+    e = { 30.8, 30.2, 29.2, 28.3, 27.3, 26.4, 25.2, 24.1,21.7, 19.2, 16.8}
+    printExtrap=0;
+    extrap="none";
+    s_rtn = 1.e6;
+  }
+
+  Table k(real temp) {
+    temp = { 70.,200.,400.,600.,800.,1000.,1200.,1400.,1600.,1800.,2000. }
+    k = { 73.0, 86.0, 98.0,113.0,127.0,139.0,160.0,181.0,181.0,192.0,192.0}
+    printExtrap=0;
+    extrap="none";
+    s_rtn = 1./144.;
+  }
+
+  Table alpha(real temp) {
+    temp = { 70.,200.,400.,600.,800.,1000.,1200.,1400.,1600.,1800.,2000. }
+    a = { 6.4,  6.4,  6.8,  7.1,  7.3,  7.4,  7.6,  8.0,8.3,  8.6,  8.8}
+    printExtrap=0;
+    extrap="none";
+    s_rtn = 1.e-6;
+  }
+
+  Table sy(real temp) {
+    temp = { 70.,200.,400.,600.,800.,1000.,1200.,1400.,1600.,1800.,2000. }
+    sy = { 56.0, 53.9, 50.7, 47.5, 44.2, 41.0, 40.0, 39.0,34.0, 20.0,  9.0}
+    printExtrap=0;
+    extrap="none";
+    s_rtn = 1000.;
+  }
+
+  Table su(real temp) {
+    temp = { 70.,200.,400.,600.,800.,1000.,1200.,1400.,1600.,1800.,2000. }
+    su = { 123.0,120.6,117.0,113.3,109.7,106.0, 99.0, 79.0,53.0, 33.0, 17.0}
+    printExtrap=0;
+    extrap="none";
+    s_rtn = 1000.;
+  }
+
+  real rho(real temp) { return .316; }
+  real duc(real temp) { return .22; }
+  real poissonRatio(real temp) { return .3; }
+  
+  //real Tmin = 70;
+  //real Tmax = 2000;
+}
+
+
+//
+// Properties for Inconel-600 (ref. Inco Nickel Base Alloys Handbook)
+//
+VariableContainer Inconel_600 {
+  description = "Properties for Inconel-600 (ref. Inco Nickel Base Alloys Handbook)";
+
+  Table E(real temp) {
+    temp = { 70.,200.,400.,600.,800.,1000.,1200.,1400.,1600.,1800.,2000. }
+    e = { 31.1, 30.5, 29.7, 28.8, 27.8, 26.7, 25.5, 24.3,22.8, 21.0, 19.2}
+    printExtrap=0;
+    extrap="none";
+    s_rtn = 1.e6;
+  }
+  
+  Table k(real temp) {
+    temp = { 70.,200.,400.,600.,800.,1000.,1200.,1400.,1600.,1800.,2000. }
+    k = { 103.0,109.0,121.0,133.0,145.0,158.0,172.0,186.0,200.0,215.0,200.0}
+    printExtrap=0;
+    extrap="none";
+    s_rtn = 1./144.;
+  }
+  
+  Table alpha(real temp) {
+    temp = { 70.,200.,400.,600.,800.,1000.,1200.,1400.,1600.,1800.,2000. }
+    a = { 7.4,  7.4,  7.7,  7.9,  8.1,  8.4,  8.6,  8.9,9.1,  9.3,  9.3}
+    printExtrap=0;
+    extrap="none";
+    s_rtn = 1.e-6;
+  }
+
+  Table sy(real temp) {
+    temp = { 70.,200.,400.,600.,800.,1000.,1200.,1400.,1600.,1800.,2000. }
+    sy = { 41.0, 39.7, 37.8, 35.9, 33.9, 32.0, 30.0, 26.0,11.0,  6.0,  1.0}
+    printExtrap=0;
+    extrap="none";
+    s_rtn = 1000.;
+  }
+  
+  Table su(real temp) {
+    temp = { 70.,200.,400.,600.,800.,1000.,1200.,1400.,1600.,1800.,2000. }
+    su = { 96.0, 93.9, 90.7, 87.5, 84.2, 81.0, 65.0, 38.0,20.0, 11.0,  2.0}
+    printExtrap=0;
+    extrap="none";
+    s_rtn = 1000.;
+  }
+  
+  real rho(real temp) { return .304; }
+  real duc(real temp) { return .22; }
+  real poissonRatio(real temp) { return .3; }
+  
+  //real Tmin = 70;
+  //real Tmax = 2000;
+}
+
+
+//
+// Properties for Inconel-601 (ref. Inco Nickel Base Alloys Handbook)
+//
+VariableContainer Inconel_601 {
+  description = "Properties for Inconel-601 (ref. Inco Nickel Base Alloys Handbook)";
+
+  Table E(real temp) {
+    temp = { 70.,200.,400.,600.,800.,1000.,1200.,1400.,1600.,1800.,2000. }
+    e = { 30.0, 29.4, 28.5, 27.6, 26.6, 25.4, 24.1, 22.5,20.5, 18.4, 16.2}
+    printExtrap=0;
+    extrap="none";
+    s_rtn = 1.e6;
+  }
+   
+  Table k(real temp) {
+    temp = { 70.,200.,400.,600.,800.,1000.,1200.,1400.,1600.,1800.,2000. }
+    k = { 78.0, 87.0,100.0,113.0,126.0,139.0,153.0,165.0,178.0,190.0,203.0}
+    printExtrap=0;
+    extrap="none";
+    s_rtn = 1./144.;
+  }
+   
+  Table alpha(real temp) {
+    temp = { 70.,200.,400.,600.,800.,1000.,1200.,1400.,1600.,1800.,2000. }
+    a = { 7.6,  7.6,  8.0,  8.1,  8.3,  8.5,  8.9,  9.2,9.5,  9.8, 10.2}
+    printExtrap=0;
+    extrap="none";
+    s_rtn = 1.e-6;
+  }
+   
+  Table sy(real temp) {
+    temp = { 70.,200.,400.,600.,800.,1000.,1200.,1400.,1600.,1800.,2000. }
+    sy = { 66.0, 63.9, 60.7, 57.5, 54.2, 51.0, 45.0, 32.0,16.0, 8.0,  4.0}
+    printExtrap=0;
+    extrap="none";
+    s_rtn = 1000.;
+  }
+   
+  Table su(real temp) {
+    temp = { 70.,200.,400.,600.,800.,1000.,1200.,1400.,1600.,1800.,2000. }
+    su = { 112.0,109.3,105.3,101.2, 97.1, 93.0, 72.0, 37.0,18.0,  9.0,  5.0}
+    printExtrap=0;
+    extrap="none";
+    s_rtn = 1000.;
+  }
+   
+  real rho(real temp) { return .291; }
+  real duc(real temp) { return .22; }
+  real poissonRatio(real temp) { return .3; }
+  
+  //real Tmin = 70;
+  //real Tmax = 2000;
+}
+
+
+//
+// Properties for Inconel-617 (ref. Inco Nickel Base Alloys Handbook)
+//
+VariableContainer Inconel_617 {
+  description = "Properties for Inconel-617 (ref. Inco Nickel Base Alloys Handbook)";
+
+  Table E(real temp) {
+    temp = { 70.,200.,400.,600.,800.,1000.,1200.,1400.,1600.,1800.,2000. }
+    e = { 30.4, 29.8, 28.8, 27.8, 26.7, 25.6, 24.4, 23.2,21.8, 20.2, 18.6}
+    printExtrap=0;
+    extrap="none";
+    s_rtn = 1.e6;
+ }
+  
+  Table k(real temp) {
+    temp = { 70.,200.,400.,600.,800.,1000.,1200.,1400.,1600.,1800.,2000. }
+    k = { 94.0,101.0,113.0,125.0,137.0,149.0,161.0,173.0,185.0,197.0,209.0}
+    printExtrap=0;
+    extrap="none";
+    s_rtn = 1./144.;
+  }
+  
+  Table alpha(real temp) {
+    temp = { 70.,200.,400.,600.,800.,1000.,1200.,1400.,1600.,1800.,2000. }
+    a = { 6.4,  6.4,  7.0,  7.4,  7.6,  7.7,  8.0,  8.4,8.7,  9.0,  9.2}
+    printExtrap=0;
+    extrap="none";
+    s_rtn = 1.e-6;
+  }
+  
+  Table sy(real temp) {
+    temp = { 70.,200.,400.,600.,800.,1000.,1200.,1400.,1600.,1800.,2000. }
+    sy = { 43.0, 41.0, 38.0, 35.0, 32.0, 29.0, 25.0, 26.0,28.0, 20.0,  8.0}
+    printExtrap=0;
+    extrap="none";
+    s_rtn = 1000.;
+  }
+  
+  Table su(real temp) {
+    temp = { 70.,200.,400.,600.,800.,1000.,1200.,1400.,1600.,1800.,2000. }
+    su = { 107.0,103.8, 98.8, 93.8, 88.9, 84.0, 82.0, 64.0,40.0, 22.0, 12.0}
+    printExtrap=0;
+    extrap="none";
+    s_rtn = 1000.;
+  }
+  
+  real rho(real temp) { return .302; }
+  real duc(real temp) { return .22; }
+  real poissonRatio(real temp) { return .3; }
+  
+  //real Tmin = 70;
+  //real Tmax = 2000;
+}
+
+
+//
+// Properties for Inconel-625 (ref. Inco Nickel Base Alloys Handbook)
+//
+VariableContainer Inconel_625 {
+  description = "Properties for Inconel-625 (ref. Inco Nickel Base Alloys Handbook)";
+
+  Table E(real temp) {
+    temp = { 70.,200.,400.,600.,800.,1000.,1200.,1400.,1600.,1800.,2000. }
+    e = { 30.1, 29.6, 28.7, 27.8, 26.9, 25.9, 24.7, 23.3,21.4, 19.5, 17.6}
+    printExtrap=0;
+    extrap="none";
+    s_rtn = 1.e6;
+  }
+  
+  Table k(real temp) {
+    temp = { 70.,200.,400.,600.,800.,1000.,1200.,1400.,1600.,1800.,2000. }
+    k = { 68.0, 75.0, 87.0, 98.0,109.0,121.0,132.0,144.0,158.0,175.0,192.0}
+    printExtrap=0;
+    extrap="none";
+    s_rtn = 1./144.;
+  }
+  
+  Table alpha(real temp) {
+    temp = { 70.,200.,400.,600.,800.,1000.,1200.,1400.,1600.,1800.,2000. }
+    a = { 7.1,  7.1,  7.3,  7.4,  7.6,  7.8,  8.2,  8.5,8.8,  9.2,  9.6}
+    printExtrap=0;
+    extrap="none";
+    s_rtn = 1.e-6;
+  }
+  
+  Table sy(real temp) {
+    temp = { 70.,200.,400.,600.,800.,1000.,1200.,1400.,1600.,1800.,2000. }
+    sy = { 71.0, 69.5, 67.1, 64.7, 62.4, 60.0, 61.0, 60.0,40.0, 20.0, 11.0}
+    printExtrap=0;
+    extrap="none";
+    s_rtn = 1000.;
+  }
+  
+  Table su(real temp) {
+    temp = { 70.,200.,400.,600.,800.,1000.,1200.,1400.,1600.,1800.,2000. }
+    su = { 140.0,138.9,137.2,135.4,133.7,132.0,121.0, 80.0,40.0, 20.0, 11.0}
+    printExtrap=0;
+    extrap="none";
+    s_rtn = 1000.;
+  }
+  
+  real rho(real temp) { return .305; }
+  real duc(real temp) { return .22; }
+  real poissonRatio(real temp) { return .3; }
+  
+  //real Tmin = 70;
+  //real Tmax = 2000;
+}
+
+
+//
+// Properties for Inconel-690 (ref. Inco Nickel Base Alloys Handbook)
+//
+VariableContainer Inconel_690 {
+  description = "Properties for Inconel-690 (ref. Inco Nickel Base Alloys Handbook)";
+
+  Table E(real temp) {
+    temp = { 70.,200.,400.,600.,800.,1000.,1200.,1400. }
+    e = { 30.5, 30.0, 29.1, 28.1, 27.1, 26.0, 24.8, 23.5}
+    printExtrap=0;
+    extrap="none";
+    s_rtn = 1.e6;
+  }
+  
+  Table k(real temp) {
+    temp = { 70.,200.,400.,600.,800.,1000.,1200.,1400. }
+    k = { 95.0,104.0,118.0,130.0,142.0,158.0,168.0,180.0}
+    printExtrap=0;
+    extrap="none";
+    s_rtn = 1./144.;
+  }
+  
+  Table alpha(real temp) {
+    temp = { 70.,200.,400.,600.,800.,1000.,1200.,1400. }
+    a = { 7.5,  7.5,  8.0,  8.5,  8.7,  8.8,  9.0,  9.3}
+    printExtrap=0;
+    extrap="none";
+    s_rtn = 1.e-6;
+  }
+  
+  Table sy(real temp) {
+    temp = { 70.,200.,400.,600.,800.,1000.,1200.,1400. }
+    sy = { 45.0, 43.7, 41.8, 39.9, 37.9, 36.0, 31.0, 24.0}
+    printExtrap=0;
+    extrap="none";
+    s_rtn = 1000.;
+  }
+  
+  Table su(real temp) {
+    temp = { 70.,200.,400.,600.,800.,1000.,1200.,1400. }
+    su = { 103.0,100.3, 96.3, 92.2, 88.1, 84.0, 68.0, 43.0}
+    printExtrap=0;
+    extrap="none";
+    s_rtn = 1000.;
+  }
+  
+  real rho(real temp) { return .294; }
+  real duc(real temp) { return .22; }
+  real poissonRatio(real temp) { return .3; }
+  
+  //real Tmin = 70;
+  //real Tmax = 1400;
+}
+
+
+//
+// Properties for Inconel-706 (ref. Inco Nickel Base Alloys Handbook)
+//
+VariableContainer Inconel_706 {
+  description = "Properties for Inconel-706 (ref. Inco Nickel Base Alloys Handbook)";
+
+  Table E(real temp) {
+    temp = { 70.,200.,400.,600.,800.,1000.,1200.,1400. }
+    e = { 30.4, 29.9, 29.0, 27.9, 27.0, 25.9, 24.7, 23.5}
+    printExtrap=0;
+    extrap="none";
+    s_rtn = 1.e6;
+  }
+  
+  Table k(real temp) {
+    temp = { 70.,200.,400.,600.,800.,1000.,1200.,1400. }
+    k = { 87.0, 96.0,110.0,124.0,136.0,147.0,158.0,169.0}
+    printExtrap=0;
+    extrap="none";
+    s_rtn = 1./144.;
+  }
+  
+  Table alpha(real temp) {
+    temp = { 70.,200.,400.,600.,800.,1000.,1200.,1400. }
+    a = { 7.4,  7.4,  8.1,  8.4,  8.6,  8.7,  9.0,  9.3}
+    printExtrap=0;
+    extrap="none";
+    s_rtn = 1.e-6;
+  }
+  
+  Table sy(real temp) {
+    temp = { 70.,200.,400.,600.,800.,1000.,1200.,1400. }
+    sy = { 146.0,144.0,141.0,138.0,135.0,132.0,125.0, 96.0}
+    printExtrap=0;
+    extrap="none";
+    s_rtn = 1000.;
+  }
+  
+  Table su(real temp) {
+    temp = { 70.,200.,400.,600.,800.,1000.,1200.,1400. }
+    su = {  190.0,186.6,181.4,176.3,171.2,166.0,150.0,105.0}
+    printExtrap=0;
+    extrap="none";
+    s_rtn = 1000.;
+  }
+  
+  real rho(real temp) { return .292; }
+  real duc(real temp) { return .22; }
+  real poissonRatio(real temp) { return .3; }
+  
+  //real Tmin = 70;
+  //real Tmax = 1400;
+}
+
+
+//
+// Properties for Inconel-718 (ref. Inco Nickel Base Alloys Handbook)
+//
+VariableContainer Inconel_718 {
+  description = "Properties for Inconel-718 (ref. Inco Nickel Base Alloys Handbook)";
+
+  Table E(real temp) {
+    temp = { 70.,200.,400.,600.,800.,1000.,1200.,1400.,1600.,1800.,2000. }
+    e = { 29.0, 28.4, 27.6, 26.7, 25.8, 24.8, 23.7, 22.3,20.2, 17.4, 14.3}
+    printExtrap=0;
+    extrap="none";
+    s_rtn = 1.e6;
+  }
+  
+  Table k(real temp) {
+    temp = { 70.,200.,400.,600.,800.,1000.,1200.,1400.,1600.,1800.,2000. }
+    k = { 79.0, 87.0,100.0,112.0,124.0,136.0,148.0,161.0,173.0,186.0,199.0}
+    printExtrap=0;
+    extrap="none";
+    s_rtn = 1./144.;
+  }
+  
+  Table alpha(real temp) {
+    temp = { 70.,200.,400.,600.,800.,1000.,1200.,1400.,1600.,1800.,2000. }
+    a = { 6.8,  6.8,  7.4,  7.6,  7.8,  8.0,  8.3,  8.6,8.9,  9.2,  9.5}
+    printExtrap=0;
+    extrap="none";
+    s_rtn = 1.e-6;
+  }
+  
+  Table sy(real temp) {
+    temp = { 70.,200.,400.,600.,800.,1000.,1200.,1400.,1600.,1800.,2000. }
+    sy = { 163.0,160.9,157.7,154.5,151.2,148.0,140.0,116.0,49.2, 16.9,  8.5}
+    printExtrap=0;
+    extrap="none";
+    s_rtn = 1000.;
+  }
+  
+  Table su(real temp) {
+    temp = { 70.,200.,400.,600.,800.,1000.,1200.,1400.,1600.,1800.,2000. }
+    su = { 198.0,194.5,189.1,183.8,178.4,173.0,160.0,124.0,46.2, 18.5,  9.2}
+    printExtrap=0;
+    extrap="none";
+    s_rtn = 1000.;
+  }
+  
+  real rho(real temp) { return .297; }
+  real duc(real temp) { return .22; }
+  real poissonRatio(real temp) { return .3; }
+  
+  //real Tmin = 70;
+  //real Tmax = 2000;
+}
+
+
+//
+// Properties for Rene 41 (bar) (ref. Inco Nickel Base Alloys Handbook)
+//
+VariableContainer Rene_41_bar {
+  description = "Properties for Rene 41 (bar) (ref. Inco Nickel Base Alloys Handbook)";
+
+  Table E(real temp) {
+    temp = { 70.,200.,400.,600.,800.,1000.,1200.,1400.,1600.,1800.,2000. }
+    e = { 31.9, 31.3, 30.4, 29.5, 28.6, 27.7, 26.4, 25.1,23.6, 22.1, 20.6}
+    printExtrap=0;
+    extrap="none";
+    s_rtn = 1.e6;
+  }
+  
+  Table k(real temp) {
+    temp = { 70.,200.,400.,600.,800.,1000.,1200.,1400.,1600.,1800.,2000. }
+    k = { 62.0, 71.0, 86.0,102.0,115.0,125.0,136.0,148.0,160.0,172.0,183.0}
+    printExtrap=0;
+    extrap="none";
+    s_rtn = 1./144.;
+  }
+  
+  Table alpha(real temp) {
+    temp = { 70.,200.,400.,600.,800.,1000.,1200.,1400.,1600.,1800.,2000. }
+    a = { 6.6,  6.6,  6.8,  7.1,  7.2,  7.5,  7.8,  8.2,8.7,  9.3,  9.9}
+    printExtrap=0;
+    extrap="none";
+    s_rtn = 1.e-6;
+  }
+  
+  Table sy(real temp) {
+    temp = { 70.,200.,400.,600.,800.,1000.,1200.,1400.,1600.,1800.,2000. }
+    sy = { 154.0,153.0,151.5,150.0,148.5,147.0,145.0,136.0,80.0, 38.0,  0.1}
+    printExtrap=0;
+    extrap="none";
+    s_rtn = 1000.;
+  }
+  
+  Table su(real temp) {
+    temp = { 70.,200.,400.,600.,800.,1000.,1200.,1400.,1600.,1800.,2000. }
+    su = { 206.0,205.6,204.9,204.3,203.6,203.0,194.0,160.0,90.0, 42.0,  0.1}
+    printExtrap=0;
+    extrap="none";
+    s_rtn = 1000.;
+  }
+  
+  real rho(real temp) { return .298; }
+  real duc(real temp) { return .16; }
+  real poissonRatio(real temp) { return .3; }
+  
+  //real Tmin = 70;
+  //real Tmax = 2000;
+}
+
+
+//
+// Properties for TD Nickel (bar) (ref. Inco Nickel Base Alloys Handbook)
+//
+VariableContainer TD_Nickel_bar {
+  description = "Properties for TD Nickel (bar) (ref. Inco Nickel Base Alloys Handbook)";
+
+  Table E(real temp) {
+    temp = { 70.,200.,400.,600.,800.,1000.,1200.,1400.,1600.,1800.,2000. }
+    e = { 22.0, 21.0, 19.5, 18.2, 17.4, 16.8, 16.2, 15.6,14.7, 13.2, 11.7}
+    printExtrap=0;
+    extrap="none";
+    s_rtn = 1.e6;
+  }
+  
+  Table k(real temp) {
+    temp = { 70.,200.,400.,600.,800.,1000.,1200.,1400.,1600.,1800.,2000. }
+    k = { 572.0,515.0,425.0,355.0,320.0,305.0,305.0,310.0,335.0,360.0,385.0}
+    printExtrap=0;
+    extrap="none";
+    s_rtn = 1./144.;
+  }
+  
+  Table alpha(real temp) {
+    temp = { 70.,200.,400.,600.,800.,1000.,1200.,1400.,1600.,1800.,2000. }
+    a = { 6.0,  6.0,  6.8,  7.4,  7.8,  7.9,  8.0,  8.3,8.6,  8.8,  9.0}
+    printExtrap=0;
+    extrap="none";
+    s_rtn = 1.e-6;
+  }
+  
+  Table sy(real temp) {
+    temp = { 70.,200.,400.,600.,800.,1000.,1200.,1400.,1600.,1800.,2000. }
+    sy = { 80.0, 74.8, 66.9, 58.9, 51.0, 43.0, 36.0, 31.0,26.0, 20.0, 16.0}
+    printExtrap=0;
+    extrap="none";
+    s_rtn = 1000.;
+  }
+  
+  Table su(real temp) {
+    temp = { 70.,200.,400.,600.,800.,1000.,1200.,1400.,1600.,1800.,2000. }
+    su = { 100.0, 92.3, 80.5, 68.7, 56.8, 45.0, 38.0, 33.0,28.0, 24.0, 20.0}
+    printExtrap=0;
+    extrap="none";
+    s_rtn = 1000.;
+  }
+  
+  real rho(real temp) { return .322; }
+  real duc(real temp) { return .22; }
+  real poissonRatio(real temp) { return .3; }
+  
+  //real Tmin = 70;
+  //real Tmax = 2000;
+}
+
+
+//
+// Properties for Udimet 500 (ref. Inco Nickel Base Alloys Handbook)
+//
+VariableContainer Udimet_500 {
+  description = "Properties for Udimet 500 (ref. Inco Nickel Base Alloys Handbook)";
+
+  Table E(real temp) {
+    temp = { 70.,200.,400.,600.,800.,1000.,1200.,1400.,1600.,1800.,2000. }
+    e = { 32.1, 31.6, 30.6, 29.8, 28.8, 27.7, 26.5, 25.1,23.4, 21.0, 18.6}
+    printExtrap=0;
+    extrap="none";
+    s_rtn = 1.e6;
+  }
+ 
+  Table k(real temp) {
+    temp = { 70.,200.,400.,600.,800.,1000.,1200.,1400.,1600.,1800.,2000. }
+    k = { 77.0, 82.0, 91.0,102.0,114.0,127.0,142.0,155.0,170.0,178.0,186.0}
+    printExtrap=0;
+    extrap="none";
+    s_rtn = 1./144.;
+  }
+ 
+  Table alpha(real temp) {
+    temp = { 70.,200.,400.,600.,800.,1000.,1200.,1400.,1600.,1800.,2000. }
+    a = { 6.8,  6.8,  7.2,  7.4,  7.6,  7.8,  8.1,  8.5,9.0,  9.5, 10.0}
+    printExtrap=0;
+    extrap="none";
+    s_rtn = 1.e-6;
+  }
+ 
+  Table sy(real temp) {
+    temp = { 70.,200.,400.,600.,800.,1000.,1200.,1400.,1600.,1800.,2000. }
+    sy = { 122.0,121.0,119.5,118.0,116.5,115.0,110.0,106.0,72.0, 33.0,  0.1}
+    printExtrap=0;
+    extrap="none";
+    s_rtn = 1000.;
+  }
+ 
+  Table su(real temp) {
+    temp = { 70.,200.,400.,600.,800.,1000.,1200.,1400.,1600.,1800.,2000. }
+    su = { 190.0,188.6,186.5,184.3,182.2,180.0,176.0,151.0,93.0, 42.0,  0.1}
+    printExtrap=0;
+    extrap="none";
+    s_rtn = 1000.;
+  }
+ 
+  real rho(real temp) { return .290; }
+  real duc(real temp) { return .22; }
+  real poissonRatio(real temp) { return .3; }
+  
+  //real Tmin = 70;
+  //real Tmax = 2000;
+}
+
+
+//
+// Properties for Udimet 700 (ref. Inco Nickel Base Alloys Handbook)
+//
+VariableContainer Udimet_700 {
+  description = "Properties for Udimet 700 (ref. Inco Nickel Base Alloys Handbook)";
+
+  Table E(real temp) {
+    temp = { 70.,200.,400.,600.,800.,1000.,1200.,1400.,1600.,1800.,2000. }
+    e = { 32.4, 32.0, 31.2, 30.2, 29.1, 28.1, 27.0, 25.7,24.2, 22.1, 20.0}
+    printExtrap=0;
+    extrap="none";
+    s_rtn = 1.e6;
+  }
+  
+  Table k(real temp) {
+    temp = { 70.,200.,400.,600.,800.,1000.,1200.,1400.,1600.,1800.,2000. }
+    k = { 136.0,137.0,138.0,139.0,140.0,143.0,148.0,161.0,192.0,240.0,305.0}
+    printExtrap=0;
+    extrap="none";
+    s_rtn = 1./144.;
+  }
+  
+  Table alpha(real temp) {
+    temp = { 70.,200.,400.,600.,800.,1000.,1200.,1400.,1600.,1800.,2000. }
+    a = {  7.5,  7.5,  7.5,  7.5,  7.6,  7.7,  8.0,  8.4,9.0,  9.7, 10.3}
+    printExtrap=0;
+    extrap="none";
+    s_rtn = 1.e-6;
+  }
+  
+  Table sy(real temp) {
+    temp = { 70.,200.,400.,600.,800.,1000.,1200.,1400.,1600.,1800.,2000. }
+    sy = { 140.0,138.6,136.5,134.3,132.2,130.0,124.0,120.0,92.0, 44.0, 12.0}
+    printExtrap=0;
+    extrap="none";
+    s_rtn = 1000.;
+  }
+  
+  Table su(real temp) {
+    temp = { 70.,200.,400.,600.,800.,1000.,1200.,1400.,1600.,1800.,2000. }
+    su = { 204.0,201.3,197.3,193.2,189.1,185.0,180.0,150.0,100.0, 52.0, 15.0}
+    printExtrap=0;
+    extrap="none";
+    s_rtn = 1000.;
+  }
+  
+  real rho(real temp) { return .286; }
+  real duc(real temp) { return .22; }
+  real poissonRatio(real temp) { return .3; }
+  
+  //real Tmin = 70;
+  //real Tmax = 2000;
+}
+
+
+//
+// Properties for Udimet 710 (ref. Inco Nickel Base Alloys Handbook)
+//
+VariableContainer Udimet_710 {
+  description = "Properties for Udimet 710 (ref. Inco Nickel Base Alloys Handbook)";
+
+  Table E(real temp) {
+    temp = { 70.,200.,400.,600.,800.,1000.,1200.,1400.,1600.,1800.,2000. }
+    e = { 32.1, 31.4, 30.4, 29.4, 28.3, 27.3, 26.3, 25.3,24.3, 23.3, 22.2 }
+    printExtrap=0;
+    extrap="none";
+    s_rtn = 1.e6;
+  }
+  
+  Table k(real temp) {
+    temp = { 70.,200.,400.,600.,800.,1000.,1200.,1400.,1600.,1800.,2000. }
+    k = { 77.0, 84.0, 94.0,104.0,115.0,126.0,136.0,147.0,158.0,168.0,178.0}
+    printExtrap=0;
+    extrap="none";
+    s_rtn = 1./144.;
+  }
+  
+  Table alpha(real temp) {
+    temp = { 70.,200.,400.,600.,800.,1000.,1200.,1400.,1600.,1800.,2000. }
+    a = { 6.7,  6.7,  6.9,  7.1,  7.4,  7.6,  7.8,  8.1,8.6,  9.2,  9.8}
+    printExtrap=0;
+    extrap="none";
+    s_rtn = 1.e-6;
+  }
+  
+  Table sy(real temp) {
+    temp = { 70.,200.,400.,600.,800.,1000.,1200.,1400.,1600.,1800.,2000. }
+    sy = { 132.0,130.7,128.8,126.9,124.9,123.0,125.0,118.0,92.0, 39.0,  0.1}
+    printExtrap=0;
+    extrap="none";
+    s_rtn = 1000.;
+  }
+  
+  Table su(real temp) {
+    temp = { 70.,200.,400.,600.,800.,1000.,1200.,1400.,1600.,1800.,2000. }
+    su = { 172.0,171.0,170.2,169.2,168.1,167.0,187.0,148.0,102.0, 55.0,  0.1}
+    printExtrap=0;
+    extrap="none";
+    s_rtn = 1000.;
+  }
+  
+  real rho(real temp) { return .292; }
+  real duc(real temp) { return .22; }
+  real poissonRatio(real temp) { return .3; }
+  
+  //real Tmin = 70;
+  //real Tmax = 2000;
+}
+
+
+//
+// Properties for Waspaloy (bar) (ref. Inco Nickel Base Alloys Handbook)
+//
+VariableContainer Waspaloy_bar {
+  description = "Properties for Waspaloy (bar) (ref. Inco Nickel Base Alloys Handbook)";
+
+  Table E(real temp) {
+    temp = { 70.,200.,400.,600.,800.,1000.,1200.,1400.,1600.,1800.,2000. }
+    e = { 30.9, 30.4, 29.5, 28.6, 27.7, 26.7, 25.6, 24.3,22.9, 21.1, 19.3}
+    printExtrap=0;
+    extrap="none";
+    s_rtn = 1.e6;
+  }
+  
+  Table k(real temp) {
+    temp = { 70.,200.,400.,600.,800.,1000.,1200.,1400.,1600.,1800.,2000. }
+    k = { 74.0, 80.0, 89.0,101.0,113.0,125.0,139.0,152.0,167.0,182.0,197.0}
+    printExtrap=0;
+    extrap="none";
+    s_rtn = 1./144.;
+  }
+  
+  Table alpha(real temp) {
+    temp = { 70.,200.,400.,600.,800.,1000.,1200.,1400.,1600.,1800.,2000. }
+    a = { 6.8,  6.8,  7.1,  7.4,  7.6,  7.8,  8.0,  8.5,8.9,  9.8, 10.4}
+    printExtrap=0;
+    extrap="none";
+    s_rtn = 1.e-6;
+  }
+  
+  Table sy(real temp) {
+    temp = { 70.,200.,400.,600.,800.,1000.,1200.,1400.,1600.,1800.,2000. }
+    sy = { 115.0,113.6,111.5,109.3,107.2,105.0,100.0, 98.0,75.0, 20.0,  0.1}
+    printExtrap=0;
+    extrap="none";
+    s_rtn = 1000.;
+  }
+  
+  Table su(real temp) {
+    temp = { 70.,200.,400.,600.,800.,1000.,1200.,1400.,1600.,1800.,2000. }
+    su = { 185.0,182.9,179.7,176.5,173.2,170.0,162.0,115.0,76.0, 28.0,  0.1}
+    printExtrap=0;
+    extrap="none";
+    s_rtn = 1000.;
+  }
+  
+  real rho(real temp) { return .296; }
+  real duc(real temp) { return .22; }
+  real poissonRatio(real temp) { return .3; }
+  
+  //real Tmin = 70;
+  //real Tmax = 2000;
+}
+
+
+//
+// Properties for Rene 88 (ref. GE paer by E. Huron, Superalloys 1996)
+//   P/M Nickel Base
+//
+VariableContainer Rene_88 {
+  description = "Properties for Rene 88 (ref. GE paer by E. Huron, Superalloys 1996)   P/M Nickel Base";
+
+  Table E(real temp) {
+    temp = { 70.,200.,400.,600.,800.,1000.,1200.,1400.,1600.,1800.,2000. }
+    e = { 31.9, 31.4, 30.6, 29.8, 28.9, 27.9, 26.7, 25.7,23.6, 22.1, 20.6}
+    printExtrap=0;
+    extrap="none";
+    s_rtn = 1.e6;
+  }
+  
+  Table k(real temp) {
+    temp = { 70.,200.,400.,600.,800.,1000.,1200.,1400.,1600.,1800.,2000. }
+    k = { 62.0, 71.0, 86.0,102.0,115.0,125.0,136.0,148.0,160.0,172.0,183.0}
+    printExtrap=0;
+    extrap="none";
+    s_rtn = 1./144.;
+  }
+  
+  Table alpha(real temp) {
+    temp = { 70.,200.,400.,600.,800.,1000.,1200.,1400.,1600.,1800.,2000. }
+    a = { 6.9,  6.8, 6.85, 7.10, 7.35,  7.6,  7.8,  7.8,7.8,  7.8,  7.8}
+    printExtrap=0;
+    extrap="none";
+    s_rtn = 1.e-6;
+  }
+  
+  Table sy(real temp) {
+    temp = { 70.,200.,400.,600.,800.,1000.,1200.,1400.,1600.,1800.,2000. }
+    sy = { 185.5,180.0,154.6,152.5,150.4,148.2,146.1,144.0,72.0, 36.0,  0.1}
+    printExtrap=0;
+    extrap="none";
+    s_rtn = 1000.;
+  }
+  
+  Table su(real temp) {
+    temp = { 70.,200.,400.,600.,800.,1000.,1200.,1400.,1600.,1800.,2000. }
+    su = { 234.5,230.0,221.0,220.3,219.5,218.8,218.0,217.3,108.5, 54.2,  0.1}
+    printExtrap=0;
+    extrap="none";
+    s_rtn = 1000.;
+  }
+  
+  real rho(real temp) { return .298; }
+  real duc(real temp) { return .22; }
+  real poissonRatio(real temp) { return .3; }
+  
+  //real Tmin = 70;
+  //real Tmax = 2000;
+}
+
+
+//
+// Properties for Rene 95 (ref. Aerospace Structural Metals Handbook)
+//    P/M HIP + Forged
+//
+VariableContainer Rene_95 {
+  description = "Properties for Rene 95 (ref. Aerospace Structural Metals Handbook)    P/M HIP + Forged";
+
+  Table E(real temp) {
+    temp = { 70.,200.,400.,600.,800.,1000.,1200.,1400.,1600.,1800.,2000. }
+    e = { 31.9, 31.4, 30.6, 29.8, 28.9, 27.9, 26.7, 25.7,23.6, 22.1, 20.6}
+    printExtrap=0;
+    extrap="none";
+    s_rtn = 1.e6;
+  }
+  
+  Table k(real temp) {
+    temp = { 70.,200.,400.,600.,800.,1000.,1200.,1400.,1600.,1800.,2000. }
+    k = { 62.0, 71.0, 86.0,102.0,115.0,125.0,136.0,148.0,160.0,172.0,183.0}
+    printExtrap=0;
+    extrap="none";
+    s_rtn = 1./144.;
+  }
+  
+  Table alpha(real temp) {
+    temp = { 70.,200.,400.,600.,800.,1000.,1200.,1400.,1600.,1800.,2000. }
+    a = { 6.9,  6.8, 6.85, 7.10, 7.35,  7.6,  7.8,  7.8,7.8,  7.8,  7.8}
+    printExtrap=0;
+    extrap="none";
+    s_rtn = 1.e-6;
+  }
+  
+  Table sy(real temp) {
+    temp = { 70.,200.,400.,600.,800.,1000.,1200.,1400.,1600.,1800.,2000. }
+    sy = { 185.5,180.0,175.6,171.6,168.4,165.5,163.6,160.0,80.0, 40.0,  0.1}
+    printExtrap=0;
+    extrap="none";
+    s_rtn = 1000.;
+  }
+  
+  Table su(real temp) {
+    temp = { 70.,200.,400.,600.,800.,1000.,1200.,1400.,1600.,1800.,2000. }
+    su = { 234.5,230.0,225.5,221.0,220.0,219.1,218.2,214.5,107.2, 54.1,  0.1}
+    printExtrap=0;
+    extrap="none";
+    s_rtn = 1000.;
+  }
+  
+  real rho(real temp) { return .298; }
+  real duc(real temp) { return .22; }
+  real poissonRatio(real temp) { return .3; }
+  
+  //real Tmin = 70;
+  //real Tmax = 2000;
+}
+
+
+//
+// Properties for Haynes-188 (ref. Inco Nickel Base Alloys Handbook)
+//
+VariableContainer Haynes_188 {
+  description = "Properties for Haynes-188 (ref. Inco Nickel Base Alloys Handbook)";
+
+  Table E(real temp) {
+    temp = { 70.,200.,400.,600.,800.,1000.,1200.,1400.,1600.,1800.,2000. }
+    e = { 31.4, 31.0, 30.3, 29.6, 28.8, 27.9, 26.8, 25.4,24.0, 22.5, 20.6}
+    printExtrap=0;
+    extrap="none";
+    s_rtn = 1.e6;
+  }
+  
+  Table k(real temp) {
+    temp = { 70.,200.,400.,600.,800.,1000.,1200.,1400.,1600.,1800.,2000. }
+    k = { 72.0, 84.0,100.0,112.0,125.0,138.0,152.0,167.0,174.0,189.0,204.0}
+    printExtrap=0;
+    extrap="none";
+    s_rtn = 1./144.;
+  }
+  
+  Table alpha(real temp) {
+    temp = { 70.,200.,400.,600.,800.,1000.,1200.,1400.,1600.,1800.,2000. }
+    a = { 6.6,  6.6,  7.0,  7.4,  7.8,  8.2,  8.6,  9.0,9.4,  9.9, 10.3}
+    printExtrap=0;
+    extrap="none";
+    s_rtn = 1.e-6;
+  }
+  
+  Table sy(real temp) {
+    temp = { 70.,200.,400.,600.,800.,1000.,1200.,1400.,1600.,1800.,2000. }
+    sy = { 70.0, 66.4, 60.8, 55.2, 49.6, 44.0, 44.0, 42.0,38.0, 24.0, 12.0}
+    printExtrap=0;
+    extrap="none";
+    s_rtn = 1000.;
+  }
+  
+  Table su(real temp) {
+    temp = { 70.,200.,400.,600.,800.,1000.,1200.,1400.,1600.,1800.,2000. }
+    su = { 139.0,134.5,127.6,120.8,113.9,107.0,103.0, 92.0,61.0, 37.0, 19.0}
+    printExtrap=0;
+    extrap="none";
+    s_rtn = 1000.;
+  }
+  
+  real rho(real temp) { return .33; }
+  real duc(real temp) { return .22; }
+  real poissonRatio(real temp) { return .3; }
+  
+  //real Tmin = 70;
+  //real Tmax = 2000;
+}
+
+
+//
+// Properties for L-605 (ref. Inco Nickel Base Alloys Handbook)
+//
+VariableContainer L_605 {
+  description = "Properties for L-605 (ref. Inco Nickel Base Alloys Handbook)";
+
+  Table E(real temp) {
+    temp = { 70.,200.,400.,600.,800.,1000.,1200.,1400.,1600.,1800.,2000. }
+    e = { 32.6, 32.2, 30.8, 28.5, 28.2, 27.0, 25.5, 24.3,23.0, 21.5, 20.0}
+    printExtrap=0;
+    extrap="none";
+    s_rtn = 1.e6;
+  }
+  
+  Table k(real temp) {
+    temp = { 70.,200.,400.,600.,800.,1000.,1200.,1400.,1600.,1800.,2000. }
+    k = { 65.0, 75.0, 90.0,105.0,120.0,135.0,150.0,165.0,181.0,197.0,213.0}
+    printExtrap=0;
+    extrap="none";
+    s_rtn = 1./144.;
+  }
+  
+  Table alpha(real temp) {
+    temp = { 70.,200.,400.,600.,800.,1000.,1200.,1400.,1600.,1800.,2000. }
+    a = { 6.8,  6.8,  7.2,  7.6,  7.8,  8.0,  8.2,  8.6,9.1,  9.4,  9.8}
+    printExtrap=0;
+    extrap="none";
+    s_rtn = 1.e-6;
+  }
+  
+  Table sy(real temp) {
+    temp = { 70.,200.,400.,600.,800.,1000.,1200.,1400.,1600.,1800.,2000. }
+    sy = { 67.0, 62.7, 56.0, 49.3, 42.7, 36.0, 35.0, 38.0,35.0, 23.0, 12.0}
+    printExtrap=0;
+    extrap="none";
+    s_rtn = 1000.;
+  }
+  
+  Table su(real temp) {
+    temp = { 70.,200.,400.,600.,800.,1000.,1200.,1400.,1600.,1800.,2000. }
+    su = { 146.0,141.8,135.4,128.9,122.5,116.0,103.0, 66.0,47.0, 34.0, 19.0}
+    printExtrap=0;
+    extrap="none";
+    s_rtn = 1000.;
+  }
+  
+  real rho(real temp) { return .33; }
+  real duc(real temp) { return .22; }
+  real poissonRatio(real temp) { return .3; }
+  
+  //real Tmin = 70;
+  //real Tmax = 2000;
+}
+
+
+//
+// Properties for  Alloy-901 (ref. Inco Nickel Base Alloys Handbook)
+//
+VariableContainer  Alloy_901 {
+  description = "Properties for  Alloy-901 (ref. Inco Nickel Base Alloys Handbook)";
+
+  Table E(real temp) {
+    temp = { 70.,200.,400.,600.,800.,1000.,1200.,1400.,1600.,1800.,2000. }
+    e = { 29.9, 29.5, 28.5, 26.5, 25.9, 24.2, 22.1, 20.0,17.9, 15.8, 13.7}
+    printExtrap=0;
+    extrap="none";
+    s_rtn = 1.e6;
+  }
+  
+  Table k(real temp) {
+    temp = { 70.,200.,400.,600.,800.,1000.,1200.,1400.,1600.,1800.,2000. }
+    k = { 92.0, 97.0,103.0,111.0,117.0,127.0,134.0,142.0,150.0,158.0,166.0}
+    printExtrap=0;
+    extrap="none";
+    s_rtn = 1./144.;
+  }
+  
+  Table alpha(real temp) {
+    temp = { 70.,200.,400.,600.,800.,1000.,1200.,1400.,1600.,1800.,2000. }
+    a = { 7.8,  7.8,  7.9,  8.0,  8.3,  8.5,  8.8,  9.2,9.6,  10.0, 10.4}
+    printExtrap=0;
+    extrap="none";
+    s_rtn = 1.e-6;
+  }
+  
+  Table sy(real temp) {
+    temp = { 70.,200.,400.,600.,800.,1000.,1200.,1400.,1600.,1800.,2000. }
+    sy = { 130.0,127.6,124.0,120.3,116.7,113.0,110.0, 92.0,74.0, 56.0, 38.0}
+    printExtrap=0;
+    extrap="none";
+    s_rtn = 1000.;
+  }
+  
+  Table su(real temp) {
+    temp = { 70.,200.,400.,600.,800.,1000.,1200.,1400.,1600.,1800.,2000. }
+    su = { 175.0,171.4,165.8,160.2,154.6,149.0,139.0,105.0,71.0, 37.0,  3.0}
+    printExtrap=0;
+    extrap="none";
+    s_rtn = 1000.;
+  }
+  
+  real rho(real temp) { return .297; }
+  real duc(real temp) { return .22; }
+  real poissonRatio(real temp) { return .3; }
+  
+  //real Tmin = 70;
+  //real Tmax = 2000;
+}
+
+
+//
+// Properties for A-286 (ref. Inco Nickel Base Alloys Handbook)
+//
+VariableContainer A_286 {
+  description = "Properties for A-286 (ref. Inco Nickel Base Alloys Handbook)";
+
+  Table E(real temp) {
+    temp = { 70.,200.,400.,600.,800.,1000.,1200.,1400.,1600.,1800.,2000. }
+    e = { 29.1, 28.3, 27.1, 26.0, 24.8, 23.5, 22.2, 20.6,18.9, 17.2, 15.5}
+    printExtrap=0;
+    extrap="none";
+    s_rtn = 1.e6;
+  }
+  
+  Table k(real temp) {
+    temp = { 70.,200.,400.,600.,800.,1000.,1200.,1400.,1600.,1800.,2000. }
+    k = { 88.0,100.0,115.0,128.0,140.0,156.0,172.0,188.0,204.0,220.0,236.0}
+    printExtrap=0;
+    extrap="none";
+    s_rtn = 1./144.;
+  }
+  
+  Table alpha(real temp) {
+    temp = { 70.,200.,400.,600.,800.,1000.,1200.,1400.,1600.,1800.,2000. }
+    a = { 9.2,  9.2,  9.4,  9.5,  9.6,  9.8,  9.9, 10.3,10.7, 11.1, 11.5}
+    printExtrap=0;
+    extrap="none";
+    s_rtn = 1.e-6;
+  }
+  
+  Table sy(real temp) {
+    temp = { 70.,200.,400.,600.,800.,1000.,1200.,1400.,1600.,1800.,2000. }
+    sy = { 105.0,102.6, 99.0, 95.3, 91.7, 88.0, 88.0, 62.0,36.0, 10.0,  0.1}
+    printExtrap=0;
+    extrap="none";
+    s_rtn = 1000.;
+  }
+  
+  Table su(real temp) {
+    temp = { 70.,200.,400.,600.,800.,1000.,1200.,1400.,1600.,1800.,2000. }
+    su = { 146.0,143.9,140.7,137.5,134.2,131.0,104.0, 64.0,24.0,  0.1,  0.1}
+    printExtrap=0;
+    extrap="none";
+    s_rtn = 1000.;
+  }  
+  
+  real rho(real temp) { return .286; }
+  real duc(real temp) { return .22; }
+  real poissonRatio(real temp) { return .3; }
+  
+  //real Tmin = 70;
+  //real Tmax = 2000;
+}
+
+
+//
+// Properties for N-155 (ref. Inco Nickel Base Alloys Handbook)
+//
+VariableContainer N_155 {
+  description = "Properties for N-155 (ref. Inco Nickel Base Alloys Handbook)";
+
+  Table E(real temp) {
+    temp = { 70.,200.,400.,600.,800.,1000.,1200.,1400.,1600.,1800.,2000. }
+    e = { 29.3, 28.5, 27.5, 26.4, 25.4, 24.2, 23.0, 21.6,20.0, 18.4, 16.8}
+    printExtrap=0;
+    extrap="none";
+    s_rtn = 1.e6;
+  }
+  
+  Table k(real temp) {
+    temp = { 70.,200.,400.,600.,800.,1000.,1200.,1400.,1600.,1800.,2000. }
+    k = { 85.0, 91.0,101.0,112.0,123.0,133.0,144.0,155.0,166.0,177.0,188.0}
+    printExtrap=0;
+    extrap="none";
+    s_rtn = 1./144.;
+  }
+  
+  Table alpha(real temp) {
+    temp = { 70.,200.,400.,600.,800.,1000.,1200.,1400.,1600.,1800.,2000. }
+    a = { 7.8,  7.8,  8.5,  8.5,  8.7,  9.1,  9.5,  9.7,9.9, 10.1, 10.3}
+    printExtrap=0;
+    extrap="none";
+    s_rtn = 1.e-6;
+  }
+  
+  Table sy(real temp) {
+    temp = { 70.,200.,400.,600.,800.,1000.,1200.,1400.,1600.,1800.,2000. }
+    sy = { 58.0, 56.7, 54.8, 52.9, 50.9, 49.0, 43.0, 36.0,25.0, 14.0,  3.0}
+    printExtrap=0;
+    s_rtn = 1000.;
+    extrap="none";
+  }
+  
+  Table su(real temp) {
+    temp = { 70.,200.,400.,600.,800.,1000.,1200.,1400.,1600.,1800.,2000. }
+    su = { 118.0,114.6,109.5,104.3, 99.2, 94.0, 79.0, 62.0,38.0, 14.0,  0.1}
+    printExtrap=0;
+    extrap="none";
+    s_rtn = 1000.;
+  }
+  
+  real rho(real temp) { return .296; }
+  real duc(real temp) { return .22; }
+  real poissonRatio(real temp) { return .3; }
+  
+  //real Tmin = 70;
+  //real Tmax = 2000;
+}
+
+
+//
+// Properties for V-57 (ref. Inco Nickel Base Alloys Handbook)
+//
+VariableContainer V_57 {
+  description = "Properties for V-57 (ref. Inco Nickel Base Alloys Handbook)";
+
+  Table E(real temp) {
+    temp = { 70.,200.,400.,600.,800.,1000.,1200.,1400.,1600.,1800.,2000. }
+    e = { 28.8, 28.0, 26.9, 25.5, 24.6, 23.6, 22.2, 20.8,18.9, 17.0, 15.1}
+    printExtrap=0;
+    extrap="none";
+    s_rtn = 1.e6;
+  }
+  
+  Table k(real temp) {
+    temp = { 70.,200.,400.,600.,800.,1000.,1200.,1400.,1600.,1800.,2000. }
+    k = { 96.0,103.0,114.0,128.0,140.0,156.0,170.0,184.0,198.0,212.0,226.0}
+    printExtrap=0;
+    extrap="none";
+    s_rtn = 1./144.;
+  }
+  
+  Table alpha(real temp) {
+    temp = { 70.,200.,400.,600.,800.,1000.,1200.,1400.,1600.,1800.,2000. }
+    a = { 9.0,  9.0,  9.3,  9.5,  9.6,  9.7,  9.8, 10.5,11.2, 11.9, 12.6}
+    printExtrap=0;
+    extrap="none";
+    s_rtn = 1.e-6;
+  }
+  
+  Table sy(real temp) {
+    temp = { 70.,200.,400.,600.,800.,1000.,1200.,1400.,1600.,1800.,2000. }
+    sy = { 120.0,118.6,116.4,114.3,112.2,110.0,108.0, 70.0,32.0,  0.1,  0.1}
+    printExtrap=0;
+    extrap="none";
+    s_rtn = 1000.;
+  }
+  
+  Table su(real temp) {
+    temp = { 70.,200.,400.,600.,800.,1000.,1200.,1400.,1600.,1800.,2000. }
+    su = { 170.0,166.5,161.1,155.8,150.4,145.0,130.0, 90.0,50.0, 10.0,  0.1}
+    printExtrap=0;
+    extrap="none";
+    s_rtn = 1000.;
+  }
+  
+  real rho(real temp) { return .287; }
+  real duc(real temp) { return .22; }
+  real poissonRatio(real temp) { return .3; }
+  
+  //real Tmin = 70;
+  //real Tmax = 2000;
+}
+
+
+// ********** TITANIUM ALLOYS *****************
+
+
+//
+// Properties for Ti-17 alloy - alpha-beta material
+//  (ref. Aerospace  Structures Handbook)
+//
+VariableContainer Ti_17 {
+  description = "Properties for Ti-17 alloy - alpha-beta material  (ref. Aerospace  Structures Handbook)";
+
+  Table E(real temp) {
+    temp = { 70.,200.,400.,600.,800. }
+    e = { 16.5, 16.0, 15.3, 14.7, 13.8 }
+    printExtrap=0;
+    extrap="none";
+    s_rtn = 1.e6;
+  }
+  
+  Table k(real temp) {
+    temp = { 70.,200.,400.,600.,800. }
+    k = { 44.6, 60.0, 60.6, 62.4, 64.8}
+    printExtrap=0;
+    extrap="none";
+    s_rtn = 1./144.;
+  }
+  
+  Table alpha(real temp) {
+    temp = { 70.,200.,400.,600.,800. }
+    a = { 4.0,  5.0,  5.1,  5.2,  5.4}
+    printExtrap=0;
+    extrap="none";
+    s_rtn = 1.e-6;
+  }
+  
+  Table sy(real temp) {
+    temp = { 70.,200.,400.,600.,800. }
+    sy = { 155.0,127.0,122.0,115.0,101.0}
+    printExtrap=0;
+    extrap="none";
+    s_rtn = 1000.;
+  }
+  
+  Table su(real temp) {
+    temp = { 70.,200.,400.,600.,800. }
+    su = { 163.0,156.0,144.0,137.0,129.0}
+    printExtrap=0;
+    extrap="none";
+    s_rtn = 1000.;
+  }
+  
+  real rho(real temp) { return .168; }
+  real duc(real temp) { return .22; }
+  real poissonRatio(real temp) { return .3; }
+  
+  //real Tmin = 70;
+  //real Tmax = 800;
+ }
+
+
+//
+// Properties for Ti-6-2-4-2 alloy - duplex annealed bar
+//  (ref. Aerospace  Structures Handbook)
+//
+VariableContainer Ti_6_2_4_2 {
+  description = "Properties for Ti-6-2-4-2 alloy - duplex annealed bar  (ref. Aerospace  Structures Handbook)";
+
+  Table E(real temp) {
+    temp = { 70.,200.,400.,600.,800.,1000.}
+    e = { 16.0, 15.7, 15.2, 14.4, 12.9, 9.07}
+    printExtrap=0;
+    extrap="none";
+    s_rtn = 1.e6;
+  }
+  
+  Table k(real temp) {
+    temp = { 70.,200.,400.,600.,800.,1000.}
+    k = { 44.6, 48.0, 60.0, 72.0, 84.0, 94.4}
+    printExtrap=0;
+    extrap="none";
+    s_rtn = 1./144.;
+  }
+  
+  Table alpha(real temp) {
+    temp = { 70.,200.,400.,600.,800.,1000.}
+    a = { 4.0,  4.5,  5.0,  5.2, 5.33,  5.5}
+    printExtrap=0;
+    extrap="none";
+    s_rtn = 1.e-6;
+  }
+  
+  Table sy(real temp) {
+    temp = { 70.,200.,400.,600.,800.,1000.}
+    sy = { 106.7,101.3, 85.3, 66.7, 60.0, 53.3}
+    printExtrap=0;
+    extrap="none";
+    s_rtn = 1000.;
+  }
+  
+  Table su(real temp) {
+    temp = { 70.,200.,400.,600.,800.,1000.}
+    su = { 142.7,136.0,122.7,108.0,100.0, 94.0}
+    printExtrap=0;
+    extrap="none";
+    s_rtn = 1000.;
+  }
+  
+  real rho(real temp) { return .164; }
+  real duc(real temp) { return .22; }
+  real poissonRatio(real temp) { return .3; }
+  
+  //real Tmin = 70;
+  //real Tmax = 1000;
+}
+
+
+
+// *************** STEEL ALLOYS ******************
+
+//
+// Properties for 4130 Steel (ref. Aerospace  Structures Handbook)
+//
+VariableContainer _4130_Steel {
+  description = "Properties for 4130 Steel (ref. Aerospace  Structures Handbook)";
+
+  Table E(real temp) {
+    temp = { 70.,200.,400.,600.,800.,1000.,1200.}
+    e = { 30.0, 30.0, 28.8, 27.8, 26.0, 21.0, 21.0}
+    printExtrap=0;
+    extrap="none";
+    s_rtn = 1.e6;
+  }
+  
+  Table k(real temp) {
+    temp = { 70.,200.,400.,600.,800.,1000.,1200.}
+    k = { 300.0,300.0,294.0,283.2,264.0,246.0,216.0}
+    printExtrap=0;
+    extrap="none";
+    s_rtn = 1./144.;
+  }
+  
+  Table alpha(real temp) {
+    temp = { 70.,200.,400.,600.,800.,1000.,1200.}
+    a = {  6.5,  7.0,  7.2,  7.5,  7.9,  8.1,  8.3}
+    printExtrap=0;
+    extrap="none";
+    s_rtn = 1.e-6;
+  }
+  
+  Table sy(real temp) {
+    temp = { 70.,200.,400.,600.,800.,1000.,1200.}
+    sy = { 70.0, 66.1, 60.0, 55.0, 50.0, 40.0, 27.0}
+    printExtrap=0;
+    extrap="none";
+    s_rtn = 1000.;
+  }
+  
+  Table su(real temp) {
+    temp = { 70.,200.,400.,600.,800.,1000.,1200.}
+    su = {  95.0, 91.5, 86.0, 80.0, 65.0, 50.0, 20.0}
+    printExtrap=0;
+    extrap="none";
+    s_rtn = 1000.;
+  }
+  
+  real rho(real temp) { return .2834; }
+  real duc(real temp) { return .22; }
+  real poissonRatio(real temp) { return .3; }
+  
+  //real Tmin = 70;
+  //real Tmax = 1200;
+}
+
+
+//
+// Properties for 4340 Steel (ref. Aerospace  Structures Handbook)
+//
+VariableContainer _4340_Steel {
+  description = "Properties for 4340 Steel (ref. Aerospace  Structures Handbook)";
+
+  Table E(real temp) {
+    temp = { 70.,200.,400.,600.,800.,1000.}
+    e = { 30.5, 30.0, 29.2, 27.8, 26.4, 25.0}
+    printExtrap=0;
+    extrap="none";
+    s_rtn = 1.e6;
+  }
+  
+  Table k(real temp) {
+    temp = { 70.,200.,400.,600.,800.,1000.}
+    k = { 260.4,260.4,260.4,260.4,260.4,260.4}
+    printExtrap=0;
+    extrap="none";
+    s_rtn = 1./144.;
+  }
+  
+  Table alpha(real temp) {
+    temp = { 70.,200.,400.,600.,800.,1000.}
+    a = {  6.3,  6.6,  6.9,  7.3,  7.7,  8.1}
+    printExtrap=0;
+    extrap="none";
+    s_rtn = 1.e-6;
+  }
+  
+  Table sy(real temp) {
+    temp = { 70.,200.,400.,600.,800.,1000.}
+    sy = { 150.0,140.0,128.0,120.0,100.0, 50.0}
+    printExtrap=0;
+    extrap="none";
+    s_rtn = 1000.;
+  }
+  
+  Table su(real temp) {
+    temp = { 70.,200.,400.,600.,800.,1000.}
+    su = { 160.0,160.0,157.0,150.0,120.0, 75.0}
+    printExtrap=0;
+    extrap="none";
+    s_rtn = 1000.;
+  }
+  
+  real rho(real temp) { return .283; }
+  real duc(real temp) { return .22; }
+  real poissonRatio(real temp) { return .3; }
+  
+  //real Tmin = 70;
+  //real Tmax = 1000;
+}
+
+
+//
+// Properties for 410 Steel (ref. Aerospace  Structures Handbook)
+//
+VariableContainer _410_Steel {
+  description = "Properties for 410 Steel (ref. Aerospace  Structures Handbook)";
+
+  Table E(real temp) {
+    temp = { 70.,200.,400.,600.,800.,1000.,1200.}
+    e = { 31.6, 31.0, 30.2, 29.3, 28.0, 26.0, 22.0}
+    printExtrap=0;
+    extrap="none";
+    s_rtn = 1.e6;
+  }
+  
+  Table k(real temp) {
+    temp = { 70.,200.,400.,600.,800.,1000.,1200.}
+    k = { 172.8,178.8,186.0,194.4,201.6,216.0,216.0}
+    printExtrap=0;
+    extrap="none";
+    s_rtn = 1./144.;
+  }
+  
+  Table alpha(real temp) {
+    temp = { 70.,200.,400.,600.,800.,1000.,1200.}
+    a = { 5.1,  5.1,  5.3,  5.5,  5.8,  6.3,  6.5}
+    printExtrap=0;
+    extrap="none";
+    s_rtn = 1.e-6;
+  }
+  
+  Table sy(real temp) {
+    temp = { 70.,200.,400.,600.,800.,1000.,1200.}
+    sy = { 130.0,125.0,120.0,130.0,120.0, 80.0, 20.0}
+    printExtrap=0;
+    extrap="none";
+    s_rtn = 1000.;
+  }
+  
+  Table su(real temp) {
+    temp = { 70.,200.,400.,600.,800.,1000.,1200.}
+    su = { 170.0,170.0,170.0,180.0,170.0,110.0, 35.0}
+    printExtrap=0;
+    extrap="none";
+    s_rtn = 1000.;
+  }
+  
+  real rho(real temp) { return .280; }
+  real duc(real temp) { return .22; }
+  real poissonRatio(real temp) { return .3; }
+  
+  //real Tmin = 70;
+  //real Tmax = 1200;
+}
+
+
+//
+// Properties for 17-4PH Steel (ref. Aerospace  Structures Handbook)
+//
+VariableContainer _17_4PH {
+  description = "Properties for 17-4PH Steel (ref. Aerospace  Structures Handbook)";
+
+  Table E(real temp) {
+    temp = { 70.,200.,400.,600.,800.,1000.}
+    e = { 29.5, 29.0, 28.0, 27.0, 26.0, 24.0}
+    printExtrap=0;
+    extrap="none";
+    s_rtn = 1.e6;
+  }
+  
+  Table k(real temp) {
+    temp = { 70.,200.,400.,600.,800.,1000.}
+    k = { 76.8, 76.8, 90.0,108.0,120.0,132.0}
+    printExtrap=0;
+    extrap="none";
+    s_rtn = 1./144.;
+  }
+  
+  Table alpha(real temp) {
+    temp = { 70.,200.,400.,600.,800.,1000.}
+    a = { 6.6,  6.6,  6.9,  7.1,  7.2,  7.3}
+    printExtrap=0;
+    extrap="none";
+    s_rtn = 1.e-6;
+  }
+  
+  Table sy(real temp) {
+    temp = { 70.,200.,400.,600.,800.,1000.}
+    sy = { 130.0,130.0,125.0,117.0,108.0, 88.0}
+    printExtrap=0;
+    extrap="none";
+    s_rtn = 1000.;
+  }
+  
+  Table su(real temp) {
+    temp = { 70.,200.,400.,600.,800.,1000.}
+    su = { 138.0,138.0,131.0,125.0,116.0,100.0}
+    printExtrap=0;
+    extrap="none";
+    s_rtn = 1000.;
+  }
+  
+  real rho(real temp) { return .284; }
+  real duc(real temp) { return .22; }
+  real poissonRatio(real temp) { return .3; }
+  
+  //real Tmin = 70;
+  //real Tmax = 1000;
+}
+
+
+// *************** HSR MATERIALS ********************
+
+
+//
+// Properties for Subsolvus alloy
+//
+VariableContainer Subsolvus {
+  description = "Properties for Subsolvus alloy";
+
+  Table E(real temp) {
+    temp = { 70.,200.,400.,600.,800.,1000.,1200.,1400. }
+    e = { 32.0, 31.4, 30.6, 29.7, 28.7, 28.0, 26.4, 25.4}
+    printExtrap=0;
+    extrap="none";
+    s_rtn = 1.e6;
+  }
+  
+  Table k(real temp) {
+    temp = { 70.,200.,400.,600.,800.,1000.,1200.,1400. }
+    k = { 58.8, 64.2, 73.2, 82.8, 91.6,102.0,116.4,135.6}
+    printExtrap=0;
+    extrap="none";
+    s_rtn = 1./144.;
+  }
+  
+  Table alpha(real temp) {
+    temp = { 70.,200.,400.,600.,800.,1000.,1200.,1400. }
+    a = { 6.6,  6.7,  6.9, 7.05, 7.25, 7.49, 7.78, 8.12}
+    printExtrap=0;
+    extrap="none";
+    s_rtn = 1.e-6;
+  }
+  
+  Table sy(real temp) {
+    temp = { 70.,200.,400.,600.,800.,1000.,1200.,1400. }
+    sy = { 182.0,181.4,180.0,178.0,175.3,172.0,168.0,143.0}
+    printExtrap=0;
+    extrap="none";
+    s_rtn = 1000.;
+  }
+  
+  Table su(real temp) {
+    temp = { 70.,200.,400.,600.,800.,1000.,1200.,1400. }
+    su = { 245.0,240.4,238.0,234.0,228.0,224.0,220.0,165.0}
+    printExtrap=0;
+    extrap="none";
+    s_rtn = 1000.;
+  }
+  
+  real rho(real temp) { return .299; }
+  real duc(real temp) { return .22; }
+  real poissonRatio(real temp) { return .3; }
+  
+  //real Tmin = 70;
+  //real Tmax = 1400;
+}
+
+
+//
+// Properties for Supersolvus alloy
+//
+VariableContainer Supersolvus {
+  description = "Properties for Supersolvus alloy";
+
+  Table E(real temp) {
+    temp = { 70.,200.,400.,600.,800.,1000.,1200.,1400.,1600.}
+    e = { 32.0, 31.4, 30.6, 29.7, 28.7, 28.0, 26.4, 25.4,24.4}
+    printExtrap=0;
+    extrap="none";
+    s_rtn = 1.e6;
+  }
+  
+  Table k(real temp) {
+    temp = { 70.,200.,400.,600.,800.,1000.,1200.,1400.,1600.}
+    k = { 58.8, 64.2, 73.2, 82.8, 91.6,102.0,116.4,135.6,154.8}
+    printExtrap=0;
+    extrap="none";
+    s_rtn = 1./144.;
+  }
+  
+  Table alpha(real temp) {
+    temp = { 70.,200.,400.,600.,800.,1000.,1200.,1400.,1600.}
+    a = { 6.6,  6.7,  6.9, 7.05, 7.25, 7.49, 7.78, 8.12,8.46}
+    printExtrap=0;
+    extrap="none";
+    s_rtn = 1.e-6;
+  }
+  
+  Table sy(real temp) {
+    temp = { 70.,200.,400.,600.,800.,1000.,1200.,1400.,1600.}
+    sy = { 162.0,161.4,160.7,160.0,159.3,155.5,150.0,143.0,123.0}
+    printExtrap=0;
+    extrap="none";
+    s_rtn = 1000.;
+  }
+  
+  Table su(real temp) {
+    temp = { 70.,200.,400.,600.,800.,1000.,1200.,1400.,1600.}
+    su = { 222.0,219.7,216.0,212.0,208.0,209.0,215.0,167.0,131.0}
+    printExtrap=0;
+    extrap="none";
+    s_rtn = 1000.;
+  }
+  
+  real rho(real temp) { return .299; }
+  real duc(real temp) { return .22; }
+  real poissonRatio(real temp) { return .3; }
+  
+  //real Tmin = 70;
+  //real Tmax = 1600;
+}
+
+
+//
+// Properties for Rene 80
+//
+VariableContainer Rene_80 {
+  description = "Properties for Rene 80";
+
+  Table E(real temp) {
+    temp = { 70.,200.,400.,600.,800.,1000.,1200.,1400.,1600.,1800.,2000. }
+    e = { 30.0, 29.6, 28.9, 28.3, 27.6, 27.0, 26.0, 24.0,23.0, 21.0, 19.0}
+    printExtrap=0;
+    extrap="none";
+    s_rtn = 1.e6;
+  }
+  
+  Table k(real temp) {
+    temp = { 70.,200.,400.,600.,800.,1000.,1200.,1400.,1600.,1800.,2000. }
+    k = { 68.0, 75.1, 86.1, 97.1,108.0,119.0,130.0,141.0,152.0,163.0,174.0}
+    printExtrap=0;
+    extrap="none";
+    s_rtn = 1./144.;
+  }
+  
+  Table alpha(real temp) {
+    temp = { 70.,200.,400.,600.,800.,1000.,1200.,1400.,1600.,1800.,2000. }
+    a = { 6.7,  6.8,  6.9,  7.0,  7.2,  7.3,  7.6,  7.9,8.3,  8.9,  9.8}
+    printExtrap=0;
+    extrap="none";
+    s_rtn = 1.e-6;
+  }
+  
+  Table sy(real temp) {
+    temp = { 70.,200.,400.,600.,800.,1000.,1200.,1400.,1600.,1800.,2000. }
+    sy = { 105.0,102.9, 99.7, 96.5, 93.2, 90.0, 88.0, 88.0,65.0, 34.0,  3.0}
+    printExtrap=0;
+    extrap="none";
+    s_rtn = 1000.;
+  }
+  
+  Table su(real temp) {
+    temp = { 70.,200.,400.,600.,800.,1000.,1200.,1400.,1600.,1800.,2000. }
+    su = { 127.0,127.0,127.0,127.0,127.0,127.0,127.0,122.0,86.0, 51.0, 21.0}
+    printExtrap=0;
+    extrap="none";
+    s_rtn = 1000.;
+  }
+  
+  real rho(real temp) { return .295; }
+  real duc(real temp) { return .22; }
+  real poissonRatio(real temp) { return .3; }
+  
+  //real Tmin = 70;
+  //real Tmax = 2000;
+}
+
+
+//
+// Properties for Rene 108
+//
+VariableContainer Rene_108 {
+  description = "Properties for Rene 108";
+
+  Table E(real temp) {
+    temp = { 70.,200.,400.,600.,800.,1000.,1200.,1400.,1600.,1800. }
+    e = { 29.5, 28.9, 28.1, 27.2, 26.4, 25.7, 25.0, 23.9,22.9, 21.3}
+    printExtrap=0;
+    extrap="none";
+    s_rtn = 1.e6;
+  }
+  
+  Table k(real temp) {
+    temp = { 70.,200.,400.,600.,800.,1000.,1200.,1400.,1600.,1800. }
+    k = { 56.4, 64.0, 75.6, 87.2, 98.8,111.9,124.9,141.3,161.1,187.5}
+    printExtrap=0;
+    extrap="none";
+    s_rtn = 1./144.;
+  }
+  
+  Table alpha(real temp) {
+    temp = { 70.,200.,400.,600.,800.,1000.,1200.,1400.,1600.,1800. }
+    a = { 7.07, 7.12, 7.19, 7.26, 7.33, 7.47, 7.60, 7.80,8.10, 8.60}
+    printExtrap=0;
+    extrap="none";
+    s_rtn = 1.e-6;
+  }
+  
+  Table sy(real temp) {
+    temp = { 70.,200.,400.,600.,800.,1000.,1200.,1400.,1600.,1800. }
+    sy = { 96.0, 96.0, 96.0, 96.0, 96.0, 98.0,100.0,100.0,64.0, 40.0}
+    printExtrap=0;
+    extrap="none";
+    s_rtn = 1000.;
+  }
+  
+  Table su(real temp) {
+    temp = { 70.,200.,400.,600.,800.,1000.,1200.,1400.,1600.,1800. }
+    su = { 120.0,120.0,120.0,120.0,120.0,120.0,120.0,120.0,96.0, 64.0}
+    printExtrap=0;
+    extrap="none";
+    s_rtn = 1000.;
+  } 
+  
+  real rho(real temp) { return .308; }
+  real duc(real temp) { return .22; }
+  real poissonRatio(real temp) { return .3; }
+  
+  //real Tmin = 70;
+  //real Tmax = 1800;
+}
+
+
+//
+// Properties for IN-939
+//
+VariableContainer IN_939 {
+  description = "Properties for IN-939";
+
+  Table E(real temp) {
+    temp = { 70.,200.,400.,600.,800.,1000.,1200.,1400.,1600.}
+    e = { 27.8, 26.9, 25.4, 24.0, 22.5, 21.8, 21.0, 21.7,19.9}
+    printExtrap=0;
+    extrap="none";
+    s_rtn = 1.e6;
+  }
+  
+  Table k(real temp) {
+    temp = { 70.,200.,400.,600.,800.,1000.,1200.,1400.,1600.}
+    k = { 79.2, 86.7, 98.2,109.7,121.2,132.6,144.0,154.8,166.8}
+    printExtrap=0;
+    extrap="none";
+    s_rtn = 1./144.;
+  }
+  
+  Table alpha(real temp) {
+    temp = { 70.,200.,400.,600.,800.,1000.,1200.,1400.,1600.}
+    a = { 5.70, 6.00, 6.47, 6.93, 7.40, 7.50, 7.60, 7.70,7.90}
+    printExtrap=0;
+    extrap="none";
+    s_rtn = 1.e-6;
+  }
+  
+  Table sy(real temp) {
+    temp = { 70.,200.,400.,600.,800.,1000.,1200.,1400.,1600.}
+    sy = { 85.4, 83.9, 81.5, 79.1, 76.7, 75.9, 75.1, 76.3,50.9}
+    printExtrap=0;
+    extrap="none";
+    s_rtn = 1000.;
+  }
+  
+  Table su(real temp) {
+    temp = { 70.,200.,400.,600.,800.,1000.,1200.,1400.,1600.}
+    su = { 113.4,112.3,110.6,108.8,107.1,107.1,107.2, 95.8,59.7}
+    printExtrap=0;
+    extrap="none";
+    s_rtn = 1000.;
+  }
+  
+  real rho(real temp) { return .295; }
+  real duc(real temp) { return .22; }
+  real poissonRatio(real temp) { return .3; }
+  
+  //real Tmin = 70;
+  //real Tmax = 1600;
+}
+
+
+//
+// Properties for Ti 48-2-2
+//
+VariableContainer Ti_48_2_2 {
+  description = "Properties for Ti 48-2-2";
+
+  Table E(real temp) {
+    temp = { 70.,200.,400.,600.,800.,1000.,1200.,1400.}
+    e = { 25.4, 25.1, 24.7, 24.1, 23.5, 22.9, 22.3, 21.7}
+    printExtrap=0;
+    extrap="none";
+    s_rtn = 1.e6;
+  }
+  
+  Table k(real temp) {
+    temp = { 70.,200.,400.,600.,800.,1000.,1200.,1400.}
+    k = { 149.8,155.7,164.9,172.2,178.9,184.2,188.3,191.3}
+    printExtrap=0;
+    extrap="none";
+    s_rtn = 1./144.;
+  }
+  
+  Table alpha(real temp) {
+    temp = { 70.,200.,400.,600.,800.,1000.,1200.,1400.}
+    a = { 5.57, 5.73, 5.97, 6.18, 6.39, 6.57, 6.73, 6.88}
+    printExtrap=0;
+    extrap="none";
+    s_rtn = 1.e-6;
+  }
+  
+  Table sy(real temp) {
+    temp = { 70.,200.,400.,600.,800.,1000.,1200.,1400.}
+    sy = { 38.9, 38.1, 36.9, 35.7, 34.5, 33.3, 32.1, 30.9}
+    printExtrap=0;
+    extrap="none";
+    s_rtn = 1000.;
+  }
+  
+  Table su(real temp) {
+    temp = { 70.,200.,400.,600.,800.,1000.,1200.,1400.}
+    su = { 47.9, 48.3, 48.9, 50.7, 52.4, 53.0, 51.7, 47.5}
+    printExtrap=0;
+    extrap="none";
+    s_rtn = 1000.;
+  }
+  
+  real rho(real temp) { return .145; }
+  real duc(real temp) { return .22; }
+  real poissonRatio(real temp) { return .3; }
+  
+  //real Tmin = 70;
+  //real Tmax = 1400;
+}
+
+
+//
+// Properties for 6/96 MI with Sylramic Fibers - 18 epi
+//
+VariableContainer _6_96_MI_with_Sylramic_Fibers_18_epi {
+  description = "Properties for 6/96 MI with Sylramic Fibers - 18 epi";
+
+  Table E(real temp) {
+    temp = { 70.,200.,400.,600.,800.,1000.,1200.,1400.,1600.,1800.,2000.,2200.,2400. }
+    e = { 33.41,33.33,33.21,33.09,32.97,32.85,32.73,32.61,32.49,32.37,32.25,32.13,32.01}
+    printExtrap=0;
+    extrap="none";
+    s_rtn = 1.e6;
+  }
+  
+  Table k(real temp) {
+    temp = { 70.,200.,400.,600.,800.,1000.,1200.,1400.,1600.,1800.,2000.,2200.,2400. }
+    k = { 253.2,241.2,223.2,206.4,192.0,177.6,165.6,154.8,145.2,135.6,128.4,123.6,118.8}
+    printExtrap=0;
+    extrap="none";
+    s_rtn = 1./144.;
+  }
+  
+  Table alpha(real temp) {
+    temp = { 70.,200.,400.,600.,800.,1000.,1200.,1400.,1600.,1800.,2000.,2200.,2400. }
+    a = { 1.16, 1.48, 1.74, 1.92, 2.05, 2.16, 2.25, 2.34,2.41, 2.48, 2.54, 2.60, 2.65}
+    printExtrap=0;
+    extrap="none";
+    s_rtn = 1.e-6;
+  }
+  
+  Table sy(real temp) {
+    temp = { 70.,200.,400.,600.,800.,1000.,1200.,1400.,1600.,1800.,2000.,2200.,2400. }
+    sy = { 23.8, 23.5, 23.1, 22.6, 22.1, 21.6, 21.2, 20.7,20.2, 19.7, 19.3, 18.8, 18.3}
+    printExtrap=0;
+    extrap="none";
+    s_rtn = 1000.;
+  }
+  
+  Table su(real temp) {
+    temp = { 70.,200.,400.,600.,800.,1000.,1200.,1400.,1600.,1800.,2000.,2200.,2400. }
+    su = { 23.8, 23.5, 23.1, 22.6, 22.1, 21.6, 21.2, 20.7,20.2, 19.7, 19.3, 18.8, 18.3}
+    printExtrap=0;
+    extrap="none";
+    s_rtn = 1000.;
+  }
+  
+  real rho(real temp) { return .0974; }
+  real duc(real temp) { return .22; }
+  real poissonRatio(real temp) { return .3; }
+  
+  //real Tmin = 70;
+  //real Tmax = 2400;
+}
+
+
+//
+// Properties for [0/90] Dow-Corning 2D PIP SiC
+//
+VariableContainer _0_90_Dow_Corning_2D_PIP_SiC {
+  description = "Properties for [0/90] Dow-Corning 2D PIP SiC";
+
+  Table E(real temp) {
+    temp = { 70.,200.,400.,600.,800.,1000.,1200.,1400.,1600.,1800. }
+    e = { 14.70,14.65,14.58,14.51,14.44,14.37,14.30,14.26,14.21,14.70}
+    printExtrap=0;
+    extrap="none";
+    s_rtn = 1.e6;
+  }
+  
+  Table k(real temp) {
+    temp = { 70.,200.,400.,600.,800.,1000.,1200.,1400.,1600.,1800. }
+    k = { 1.1,  1.1,  1.1,  1.1,  1.1,  1.1,  1.1,  1.1,1.1,  1.1}
+    printExtrap=0;
+    extrap="none";
+    s_rtn = 1./144.;
+  }
+  
+  Table alpha(real temp) {
+    temp = { 70.,200.,400.,600.,800.,1000.,1200.,1400.,1600.,1800. }
+    a = { 1.9,  1.9,  1.9,  1.9,  1.9,  1.9,  1.9,  1.9,1.9,  1.9}
+    printExtrap=0;
+    extrap="none";
+    s_rtn = 1.e-6;
+  }
+  
+  Table sy(real temp) {
+    temp = { 70.,200.,400.,600.,800.,1000.,1200.,1400.,1600.,1800. }
+    sy = { 27.1, 27.6, 28.4, 29.3, 30.1, 30.9, 31.7, 32.2,32.7, 32.6}
+    printExtrap=0;
+    extrap="none";
+    s_rtn = 1000.;
+  }
+  
+  Table su(real temp) {
+    temp = { 70.,200.,400.,600.,800.,1000.,1200.,1400.,1600.,1800. }
+    su = { 27.1, 27.6, 28.4, 29.3, 30.1, 30.9, 31.7, 32.2,32.7, 32.6}
+    printExtrap=0;
+    extrap="none";
+    s_rtn = 1000.;
+  }
+  
+  real rho(real temp) { return .076; }
+  real duc(real temp) { return .22; }
+  real poissonRatio(real temp) { return .3; }
+  
+  //real Tmin = 70;
+  //real Tmax = 1800;
+}
+
+
+// Material used for acoustic liners
+VariableContainer acousticComposite
+{
+  real rho(real temp) { return 0.09; }
+}
+
+// for nacelle material default
+VariableContainer aluminum
+{
+  real rho(real temp) { return 0.0975; }
+}
+
+// for firewall material default
+VariableContainer fireWallDefault
+{
+  real rho(real temp) { return 1.0; }
+}
+
+
+//$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$
+//$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$
+//                                                $$$
+//                                                $$$
+//             TI6AL4V properties                 $$$
+//                 AMS4906E                       $$$
+//         Heat treated per Fig. 1.0544           $$$
+//         Ref's: Aeropace material HB            $$$
+//                MIL-HB-5                        $$$
+//            First Rev. 5/16/94                  $$$
+//            Second Rev. 5/26/95                 $$$
+//                                                $$$
+//$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$
+//$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$
+
+VariableContainer Ti_6Al_4v {
+  description = "TI6AL4V properties - AMS4906E - Heat treated per Fig. 1.0544 -  Ref's: Aeropace material HB MIL-HB-5";
+
+  real E(real temp) {
+     if(-420 <= temp && temp <= 0) {
+        return 1.e6* 160000.*(102.70028 - .021756*temp - .00014083*temp**2-4.23e-7*temp**3);
+     }
+     else {
+        if(0<temp && temp<=750) {
+           return 1.e6* 160000.*(103.632-.03503*temp-4.40704e-7*temp**2-5.4102/temp+7.4755/temp**2);
+        }
+        else {
+          if(750<temp && temp <= 1000) {
+             return 1.e6* 160000.*((83.8134 - .07776*temp)/(1 - .00089196*temp));
+          }
+          else {
+             string errmsg = "Specified temperature (";
+             errmsg += toStr(temp);
+             errmsg += ") out of range (-420 to 1000) for e";
+             provisionalWarning(errmsg);
+          }
+        }
+     }
+   }
+   
+  real k(real temp) {
+     real logtemp = log(temp);
+     if (70<=temp && temp<=1200) {
+        return (-13.9099+logtemp*(12.218-logtemp*(2.7504+.2063*logtemp)))/12./144.;
+     }
+     else {
+        string errmsg = "Specified temperature (";
+        errmsg += toStr(temp);
+        errmsg += ") out of range (70 to 1200) for kcond";
+        provisionalWarning(errmsg);
+     }
+  }
+
+  real alpha(real temp) {
+     if (70<=temp && temp<=1600) {
+  // ??? I think the units may be screwed up here...
+        return 1.e-6*1e-6*(4.7696+(.001209-(2.314e-7-1.112e-10*temp)*temp)*temp);
+     }
+     else {
+        string errmsg = "Specified temperature (";
+        errmsg += toStr(temp);
+        errmsg += ") out of range (70 to 1600) for alpha";
+        provisionalWarning(errmsg);
+     }
+  }
+
+
+  real sy(real temp) {
+     if(-400 <= temp && temp <= 504) {
+           return 1200.*((107.316-.03064*temp)/(1+.0008608*temp));
+     }
+     else {
+        if (504<temp && temp <= 1000) {
+           return 1200.*(137.515-.33356*temp+.0005106*temp**2-2.7422e-7*temp**3);
+        }
+        else {
+           string errmsg = "Specified temperature (";
+           errmsg += toStr(temp);
+           errmsg += ") out of range (-400 to 1000) for sy";
+           provisionalWarning(errmsg);
+        }
+     }
+  }
+
+
+  real su(real temp) {
+     if (-400 <= temp && temp <= 505) {
+           return 1300.*((106.996+.006719*temp)/(1+.001045*temp));
+     }
+     else {
+        if (505<temp && temp <= 1000) {
+           return 1300.*(125.404-.2495*temp+.0004038*temp**2-2.3321e-7*temp**3);
+        }
+        else {
+           string errmsg = "Specified temperature (";
+           errmsg += toStr(temp);
+           errmsg += ") out of range (-400 to 1000) for su";
+           provisionalWarning(errmsg);
+        }
+    }
+  }
+
+
+   real duc(real temp) { return .22; }
+   real poissonRatio(real temp)   { return .335; }
+   real rho(real temp) { return 0.16; }
+
+/*
+   real ccap(real temp) {
+     real ccap=0.;
+     if (0.<temp && temp<=1200) {
+        ccap=(5.714e-5)*temp+.12;
+     }
+     else {
+        string errmsg = "Specified temperature (";
+        errmsg += toStr(temp);
+        errmsg += ") out of range (0 to 1200) for ccap";
+        provisionalWarning(errmsg);
+     }
+  }
+*/
+
+}
+
+
+VariableContainer kevlar_49
+{
+   real rho(real temp) { return 0.0520233; }
+}
+
+
