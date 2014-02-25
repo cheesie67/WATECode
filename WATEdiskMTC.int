@@ -367,12 +367,12 @@ class  WATEdiskMTC extends WATEdiskNew
  ******************************************************************************/
    void designFailed(string type, int istage, string matname)
    {
-      string msg = "design of disk shape '" + type + "' has failed. ";
+      /*string msg = "design of disk shape '" + type + "' has failed. ";
       msg += "stage = ";
       msg += toStr(istage);
       msg += ",  material = ";
       msg += toStr(matname);
-      provisionalWarning(msg);
+      provisionalWarning(msg);*/
    }
    
     
@@ -1544,6 +1544,11 @@ int calcNodes(int isec, int istart, int istop, int n)
 
        xarr[8] = x;                yarr[8] = lrr;
        xarr[9] = x+orw;            yarr[9] = lrr;
+      
+     //cout<<"stgnum="<<stgnum<<endl;
+
+     //cout<<"xarr[0]="<<xarr[0]<<endl; 
+     //cout<<"xarr[8]="<<xarr[8]<<endl;
 
    // plot outer shoulder
 
@@ -1553,8 +1558,11 @@ int calcNodes(int isec, int istart, int istop, int n)
        xarr[12] = x+ww+(orw-ww)/2; yarr[12] = lrr-orh-0.25;
        xarr[13] = x+(orw-ww)/2;    yarr[13] = lrr-orh-0.25;
 
-       xarr[14] = x+(orw-ww)/2;    yarr[14] = lrr-orh-0.25;
+       //xarr[14] = x+(orw-ww)/2;    //yarr[14] = lrr-orh-0.25; //line commented out on 12-23-2013 by m. tong
+       xarr[14] = x;               yarr[14] = lrr-orh;
        xarr[15] = x;               yarr[15] = lrr-orh;
+
+     //cout<<"xarr[15]="<<xarr[15]<<endl;
 
    // plot web
 

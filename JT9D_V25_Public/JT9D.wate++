@@ -27,7 +27,6 @@
 #include <Viewers/WATE_ShaftBlock.view_WATE>
 #include <Viewers/WATE_InletBlock.view_WATE>
 
-#include "WATEhiBypassFan.int"
 
 WATEassembly WATEa {
 

@@ -1,0 +1,171 @@
+/*******************************************************************************
+© Copyright 2003. The U.S. Government, as Represented by the Administrator of
+the National Aeronautics and Space Administration (NASA). All rights reserved.
+Includes content licensed from the U.S. Government, National Aeronautics and
+Space Administration under United States Copyright Registration Numbers
+V3503D364 and V3482D344.
+© 2008-2013 NPSS® Consortium, www.NPSSConsortium.org/AllRightsReserved
+*******************************************************************************/
+
+/*******************************************************************************
+NPSS® software and related documentation is export controlled with an Export
+Control Classification Number(ECCN) of 9D991, controlled for Anti-Terrorism
+reasons, under U.S. Export Administration Regulations 15 CFR 730-774. It may
+not be transferred to a country checked under anti-terrorism on the Commerce
+Country Chart structure or to foreign nationals of those countries in the U.S.
+or abroad without first obtaining a license from the Bureau of Industry and
+Security, United States Department of Commerce. Violations are punishable by
+fine, imprisonment, or both.
+*******************************************************************************/
+//
+// For further information contact support@wolverine-ventures.com
+//
+
+#ifndef __WIRECORRECTION__
+#define __WIRECORRECTION__
+
+#include <InterpIncludes.ncp>
+
+extern real measAdj;
+
+class WireCorrection extends Subelement {
+
+//------------------------------------------------------------
+//     ******* DOCUMENTATION *******
+//------------------------------------------------------------
+  
+  title = "";
+
+  description = isA() + " will correct an Instrument Element temperature reading for wire correction effects.";
+  
+  usageNotes = isA() + 
+"  
+
+- The Wire Correction Subelement corrects an Instrument Element temperature 
+reading for wire reading effects.  The user inputs a table of delta
+temperature as a function of real temperature.  Thus, for any given
+measured temperature, the user can determine the real temperature that
+corresponds to it.  Since the measured temperature is known and the
+table is a function of the real temperature, an iteration must be performed
+until the real temperature plus the indicated delta temperature equals the 
+input measured temperature. 
+
+- This subelement takes the value measAdj from its parent.  It is assumed
+since this subelement is being used, the parent Instrument is reading 
+a temperature.  The subelement will return a value of measAdj that
+represents the original value adjusted for the wire correction.
+
+- This subelement needs a table, TB_wireCorr, to run correctly.  This
+table should be a function of temperature delta verses true temperature.
+Temperature delta is the difference between true and read temperature.  ";
+
+
+//------------------------------------------------------------
+//     ******* SETUP VARIABLES ********
+//------------------------------------------------------------
+
+  real Tdel {
+    IOstatus = INPUT;  units = RANKINE;
+    description = "Delta temperature due to wire correction (read from table)";
+  }
+  real TsActual {
+    IOstatus = INPUT;  units = RANKINE;
+    description = "Actual measured temperature";
+  }
+  real TR {
+    IOstatus = INPUT;  units = NOUNIT;
+    description = "Ratio between real and measured temperature";
+  }
+
+// SOCKETS
+  addInterface(INSTRUMENT_MEASADJ);
+
+//TABLES
+  Socket TB_wireCorr
+  {  
+    description = "Temperature versus temperature";
+    socketType = "Function";
+    required = TRUE;
+    argTypes = { "real" }
+    returnType = "real";
+   }
+
+
+//------------------------------------------------------------
+// ******* SOLVER SETUP *******
+//------------------------------------------------------------
+
+  SecantSolver Tsolver {
+    description = "Iterate to determine temperature delta between real and measured";
+    maxDx = 5;
+    tolerance =0.001;
+    perturbSize = 0.1;
+    maxIters = 50;
+  };	 
+
+//------------------------------------------------------------
+//   ******* PERFORM ENGINEERING CALCULATIONS *******
+//------------------------------------------------------------
+  void calculate() {
+	
+    
+    //--------------------------------------------------------------
+    // Get values from parent
+    //--------------------------------------------------------------
+    real measAdj_local = measAdj;
+
+    //--------------------------------------------------------------
+    // Initialize things
+    //--------------------------------------------------------------
+    real TdelOld = 0;
+    Tsolver.initialize( TdelOld );
+    
+    //--------------------------------------------------------------
+    // Iterate until dT used to deterime TsActual = dT read from Table
+    //--------------------------------------------------------------
+    do {
+		//      TsActual = measAdj - TdelOld;
+		TsActual = measAdj_local - TdelOld; 
+      Tdel = TB_wireCorr( TsActual );
+      TdelOld = Tsolver.iterate( Tdel - TdelOld );
+
+    } while ( !( Tsolver.isConverged() || Tsolver.errorFound()  ));
+
+    //------------------------------------------------------------
+    // if an error is found, print a message
+    //------------------------------------------------------------
+    if ( Tsolver.errorFound() ) {
+	  ESOreport( 1083901,"Wire correction temperature iteration did not converge" );
+    }
+
+    if ( Tsolver.isConverged() ){
+
+      TR = TsActual / measAdj_local;
+
+      //------------------------------------------------------------
+      // set value in parent
+      //------------------------------------------------------------
+      measAdj = TsActual;
+
+    }
+    else {
+
+      Tdel = 0;
+      TR =1.0;
+
+    }
+     
+  }
+
+ //------------------------------------------------------------
+  // register the appropriate errors at build time
+  //------------------------------------------------------------
+  void VCinit()
+  {
+    ESOregCreate( 1083901, 8, "", TRUE, FALSE, TRUE );
+  }
+
+
+}
+
+#endif

@@ -990,7 +990,7 @@ class WATEaxialTurbine extends WATEturbineBase
    void checkDesignLimits(real dlimit, real htratio)
    {
       string msg;
-      if (htratio < .4)  { 
+      /*if (htratio < .4)  { 
          msg = "Stage "+toStr(stage+1)+" design limit exceeded. ";
          msg += " H/T ratio =  "; msg += toStr(htratio);
          msg += "   design limit =  .4.  hub tip ratio is too low. ";
@@ -1003,7 +1003,7 @@ class WATEaxialTurbine extends WATEturbineBase
          msg += " loading =  "; msg += toStr(loadingParam);
          msg += "   design limit = .2.  Loading is too high. ";
          provisionalWarning(msg);
-      } 
+      } */
    }      
    
    
